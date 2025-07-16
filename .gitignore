@@ -1,0 +1,12 @@
+# Ignore node_modules
+my-app/node_modules/
+server/node_modules/
+
+# Ignore build folder from React
+my-app/build/
+
+# Ignore .env files (very important!)
+**/.env
+
+# Optional: log files
+*.log
