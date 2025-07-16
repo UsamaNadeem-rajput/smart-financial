@@ -1,33 +1,31 @@
+// server.js
+require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
 const session = require('express-session');
 
 const app = express();
-
-// Use Railway-assigned port or fallback to 5000 for local dev
 const PORT = process.env.PORT || 5000;
 
-// Middleware
+// Middlewares
 app.use(cors({
-  origin: ['http://localhost:5173', 'https://your-frontend.onrender.com'], // add your frontend prod URL
+  origin: ['http://localhost:5173', 'https://your-frontend.onrender.com'], // replace with your frontend URL
   credentials: true
 }));
 app.use(express.json());
 
-app.use(
-  session({
-    secret: 'your-secret-key', // In production, use a strong secret stored in environment variable
-    resave: false,
-    saveUninitialized: false,
-    cookie: {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === 'production', // true in production (HTTPS)
-      maxAge: 24 * 60 * 60 * 1000, // 1 day
-    },
-  })
-);
+app.use(session({
+  secret: 'your-secret-key',
+  resave: false,
+  saveUninitialized: false,
+  cookie: {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === 'production',
+    maxAge: 24 * 60 * 60 * 1000,
+  },
+}));
 
-// Routes
+// Connect routes
 const registerRoute = require('./routers/register');
 const loginRoute = require('./routers/login');
 const businessRoute = require('./routers/business');
@@ -39,8 +37,7 @@ const transaction = require('./routers/transactionApi');
 const showTransactions = require('./routers/showtransactions');
 const authRoutes = require('./routers/auth');
 
-// Route mounting
-app.use('/', authRoutes); 
+app.use('/', authRoutes);
 app.use('/api', showTransactions);
 app.use('/api/accounts-list', list);
 app.use('/api/createnewaccount', createnewaccount);
