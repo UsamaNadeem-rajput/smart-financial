@@ -44,7 +44,7 @@ app.use('/api/createnewaccount', createnewaccount);
 app.use('/showbusinesses', showbusinessesRoute);
 app.use('/business', businessRoute);
 app.use('/register', registerRoute);
-app.use('/login', loginRoute);
+app.use('/api/login', loginRoute);
 app.use('/api/search-accounts', searchAccounts);
 app.use('/api', transaction);
 
