@@ -43,7 +43,7 @@ app.use('/api/accounts-list', list);
 app.use('/api/createnewaccount', createnewaccount);
 app.use('/showbusinesses', showbusinessesRoute);
 app.use('/business', businessRoute);
-app.use('/register', registerRoute);
+app.use('/api/register', registerRoute);
 app.use('/api/login', loginRoute);
 app.use('/api/search-accounts', searchAccounts);
 app.use('/api', transaction);
