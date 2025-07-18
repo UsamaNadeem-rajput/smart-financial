@@ -9,7 +9,7 @@ const PORT = process.env.PORT || 5000;
 
 // Middlewares
 app.use(cors({
-  origin: ['http://localhost:5173', 'https://smart-financial-production.up.railway.app'], // replace with your frontend URL
+  origin: ['http://localhost:5173', 'https://smart-financial-vj.netlify.app'], // replace with your frontend URL
   credentials: true
 }));
 app.use(express.json());
