@@ -65,7 +65,7 @@ const ShowBusinessAccount = () => {
   const fetchAccounts = async () => {
     try {
       // Fetch accounts from backend API
-      const response = await axios.get(`http://localhost:5000/api/accounts-list/${selectedBusiness.business_id}`, {
+      const response = await axios.get(`${process.env.REACT_APP_BACKEND_URL}/api/accounts-list/${selectedBusiness.business_id}`, {
         withCredentials: true
       });
       
@@ -107,7 +107,7 @@ const ShowBusinessAccount = () => {
   const handleDeleteAccount = async (accountId) => {
     if (window.confirm('Are you sure you want to delete this account? This action cannot be undone.')) {
       try {
-        await axios.delete(`http://localhost:5000/api/accounts/${accountId}`, {
+        await axios.delete(`${process.env.REACT_APP_BACKEND_URL}/api/accounts/${accountId}`, {
           withCredentials: true
         });
         setAccounts(prev => prev.filter(a => a.account_id !== accountId));

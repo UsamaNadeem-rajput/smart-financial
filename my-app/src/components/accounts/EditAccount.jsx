@@ -64,7 +64,7 @@ const EditAccount = () => {
 
   const fetchAccountTypes = async () => {
     try {
-      const response = await axios.get('http://localhost:5000/api/account-types', {
+      const response = await axios.get(`${process.env.REACT_APP_BACKEND_URL}/api/account-types`, {
         withCredentials: true
       });
       setAccountTypes(response.data.accountTypes || []);
@@ -137,7 +137,7 @@ const EditAccount = () => {
         throw new Error('Account ID not found');
       }
 
-      await axios.put(`http://localhost:5000/api/accounts/${accountId}`, formData, {
+      await axios.put(`${process.env.REACT_APP_BACKEND_URL}/api/accounts/${accountId}`, formData, {
         withCredentials: true
       });
       

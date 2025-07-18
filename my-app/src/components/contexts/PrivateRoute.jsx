@@ -8,7 +8,7 @@ const PrivateRoute = ({ children }) => {
   useEffect(() => {
     const checkSession = async () => {
       try {
-        const res = await axios.get('http://localhost:5000/login/session', {
+        const res = await axios.get(`${process.env.REACT_APP_BACKEND_URL}/login/session`, {
           withCredentials: true,
         });
         if (res.data.username) {

@@ -102,9 +102,9 @@ const BusinessForm = () => {
         const businessId = location.state.business.business_id;
         console.log("Submitting payload:", formData);
 
-        await axios.put(`http://localhost:5000/business/${businessId}`, payload, { withCredentials: true });
+        await axios.put(`${process.env.REACT_APP_BACKEND_URL}/business/${businessId}`, payload, { withCredentials: true });
       } else {
-        await axios.post('http://localhost:5000/business', payload, { withCredentials: true });
+        await axios.post(`${process.env.REACT_APP_BACKEND_URL}/business`, payload, { withCredentials: true });
       }
       navigate('/list');
     } catch (err) {
