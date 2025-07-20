@@ -36,6 +36,11 @@ app.use(
   })
 );
 
+// Health check endpoint
+app.get('/health', (req, res) => {
+  res.status(200).json({ status: 'OK' });
+});
+
 // Routes
 const registerRoute = require('./routers/register');
 const loginRoute = require('./routers/login');
@@ -58,7 +63,7 @@ app.use('/api/login', loginRoute);
 app.use('/api/search-accounts', searchAccounts);
 app.use('/api', transaction);
 
-// Error-handling middleware to prevent crashes
+// Error-handling middleware
 app.use((err, req, res, next) => {
   console.error('Server Error:', err.stack);
   res.status(500).json({ error: 'Internal Server Error' });
