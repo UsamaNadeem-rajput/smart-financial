@@ -6,6 +6,7 @@ const pool = require('./db');
 const app = express();
 const PORT = process.env.PORT || 5000;
 
+// Initialize session store
 const sessionStore = new MySQLStore({}, pool);
 
 app.use(
@@ -13,7 +14,7 @@ app.use(
     origin: [
       'http://localhost:5173',
       'https://alamsherbaloch.com',
-      'https://smart-financial-production.up.railway.app', // Frontend production domain
+      'https://smart-financial-production.up.railway.app',
     ],
     credentials: true,
   })
@@ -22,7 +23,7 @@ app.use(express.json());
 
 app.use(
   session({
-    secret: process.env.SESSION_SECRET,
+    secret: process.env.SESSION_SECRET || 'fallback-secret-123',
     resave: false,
     saveUninitialized: false,
     store: sessionStore,
@@ -35,6 +36,7 @@ app.use(
   })
 );
 
+// Routes
 const registerRoute = require('./routers/register');
 const loginRoute = require('./routers/login');
 const businessRoute = require('./routers/business');
@@ -56,10 +58,15 @@ app.use('/api/login', loginRoute);
 app.use('/api/search-accounts', searchAccounts);
 app.use('/api', transaction);
 
-// Debug middleware to log requests and sessions
-app.use((req, res, next) => {
-  console.log(`Request: ${req.method} ${req.url}, Session:`, req.session);
-  next();
+// Error-handling middleware to prevent crashes
+app.use((err, req, res, next) => {
+  console.error('Server Error:', err.stack);
+  res.status(500).json({ error: 'Internal Server Error' });
+});
+
+// Handle unhandled promise rejections
+process.on('unhandledRejection', (reason, promise) => {
+  console.error('Unhandled Rejection:', reason);
 });
 
 app.listen(PORT, () => {

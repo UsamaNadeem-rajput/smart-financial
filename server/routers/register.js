@@ -26,15 +26,13 @@ router.post('/', async (req, res) => {
     }
 
     const hashedPassword = await bcrypt.hash(password, 10);
-
     await conn.query(
       'INSERT INTO users (username, full_name, email, password_hash) VALUES (?, ?, ?, ?)',
       [username, fullname, email, hashedPassword]
     );
 
-    // Set session with username
     req.session.username = username;
-    console.log('Session set in register:', req.session);
+    console.log('Register session created:', req.session.username);
 
     conn.release();
     res.status(201).json({ message: 'User registered successfully', username });
