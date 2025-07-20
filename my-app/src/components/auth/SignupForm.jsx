@@ -28,7 +28,7 @@ export default function SignupForm() {
     e.preventDefault();
 
     try {
-      const res = await axios.post(`${process.env.REACT_APP_BACKEND_URL}/api/register`, formData,{ withCredentials: true});
+      const res = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/register`, formData,{ withCredentials: true});
       setMessage(res.data.message); // Show server response on success
       navigate('/business');
     } catch (err) {

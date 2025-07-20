@@ -17,7 +17,7 @@ const List = () => {
 
   const checkAuth = async () => {
     try {
-      const res = await axios.get(`${process.env.REACT_APP_BACKEND_URL}/login/session`, { withCredentials: true });
+      const res = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/login/session`, { withCredentials: true });
       setUser(res.data);
       fetchBusinesses(); // ✅ Only fetch if session is valid
       console.log('User is authenticated:', res.data.username);
@@ -30,7 +30,7 @@ const List = () => {
   const fetchBusinesses = async () => {
     try {
       // Fetch businesses from backend API
-      const response = await axios.get(`${process.env.REACT_APP_BACKEND_URL}/showbusinesses`, {
+      const response = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/showbusinesses`, {
         withCredentials: true
       });
 

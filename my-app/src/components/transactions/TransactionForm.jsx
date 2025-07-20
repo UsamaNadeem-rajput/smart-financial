@@ -81,7 +81,7 @@ export default function TransectionForm() {
     };
 
     try {
-      const res = await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/transactions`, {
+      const res = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/transactions`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
@@ -130,7 +130,7 @@ export default function TransectionForm() {
     if (value.length > 0) {
       try {
         const res = await fetch(
-          `${process.env.REACT_APP_BACKEND_URL}/api/search-accounts?query=${encodeURIComponent(
+          `${import.meta.env.VITE_BACKEND_URL}/api/search-accounts?query=${encodeURIComponent(
             value
           )}`
         );

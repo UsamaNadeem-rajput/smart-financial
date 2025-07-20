@@ -14,7 +14,7 @@ export default function TransactionEntryTable() {
     if (!date) return;
     try {
       const res = await fetch(
-        `${process.env.REACT_APP_BACKEND_URL}/api/showtransactions?date=${date}`
+        `${import.meta.env.VITE_BACKEND_URL}/api/showtransactions?date=${date}`
       );
       const data = await res.json();
 

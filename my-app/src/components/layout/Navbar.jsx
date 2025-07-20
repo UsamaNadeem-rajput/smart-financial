@@ -25,7 +25,7 @@ const Navbar = () => {
     // Fetch session username from API or localStorage
     const fetchUser = async () => {
       try {
-        const res = await axios.get(`${process.env.REACT_APP_BACKEND_URL}/login/session`, { withCredentials: true });
+        const res = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/login/session`, { withCredentials: true });
         setUser(res.data.username);
       } catch (err) {
         setUser(null);
@@ -36,7 +36,7 @@ const Navbar = () => {
 
   const handleLogout = async () => {
     try {
-      await axios.get(`${process.env.REACT_APP_BACKEND_URL}/logout`, { withCredentials: true });
+      await axios.get(`${import.meta.env.VITE_BACKEND_URL}/logout`, { withCredentials: true });
       localStorage.clear();
       clearBusiness();
       navigate('/login');

@@ -31,7 +31,7 @@ export default function LoginForm() {
     
     try {
       // Send POST request to backend login endpoint
-      const res = await axios.post(`${process.env.REACT_APP_BACKEND_URL}/api/login`, formData, { 
+      const res = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/login`, formData, { 
         withCredentials: true 
       });
       // localStorage.setItem('user', JSON.stringify(res.data.user));
