@@ -14,6 +14,7 @@ export default function LoginForm() {
   const [message, setMessage] = useState('');
 
   const navigate = useNavigate();
+  const apiUrl = import.meta.env.VITE_BACKEND_URL;
 
 
   // Handle input changes
@@ -31,7 +32,7 @@ export default function LoginForm() {
     
     try {
       // Send POST request to backend login endpoint
-      const res = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/login`, formData, { 
+      const res = await axios.post(`${apiUrl}/api/login`, formData, { 
         withCredentials: true 
       });
       // localStorage.setItem('user', JSON.stringify(res.data.user));

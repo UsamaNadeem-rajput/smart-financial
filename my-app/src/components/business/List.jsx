@@ -5,19 +5,21 @@ import Navbar from '../layout/Navbar';
 import { Building2, Plus, Edit3, Trash2, Crown } from 'lucide-react';
 import axios from 'axios';
 
+
+
 const List = () => {
   const navigate = useNavigate();
   const { businesses, setBusinesses, selectBusiness } = useBusiness();
   const [isLoading, setIsLoading] = useState(true);
   const [user, setUser] = useState(null);
-
+  const apiUrl = import.meta.env.VITE_BACKEND_URL;
   useEffect(() => {
     checkAuth();
   }, []);
 
   const checkAuth = async () => {
     try {
-      const res = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/login/session`, { withCredentials: true });
+      const res = await axios.get(`${apiUrl}/api/login/session`, { withCredentials: true });
       setUser(res.data);
       fetchBusinesses(); // ✅ Only fetch if session is valid
       console.log('User is authenticated:', res.data.username);
@@ -30,7 +32,7 @@ const List = () => {
   const fetchBusinesses = async () => {
     try {
       // Fetch businesses from backend API
-      const response = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/showbusinesses`, {
+      const response = await axios.get(`${apiUrl}/api/showbusinesses`, {
         withCredentials: true
       });
 
@@ -53,7 +55,7 @@ const List = () => {
   const handleDeleteBusiness = async (businessId) => {
     if (window.confirm('Are you sure you want to delete this business? This action cannot be undone.')) {
       try {
-        await axios.delete(`${import.meta.env.VITE_BACKEND_URL}/api/business/${businessId}`, {
+        await axios.delete(`${apiUrl}/api/business/${businessId}`, {
           withCredentials: true
         });
         setBusinesses(prev => prev.filter(b => b.business_id !== businessId));

@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { useBusiness } from '../../context/BusinessContext';
 import Navbar from '../layout/Navbar';
 import axios from 'axios';
+
 import { 
   Search, 
   Plus, 
@@ -24,6 +25,7 @@ const ShowBusinessAccount = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedFilter, setSelectedFilter] = useState('all');
   const [user, setUser] = useState(null);
+  const apiUrl = import.meta.env.VITE_BACKEND_URL;
 
   useEffect(() => {
     fetchAccounts();
@@ -65,7 +67,7 @@ const ShowBusinessAccount = () => {
   const fetchAccounts = async () => {
     try {
       // Fetch accounts from backend API
-      const response = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/accounts-list/${selectedBusiness.business_id}`, {
+      const response = await axios.get(`${apiUrl}/api/accounts-list/${selectedBusiness.business_id}`, {
         withCredentials: true
       });
       
@@ -107,7 +109,7 @@ const ShowBusinessAccount = () => {
   const handleDeleteAccount = async (accountId) => {
     if (window.confirm('Are you sure you want to delete this account? This action cannot be undone.')) {
       try {
-        await axios.delete(`${import.meta.env.VITE_BACKEND_URL}/api/accounts/${accountId}`, {
+        await axios.delete(`${apiUrl}/api/accounts/${accountId}`, {
           withCredentials: true
         });
         setAccounts(prev => prev.filter(a => a.account_id !== accountId));

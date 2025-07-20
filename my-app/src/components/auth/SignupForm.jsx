@@ -3,6 +3,7 @@ import axios from 'axios';
 import { Link } from 'react-router-dom';
 import { useNavigate } from 'react-router-dom';
 
+
 export default function SignupForm() {
   const [formData, setFormData] = useState({
     username: '',
@@ -12,7 +13,7 @@ export default function SignupForm() {
   });
 
   const [message, setMessage] = useState(''); // Used to show success or error
-
+const apiUrl = import.meta.env.VITE_BACKEND_URL;
   
 
   const navigate = useNavigate();
@@ -28,7 +29,7 @@ export default function SignupForm() {
     e.preventDefault();
 
     try {
-      const res = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/register`, formData,{ withCredentials: true});
+      const res = await axios.post(`${apiUrl}/api/register`, formData,{ withCredentials: true});
       setMessage(res.data.message); // Show server response on success
       navigate('/business');
     } catch (err) {
