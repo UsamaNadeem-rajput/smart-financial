@@ -104,7 +104,7 @@ const BusinessForm = () => {
 
         await axios.put(`${import.meta.env.VITE_BACKEND_URL}/api/business/${businessId}`, payload, { withCredentials: true });
       } else {
-        await axios.post(`${import.meta.env.VITE_BACKEND_URL}//api/business`, payload, { withCredentials: true });
+        await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/business`, payload, { withCredentials: true });
       }
       navigate('/list');
     } catch (err) {
