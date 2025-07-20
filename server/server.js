@@ -4,12 +4,22 @@ const session = require('express-session');
 const MySQLStore = require('express-mysql-session')(session);
 const pool = require('./db');
 const app = express();
-const PORT = process.env.PORT || 5000;
+const PORT = process.env.PORT || 8080;
 
-// Initialize session store with fallback
+// Initialize session store with retry
 let sessionStore;
 try {
-  sessionStore = new MySQLStore({}, pool);
+  sessionStore = new MySQLStore({
+    createDatabaseTable: true,
+    schema: {
+      tableName: 'sessions',
+      columnNames: {
+        session_id: 'session_id',
+        expires: 'expires',
+        data: 'data',
+      },
+    },
+  }, pool);
   console.log('✅ Session store initialized with MySQL');
 } catch (error) {
   console.error('❌ Session store initialization failed, using memory store:', error);
@@ -24,6 +34,8 @@ app.use(
       'https://smart-financial-production.up.railway.app',
     ],
     credentials: true,
+    methods: ['GET', 'POST', 'PUT', 'DELETE'],
+    allowedHeaders: ['Content-Type', 'Authorization'],
   })
 );
 app.use(express.json());
@@ -36,22 +48,29 @@ app.use(
     store: sessionStore,
     cookie: {
       httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
+      secure: process.env.NODE_ENV === 'production' ? true : false,
       maxAge: 24 * 60 * 60 * 1000, // 1 day
       sameSite: process.env.NODE_ENV === 'production' ? 'None' : 'Lax',
+      domain: process.env.NODE_ENV === 'production' ? null : 'localhost',
     },
   })
 );
 
-// Debug middleware for session and cookies
+// Debug middleware for requests
 app.use((req, res, next) => {
   console.log(`Request: ${req.method} ${req.url}, SessionID: ${req.sessionID}, Username: ${req.session.username}, Cookies:`, req.cookies);
   next();
 });
 
 // Health check endpoint
-app.get('/health', (req, res) => {
-  res.status(200).json({ status: 'OK' });
+app.get('/health', async (req, res) => {
+  try {
+    await pool.query('SELECT 1');
+    res.status(200).json({ status: 'OK' });
+  } catch (error) {
+    console.error('Health check failed:', error);
+    res.status(500).json({ status: 'ERROR' });
+  }
 });
 
 // Routes
