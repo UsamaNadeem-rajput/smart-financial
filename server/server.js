@@ -18,7 +18,7 @@ const sessionStore = new MySQLStore(
 /* ---------- Middleware ---------- */
 app.use(
   cors({
-    origin: ['https://alamsherbaloch.com'], // Hostinger front-end
+    origin: ['http://localhost:5173','https://alamsherbaloch.com'], // Hostinger front-end
     credentials: true,
   })
 );
