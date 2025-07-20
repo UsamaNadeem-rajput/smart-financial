@@ -6,8 +6,15 @@ const pool = require('./db');
 const app = express();
 const PORT = process.env.PORT || 5000;
 
-// Initialize session store
-const sessionStore = new MySQLStore({}, pool);
+// Initialize session store with fallback
+let sessionStore;
+try {
+  sessionStore = new MySQLStore({}, pool);
+  console.log('✅ Session store initialized with MySQL');
+} catch (error) {
+  console.error('❌ Session store initialization failed, using memory store:', error);
+  sessionStore = new session.MemoryStore(); // Fallback to prevent crashes
+}
 
 app.use(
   cors({
@@ -35,6 +42,12 @@ app.use(
     },
   })
 );
+
+// Debug middleware for session and cookies
+app.use((req, res, next) => {
+  console.log(`Request: ${req.method} ${req.url}, SessionID: ${req.sessionID}, Username: ${req.session.username}, Cookies:`, req.cookies);
+  next();
+});
 
 // Health check endpoint
 app.get('/health', (req, res) => {

@@ -15,7 +15,12 @@ const PrivateRoute = ({ children }) => {
         console.log('Session response:', res.data);
         setAuthenticated(!!res.data.username);
       } catch (err) {
-        console.error('Session check error:', err.response?.data || err.message);
+        console.error('Session check error:', {
+          status: err.response?.status,
+          data: err.response?.data,
+          headers: err.response?.headers,
+          message: err.message,
+        });
         setAuthenticated(false);
       }
     };
