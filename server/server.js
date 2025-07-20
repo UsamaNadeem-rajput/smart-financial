@@ -1,77 +1,44 @@
+// server.js
+require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
 const session = require('express-session');
 const MySQLStore = require('express-mysql-session')(session);
 const pool = require('./db');
+
 const app = express();
 const PORT = process.env.PORT || 8080;
 
-// Initialize session store with retry
-let sessionStore;
-try {
-  sessionStore = new MySQLStore({
-    createDatabaseTable: true,
-    schema: {
-      tableName: 'sessions',
-      columnNames: {
-        session_id: 'session_id',
-        expires: 'expires',
-        data: 'data',
-      },
-    },
-  }, pool);
-  console.log('✅ Session store initialized with MySQL');
-} catch (error) {
-  console.error('❌ Session store initialization failed, using memory store:', error);
-  sessionStore = new session.MemoryStore(); // Fallback to prevent crashes
-}
+/* ---------- Session store ---------- */
+const sessionStore = new MySQLStore(
+  { schema: { tableName: 'sessions' } },
+  pool
+);
 
+/* ---------- Middleware ---------- */
 app.use(
   cors({
-    origin: [
-      'http://localhost:5173',
-      'https://alamsherbaloch.com',
-      'https://smart-financial-production.up.railway.app',
-    ],
+    origin: ['https://alamsherbaloch.com'], // Hostinger front-end
     credentials: true,
-    methods: ['GET', 'POST', 'PUT', 'DELETE'],
-    allowedHeaders: ['Content-Type', 'Authorization'],
   })
 );
 app.use(express.json());
 
 app.use(
   session({
-    secret: process.env.SESSION_SECRET || 'fallback-secret-123',
+    key: 'connect.sid',
+    secret: process.env.SESSION_SECRET,
+    store: sessionStore,
     resave: false,
     saveUninitialized: false,
-    store: sessionStore,
     cookie: {
       httpOnly: true,
-      secure: process.env.NODE_ENV === 'production' ? true : false,
+      secure: true,          // required for HTTPS
+      sameSite: 'None',      // required for cross-origin cookies
       maxAge: 24 * 60 * 60 * 1000, // 1 day
-      sameSite: process.env.NODE_ENV === 'production' ? 'None' : 'Lax',
-      domain: process.env.NODE_ENV === 'production' ? null : 'localhost',
     },
   })
 );
-
-// Debug middleware for requests
-app.use((req, res, next) => {
-  console.log(`Request: ${req.method} ${req.url}, SessionID: ${req.sessionID}, Username: ${req.session.username}, Cookies:`, req.cookies);
-  next();
-});
-
-// Health check endpoint
-app.get('/health', async (req, res) => {
-  try {
-    await pool.query('SELECT 1');
-    res.status(200).json({ status: 'OK' });
-  } catch (error) {
-    console.error('Health check failed:', error);
-    res.status(500).json({ status: 'ERROR' });
-  }
-});
 
 // Routes
 const registerRoute = require('./routers/register');
@@ -95,17 +62,15 @@ app.use('/api/login', loginRoute);
 app.use('/api/search-accounts', searchAccounts);
 app.use('/api', transaction);
 
-// Error-handling middleware
-app.use((err, req, res, next) => {
-  console.error('Server Error:', err.stack);
-  res.status(500).json({ error: 'Internal Server Error' });
+/* ---------- Health check ---------- */
+app.get('/health', async (_req, res) => {
+  try {
+    await pool.query('SELECT 1');
+    res.json({ status: 'OK' });
+  } catch {
+    res.status(500).json({ status: 'ERROR' });
+  }
 });
 
-// Handle unhandled promise rejections
-process.on('unhandledRejection', (reason, promise) => {
-  console.error('Unhandled Rejection:', reason);
-});
-
-app.listen(PORT, () => {
-  console.log(`✅ Server running at http://localhost:${PORT}`);
-});
+/* ---------- Start ---------- */
+app.listen(PORT, () => console.log(`✅ Server running on :${PORT}`));
