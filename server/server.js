@@ -40,8 +40,8 @@ app.use('/', authRoutes); // or app.use('/api', authRoutes);
 app.use('/api', showTransactions);
 app.use('/api/accounts-list', list);
 app.use('/api/createnewaccount', createnewaccount); // 👈 backend endpoint
-app.use('/showbusinesses', showbusinessesRoute);
-app.use('/business', businessRoute);
+app.use('/api/showbusinesses', showbusinessesRoute);
+app.use('/api/business', businessRoute);
 app.use('/api/register', registerRoute);
 app.use('/api/login', loginRoute);
 app.use('/api/search-accounts', searchAccounts);

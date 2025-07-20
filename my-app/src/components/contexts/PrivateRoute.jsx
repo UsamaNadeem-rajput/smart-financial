@@ -8,7 +8,7 @@ const PrivateRoute = ({ children }) => {
   useEffect(() => {
     const checkSession = async () => {
       try {
-        const res = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/login/session`, {
+        const res = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/login/session`, {
           withCredentials: true,
         });
         if (res.data.username) {

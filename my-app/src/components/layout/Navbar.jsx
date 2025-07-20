@@ -25,7 +25,7 @@ const Navbar = () => {
     // Fetch session username from API or localStorage
     const fetchUser = async () => {
       try {
-        const res = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/login/session`, { withCredentials: true });
+        const res = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/login/session`, { withCredentials: true });
         setUser(res.data.username);
       } catch (err) {
         setUser(null);
