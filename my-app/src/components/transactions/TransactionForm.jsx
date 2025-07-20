@@ -130,7 +130,7 @@ export default function TransectionForm() {
     if (value.length > 0) {
       try {
         const res = await fetch(
-          `${import.meta.env.VITE_BACKEND_URL}/api/search-accounts?query=${encodeURIComponent(
+          `https://smart-financial-production.up.railway.app/api/search-accounts?query=${encodeURIComponent(
             value
           )}`
         );

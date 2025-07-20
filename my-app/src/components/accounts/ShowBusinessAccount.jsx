@@ -65,7 +65,7 @@ const ShowBusinessAccount = () => {
   const fetchAccounts = async () => {
     try {
       // Fetch accounts from backend API
-      const response = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/accounts-list/${selectedBusiness.business_id}`, {
+      const response = await axios.get(`https://smart-financial-production.up.railway.app/api/accounts-list/${selectedBusiness.business_id}`, {
         withCredentials: true
       });
       
@@ -107,7 +107,7 @@ const ShowBusinessAccount = () => {
   const handleDeleteAccount = async (accountId) => {
     if (window.confirm('Are you sure you want to delete this account? This action cannot be undone.')) {
       try {
-        await axios.delete(`${import.meta.env.VITE_BACKEND_URL}/api/accounts/${accountId}`, {
+        await axios.delete(`https://smart-financial-production.up.railway.app/api/accounts/${accountId}`, {
           withCredentials: true
         });
         setAccounts(prev => prev.filter(a => a.account_id !== accountId));

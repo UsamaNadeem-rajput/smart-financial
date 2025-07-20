@@ -64,7 +64,7 @@ const EditAccount = () => {
 
   const fetchAccountTypes = async () => {
     try {
-      const response = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/account-types`, {
+      const response = await axios.get(`https://smart-financial-production.up.railway.app/api/account-types`, {
         withCredentials: true
       });
       setAccountTypes(response.data.accountTypes || []);
@@ -137,7 +137,7 @@ const EditAccount = () => {
         throw new Error('Account ID not found');
       }
 
-      await axios.put(`${import.meta.env.VITE_BACKEND_URL}/api/accounts/${accountId}`, formData, {
+      await axios.put(`https://smart-financial-production.up.railway.app/api/accounts/${accountId}`, formData, {
         withCredentials: true
       });
       

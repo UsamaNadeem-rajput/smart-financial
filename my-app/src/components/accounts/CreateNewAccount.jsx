@@ -59,7 +59,7 @@ const CreateNewAccount = () => {
 
   const fetchAccountTypes = async () => {
     try {
-      const response = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/account-types`, {
+      const response = await axios.get(`https://smart-financial-production.up.railway.app/api/account-types`, {
         withCredentials: true
       });
       setAccountTypes(response.data.accountTypes || []);
@@ -88,7 +88,7 @@ const CreateNewAccount = () => {
 
   const fetchExistingAccounts = async () => {
     try {
-      const response = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/list/}`, {
+      const response = await axios.get(`https://smart-financial-production.up.railway.app/api/list/}`, {
         withCredentials: true
       });
       setSubAccountOptions(response.data.accounts || []);
@@ -172,7 +172,7 @@ const CreateNewAccount = () => {
         business_id: selectedBusiness.business_id
       };
 
-      await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/createnewaccount`, accountData, {
+      await axios.post(`https://smart-financial-production.up.railway.app/api/createnewaccount`, accountData, {
         withCredentials: true
       });
       
