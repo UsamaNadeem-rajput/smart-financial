@@ -1,13 +1,23 @@
 const express = require('express');
 const cors = require('cors');
 const session = require('express-session');
+const MySQLStore = require('express-mysql-session')(session);
+const pool = require('./db');
 const app = express();
 const PORT = process.env.PORT || 5000;
 
-app.use(cors({
-  origin: ['http://localhost:5173', 'https://alamsherbaloch.com'], // Replace with Hostinger domain
-  credentials: true
-}));
+const sessionStore = new MySQLStore({}, pool);
+
+app.use(
+  cors({
+    origin: [
+      'http://localhost:5173',
+      'https://alamsherbaloch.com',
+      'https://smart-financial-production.up.railway.app', // Frontend production domain
+    ],
+    credentials: true,
+  })
+);
 app.use(express.json());
 
 app.use(
@@ -15,11 +25,13 @@ app.use(
     secret: process.env.SESSION_SECRET,
     resave: false,
     saveUninitialized: false,
+    store: sessionStore,
     cookie: {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
-      maxAge: 24 * 60 * 60 * 1000 // 1 day
-    }
+      maxAge: 24 * 60 * 60 * 1000, // 1 day
+      sameSite: process.env.NODE_ENV === 'production' ? 'None' : 'Lax',
+    },
   })
 );
 
@@ -43,6 +55,12 @@ app.use('/api/register', registerRoute);
 app.use('/api/login', loginRoute);
 app.use('/api/search-accounts', searchAccounts);
 app.use('/api', transaction);
+
+// Debug middleware to log requests and sessions
+app.use((req, res, next) => {
+  console.log(`Request: ${req.method} ${req.url}, Session:`, req.session);
+  next();
+});
 
 app.listen(PORT, () => {
   console.log(`✅ Server running at http://localhost:${PORT}`);

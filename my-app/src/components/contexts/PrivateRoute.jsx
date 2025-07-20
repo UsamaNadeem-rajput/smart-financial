@@ -8,15 +8,14 @@ const PrivateRoute = ({ children }) => {
   useEffect(() => {
     const checkSession = async () => {
       try {
+        console.log('Checking session at:', `${import.meta.env.VITE_BACKEND_URL}/api/login/session`);
         const res = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/login/session`, {
           withCredentials: true,
         });
-        if (res.data.username) {
-          setAuthenticated(true);
-        } else {
-          setAuthenticated(false);
-        }
+        console.log('Session response:', res.data);
+        setAuthenticated(!!res.data.username);
       } catch (err) {
+        console.error('Session check error:', err.response?.data || err.message);
         setAuthenticated(false);
       }
     };
@@ -24,7 +23,9 @@ const PrivateRoute = ({ children }) => {
     checkSession();
   }, []);
 
-  if (authenticated === null) return null; // Or a spinner
+  if (authenticated === null) {
+    return <div>Loading...</div>;
+  }
 
   return authenticated ? children : <Navigate to="/login" replace />;
 };

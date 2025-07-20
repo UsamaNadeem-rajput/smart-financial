@@ -31,10 +31,12 @@ router.post('/', async (req, res) => {
       return res.status(401).json({ error: 'Invalid credentials' });
     }
 
+    // 5. Set session with username
     req.session.username = user.username;
+    console.log('Session set in login:', req.session);
 
-    // 5. Send success response (you can also generate a JWT token here)
-    res.status(200).json({ message: 'Login successful' });
+    // 6. Send success response
+    res.status(200).json({ message: 'Login successful', username: user.username });
 
   } catch (error) {
     console.error('Login Error:', error);
@@ -43,6 +45,7 @@ router.post('/', async (req, res) => {
 });
 
 router.get('/session', (req, res) => {
+  console.log('Session check:', req.session);
   if (req.session && req.session.username) {
     res.json({ username: req.session.username });
   } else {

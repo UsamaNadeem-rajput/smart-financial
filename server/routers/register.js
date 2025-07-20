@@ -9,7 +9,7 @@ router.post('/', async (req, res) => {
   if (!username || !fullname || !email || !password) {
     return res.status(400).json({ error: 'Please fill all fields' });
   }
- 
+
   try {
     const conn = await pool.getConnection();
 
@@ -22,7 +22,7 @@ router.post('/', async (req, res) => {
     const [rows1] = await conn.query('SELECT * FROM users WHERE username = ?', [username]);
     if (rows1.length > 0) {
       conn.release();
-      return res.status(409).json({ error: 'username already registered' });
+      return res.status(409).json({ error: 'Username already registered' });
     }
 
     const hashedPassword = await bcrypt.hash(password, 10);
@@ -31,19 +31,18 @@ router.post('/', async (req, res) => {
       'INSERT INTO users (username, full_name, email, password_hash) VALUES (?, ?, ?, ?)',
       [username, fullname, email, hashedPassword]
     );
-    // Save username in session
+
+    // Set session with username
     req.session.username = username;
+    console.log('Session set in register:', req.session);
 
     conn.release();
-    res.status(201).json({ message: 'User registered successfully' });
-  
+    res.status(201).json({ message: 'User registered successfully', username });
 
   } catch (error) {
     console.error('Registration Error:', error);
     res.status(500).json({ error: 'Internal Server Error' });
   }
-
-
 });
 
 module.exports = router;
