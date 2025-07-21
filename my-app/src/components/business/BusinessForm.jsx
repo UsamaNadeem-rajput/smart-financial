@@ -10,7 +10,7 @@ const BusinessForm = () => {
   const location = useLocation();
   const [isEditMode, setIsEditMode] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  const apiUrl = import.meta.env.VITE_BACKEND_URL;
+
   const [formData, setFormData] = useState({
     business_name: '',
     business_type: '',
@@ -103,9 +103,9 @@ const BusinessForm = () => {
         const businessId = location.state.business.business_id;
         console.log("Submitting payload:", formData);
 
-        await axios.put(`${apiUrl}/api/business/${businessId}`, payload, { withCredentials: true });
+        await axios.put(`${import.meta.env.VITE_BACKEND_URL}/api/business/${businessId}`, payload, { withCredentials: true });
       } else {
-        await axios.post(`${apiUrl}/api/business`, payload, { withCredentials: true });
+        await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/business`, payload, { withCredentials: true });
       }
       navigate('/list');
     } catch (err) {

@@ -14,7 +14,7 @@ export default function SignupForm() {
 
   const [message, setMessage] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-  const apiUrl = import.meta.env.VITE_BACKEND_URL || 'http://localhost:8080';
+
   
 
   const navigate = useNavigate();
@@ -46,9 +46,9 @@ export default function SignupForm() {
 
     try {
       console.log('Attempting registration with:', { ...formData, password: '[HIDDEN]' });
-      console.log('API URL:', `${apiUrl}/api/register`);
+      console.log('API URL:', `${import.meta.env.VITE_BACKEND_URL}/api/register`);
       
-      const res = await axios.post(`${apiUrl}/api/register`, formData, { 
+      const res = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/register`, formData, { 
         withCredentials: true,
         timeout: 10000 // 10 second timeout
       });

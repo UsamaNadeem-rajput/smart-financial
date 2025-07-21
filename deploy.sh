@@ -19,7 +19,7 @@ if [ ! -f ".env" ]; then
     echo "⚠️  Creating .env file from example..."
     cp .env.example .env
     echo "📝 Please update .env with your Railway backend URL"
-    echo "   VITE_BACKEND_URL=https://your-railway-app.railway.app"
+    echo "   VITE_BACKEND_URL=https://smart-financial-production.up.railway.app"
     read -p "Press enter when you've updated the .env file..."
 fi
 
@@ -47,7 +47,7 @@ echo "   DB_PASSWORD=your_db_password"
 echo "   DB_NAME=your_database_name"
 echo "   SESSION_SECRET=your_super_secret_session_key"
 echo "   NODE_ENV=production"
-echo "   FRONTEND_URL=https://yourdomain.com"
+echo "   FRONTEND_URL=https://alamsherbaloch.com"
 echo ""
 echo "🎉 Deployment preparation complete!"
 echo "📖 Check deployment-guide.md for detailed instructions"

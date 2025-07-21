@@ -172,7 +172,7 @@ const CreateNewAccount = () => {
         business_id: selectedBusiness.business_id
       };
 
-      await axios.post(`${process.env.REACT_APP_BACKEND_URL}/api/createnewaccount`, accountData, {
+      await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/createnewaccount`, accountData, {
         withCredentials: true
       });
       
