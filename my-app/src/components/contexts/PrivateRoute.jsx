@@ -16,7 +16,7 @@ const PrivateRoute = ({ children }) => {
         } else {
           setAuthenticated(false);
         }
-      } catch (err) {
+      } catch {
         setAuthenticated(false);
       }
     };
@@ -24,8 +24,7 @@ const PrivateRoute = ({ children }) => {
     checkSession();
   }, []);
 
-  if (authenticated === null) return null; // Or a spinner
-
+  if (authenticated === null) return null; // show spinner or loader here
   return authenticated ? children : <Navigate to="/login" replace />;
 };
 

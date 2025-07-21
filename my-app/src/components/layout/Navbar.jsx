@@ -37,18 +37,14 @@ const Navbar = () => {
   const handleLogout = async () => {
     try {
       await axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/auth/logout`, { withCredentials: true });
-      localStorage.clear();
-      clearBusiness();
+      localStorage.clear(); // optional if used
+      clearBusiness();      // your custom context clear
       navigate('/login');
-    } catch (error) {
-      console.error('Logout failed:', error);
-      // Force logout even if API call fails
-      clearBusiness();
-      // navigate('/login');
-      window.location.href = '/login';
+    } catch (err) {
+      console.error("Logout failed:", err);
     }
   };
-
+  
   const navigation = [
     { name: 'Businesses', href: '/list', icon: Building2 },
     { name: 'Accounts', href: '/showbusinessaccount', icon: Users },

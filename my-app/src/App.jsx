@@ -11,9 +11,9 @@ import TransactionForm from './components/transactions/TransactionForm';
 import ShowTransactions from './components/transactions/ShowTransactions';
 import PrivateRoute from './components/contexts/PrivateRoute';
 import { BusinessProvider } from './context/BusinessContext';
+
 import './index.css';
 import 'bootstrap/dist/css/bootstrap.min.css';
-
 
 function App() {
   return (
@@ -24,13 +24,15 @@ function App() {
             <Route path="/" element={<LandingPage />} />
             <Route path="/register" element={<SignupForm />} />
             <Route path="/login" element={<LoginForm />} />
+
+            {/* Protected Routes */}
             <Route path="/business" element={<PrivateRoute><BusinessForm /></PrivateRoute>} />
             <Route path="/list" element={<PrivateRoute><List /></PrivateRoute>} />
-            <Route path="/creatnewaccount" element={<CreateNewAccount />} />
-            <Route path="/editaccount" element={<EditAccount />} />
-            <Route path="/showbusinessaccount" element={<ShowBusinessAccount />} />
-            <Route path="/transectionForm" element={<TransactionForm />} />
-            <Route path="/showtransections" element={<ShowTransactions />} />
+            <Route path="/creatnewaccount" element={<PrivateRoute><CreateNewAccount /></PrivateRoute>} />
+            <Route path="/editaccount" element={<PrivateRoute><EditAccount /></PrivateRoute>} />
+            <Route path="/showbusinessaccount" element={<PrivateRoute><ShowBusinessAccount /></PrivateRoute>} />
+            <Route path="/transectionForm" element={<PrivateRoute><TransactionForm /></PrivateRoute>} />
+            <Route path="/showtransections" element={<PrivateRoute><ShowTransactions /></PrivateRoute>} />
           </Routes>
         </div>
       </Router>
