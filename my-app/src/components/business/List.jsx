@@ -18,7 +18,7 @@ const List = () => {
 
   const checkAuth = async () => {
     try {
-      const res = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/login/session`, { credentials: 'include'});
+      const res = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/login/session`, { withCredentials: true });
       setUser(res.data);
       fetchBusinesses(); // ✅ Only fetch if session is valid
       console.log('User is authenticated:', res.data.username);
@@ -32,7 +32,7 @@ const List = () => {
     try {
       // Fetch businesses from backend API
       const response = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/showbusinesses`, {
-        credentials: 'include'
+        withCredentials: true
       });
 
       setBusinesses(response.data.businesses || []);
@@ -55,7 +55,7 @@ const List = () => {
     if (window.confirm('Are you sure you want to delete this business? This action cannot be undone.')) {
       try {
         await axios.delete(`${import.meta.env.VITE_BACKEND_URL}/api/business/${businessId}`, {
-          credentials: 'include'
+          withCredentials: true
         });
         setBusinesses(prev => prev.filter(b => b.business_id !== businessId));
       } catch (error) {
