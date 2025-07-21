@@ -20,9 +20,9 @@ app.use(
   cors({
     origin: [
       process.env.FRONTEND_URL || 'http://localhost:5173',
-      'https://yourdomain.com', // Replace with your actual Hostinger domain
+      'https://alamsherbaloch.com', // Replace with your actual Hostinger domain
       'http://localhost:5173', // For local development
-      'http://localhost:3000'  // Alternative local port
+      'http://localhost:5000'  // Alternative local port
     ],
     credentials: true,
   })
