@@ -10,3 +10,4 @@ my-app/build/
 
 # Optional: log files
 *.log
+.env
