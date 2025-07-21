@@ -14,11 +14,11 @@ const sessionStore = new MySQLStore(
   { schema: { tableName: 'sessions' } },
   pool
 );
-
+// https://alamsherbaloch.com
 /* ---------- CORS + JSON ---------- */
 app.use(
   cors({
-    origin: ['https://alamsherbaloch.com'], // exact front-end origin
+    origin: [' http://localhost:5173'], // exact front-end origin
     credentials: true,
   })
 );
