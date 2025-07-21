@@ -6,7 +6,7 @@ const router = express.Router();
 router.post('/', async (req, res) => {
   const { username, fullname, email, password } = req.body;
 
-  console.log('Registration attempt for:', { username, email, fullname });
+  console.log('📝 Registration attempt for:', { username, email, fullname });
 
   if (!username || !fullname || !email || !password) {
     return res.status(400).json({ error: 'Please fill all fields' });
@@ -40,17 +40,17 @@ router.post('/', async (req, res) => {
       [username, fullname, email, hashedPassword]
     );
 
-    console.log('User created successfully:', { username, email, userId: result.insertId });
+    console.log('✅ User created successfully:', { username, email, userId: result.insertId });
 
     // Create session
     req.session.username = username;
-    console.log('Register session created:', req.session.username);
+    console.log('🔐 Register session created:', req.session.username);
 
     conn.release();
     res.status(201).json({ message: 'User registered successfully', username });
 
   } catch (error) {
-    console.error('Registration Error:', error);
+    console.error('❌ Registration Error:', error);
     
     // Check for specific database errors
     if (error.code === 'ER_DUP_ENTRY') {

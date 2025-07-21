@@ -61,21 +61,21 @@ const authRoutes = require('./routers/auth');
 // Add request logging middleware
 app.use((req, res, next) => {
   console.log(`${new Date().toISOString()} - ${req.method} ${req.path}`);
-  console.log('Request headers:', req.headers);
-  console.log('Request body:', req.body);
+  if (req.body && Object.keys(req.body).length > 0) {
+    console.log('Request body:', req.body);
+  }
   next();
 });
 
-app.use('/', authRoutes); // or app.use('/api', authRoutes);
-app.use('/api', showTransactions);
-app.use('/api/accounts-list', list);
-app.use('/api/createnewaccount', createnewaccount); // 👈 backend endpoint
-app.use('/api/showbusinesses', showbusinessesRoute);
-app.use('/api/business', businessRoute);
-app.use('/api/register', registerRoute);
-app.use('/api/login', loginRoute);
-app.use('/api/search-accounts', searchAccounts);
-app.use('/api', transaction );
+// Test endpoint to check if server is running
+app.get('/api/test', (req, res) => {
+  res.json({ 
+    message: 'Backend server is running!', 
+    timestamp: new Date().toISOString(),
+    cors: 'enabled',
+    environment: process.env.NODE_ENV || 'development'
+  });
+});
 
 /* ---------- Health check ---------- */
 app.get('/health', async (_req, res) => {
@@ -87,12 +87,25 @@ app.get('/health', async (_req, res) => {
   }
 });
 
-// Test endpoint to check if server is running
-app.get('/api/test', (req, res) => {
-  res.json({ 
-    message: 'Backend server is running!', 
-    timestamp: new Date().toISOString(),
-    cors: 'enabled'
+// API Routes
+app.use('/api/register', registerRoute);
+app.use('/api/login', loginRoute);
+app.use('/api/business', businessRoute);
+app.use('/api/showbusinesses', showbusinessesRoute);
+app.use('/api/createnewaccount', createnewaccount);
+app.use('/api/accounts-list', list);
+app.use('/api/search-accounts', searchAccounts);
+app.use('/api', transaction);
+app.use('/api', showTransactions);
+app.use('/', authRoutes);
+
+// Catch-all for undefined API routes
+app.use('/api/*', (req, res) => {
+  console.log(`❌ Undefined API route: ${req.method} ${req.path}`);
+  res.status(404).json({ 
+    error: 'API endpoint not found',
+    path: req.path,
+    method: req.method
   });
 });
 
