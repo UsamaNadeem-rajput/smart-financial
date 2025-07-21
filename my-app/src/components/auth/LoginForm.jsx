@@ -48,7 +48,8 @@ export default function LoginForm() {
       
       // Send POST request to backend login endpoint
       const res = await axios.post(`${apiUrl}/api/login`, formData, { 
-        withCredentials: true,
+        credentials: 'include',
+        // withCredentials: true,
         timeout: 10000 // 10 second timeout
       });
       

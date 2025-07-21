@@ -51,8 +51,9 @@ export default function SignupForm() {
       const apiUrl = import.meta.env.VITE_BACKEND_URL || 'http://localhost:8080';
       console.log('Using API URL:', apiUrl);
       
-      const res = await axios.post(`${apiUrl}/api/register`, formData, { 
-        withCredentials: true,
+      const res = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/register`, formData, { 
+        credentials: 'include',
+        // withCredentials: true,
         timeout: 10000 // 10 second timeout
       });
       

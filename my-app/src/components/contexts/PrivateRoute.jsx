@@ -9,7 +9,7 @@ const PrivateRoute = ({ children }) => {
     const checkSession = async () => {
       try {
         const res = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/login/session`, {
-          withCredentials: true,
+          credentials: 'include',
         });
         if (res.data.username) {
           setAuthenticated(true);

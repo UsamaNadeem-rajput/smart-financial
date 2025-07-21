@@ -18,12 +18,7 @@ const sessionStore = new MySQLStore(
 /* ---------- CORS + JSON ---------- */
 app.use(
   cors({
-    origin: [
-      'http://localhost:5173',
-      'http://localhost:3000',
-      'http://127.0.0.1:5173',
-      process.env.FRONTEND_URL || 'http://localhost:5173'
-    ],
+    origin: 'https://alamsherbaloch.com', // <-- your frontend URL
     credentials: true,
   })
 );
@@ -39,9 +34,9 @@ app.use(
     saveUninitialized: false,
     cookie: {
       httpOnly: true,
-      secure: false, // Set to false for local development
-      sameSite: 'lax',
-      maxAge: 24 * 60 * 60 * 1000, // 1 day
+      secure: true, // <-- true if using HTTPS
+      sameSite: 'none', // <-- for cross-site cookies
+      maxAge: 24 * 60 * 60 * 1000,
     },
   })
 );
