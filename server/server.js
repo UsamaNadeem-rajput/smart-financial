@@ -18,7 +18,12 @@ const sessionStore = new MySQLStore(
 /* ---------- CORS + JSON ---------- */
 app.use(
   cors({
-    origin: [' https://alamsherbaloch.com'], // exact front-end origin
+    origin: [
+      process.env.FRONTEND_URL || 'http://localhost:5173',
+      'https://yourdomain.com', // Replace with your actual Hostinger domain
+      'http://localhost:5173', // For local development
+      'http://localhost:3000'  // Alternative local port
+    ],
     credentials: true,
   })
 );
@@ -34,8 +39,8 @@ app.use(
     saveUninitialized: false,
     cookie: {
       httpOnly: true,
-      secure: true,      // required for HTTPS (Railway is HTTPS)
-      sameSite: 'None',  // required for cross-origin cookies
+      secure: process.env.NODE_ENV === 'production', // HTTPS in production
+      sameSite: process.env.NODE_ENV === 'production' ? 'None' : 'Lax',
       maxAge: 24 * 60 * 60 * 1000, // 1 day
     },
   })
