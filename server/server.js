@@ -7,7 +7,7 @@ const MySQLStore = require('express-mysql-session')(session);
 const pool = require('./db');
 
 const app = express();
-const PORT = process.env.PORT || 8080;
+const PORT = process.env.PORT || 5000;
 
 /* ---------- Session store ---------- */
 const sessionStore = new MySQLStore(
