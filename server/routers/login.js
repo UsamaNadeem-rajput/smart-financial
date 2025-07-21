@@ -30,6 +30,7 @@ router.post('/', async (req, res) => {
     }
 
     req.session.username = user.username;
+    req.session.userId = user.id;
     console.log('🔐 Login session created:', req.session.username);
 
     console.log('✅ Login successful for user:', user.username);
@@ -45,7 +46,7 @@ router.post('/', async (req, res) => {
 });
 
 router.get('/session', (req, res) => {
-  if (req.session && req.session.username) {
+  if (req.session?.username) {
     res.json({ username: req.session.username });
   } else {
     res.status(401).json({ error: 'Not logged in' });

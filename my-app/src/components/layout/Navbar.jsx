@@ -36,7 +36,7 @@ const Navbar = () => {
 
   const handleLogout = async () => {
     try {
-      await axios.get(`${import.meta.env.VITE_BACKEND_URL}/logout`, { withCredentials: true });
+      await axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/auth/logout`, { withCredentials: true });
       localStorage.clear();
       clearBusiness();
       navigate('/login');
