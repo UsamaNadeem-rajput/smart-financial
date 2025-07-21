@@ -7,18 +7,18 @@ const MySQLStore = require('express-mysql-session')(session);
 const pool = require('./db');
 
 const app = express();
-const PORT = process.env.PORT || 5000;
+const PORT = process.env.PORT || 8080;
 
 /* ---------- Session store ---------- */
 const sessionStore = new MySQLStore(
   { schema: { tableName: 'sessions' } },
   pool
 );
-// https://alamsherbaloch.com
+// 
 /* ---------- CORS + JSON ---------- */
 app.use(
   cors({
-    origin: [' http://localhost:5173'], // exact front-end origin
+    origin: [' https://alamsherbaloch.com'], // exact front-end origin
     credentials: true,
   })
 );
