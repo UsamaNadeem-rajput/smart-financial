@@ -43,8 +43,11 @@ export default function LoginForm() {
       console.log('Attempting login with email:', formData.email);
       console.log('API URL:', `${import.meta.env.VITE_BACKEND_URL}/api/login`);
       
+      const apiUrl = import.meta.env.VITE_BACKEND_URL || 'http://localhost:8080';
+      console.log('Using API URL:', apiUrl);
+      
       // Send POST request to backend login endpoint
-      const res = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/login`, formData, { 
+      const res = await axios.post(`${apiUrl}/api/login`, formData, { 
         withCredentials: true,
         timeout: 10000 // 10 second timeout
       });

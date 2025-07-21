@@ -48,7 +48,10 @@ export default function SignupForm() {
       console.log('Attempting registration with:', { ...formData, password: '[HIDDEN]' });
       console.log('API URL:', `${import.meta.env.VITE_BACKEND_URL}/api/register`);
       
-      const res = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/register`, formData, { 
+      const apiUrl = import.meta.env.VITE_BACKEND_URL || 'http://localhost:8080';
+      console.log('Using API URL:', apiUrl);
+      
+      const res = await axios.post(`${apiUrl}/api/register`, formData, { 
         withCredentials: true,
         timeout: 10000 // 10 second timeout
       });

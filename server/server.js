@@ -19,10 +19,10 @@ const sessionStore = new MySQLStore(
 app.use(
   cors({
     origin: [
-      process.env.FRONTEND_URL || 'http://localhost:5173',
-      'https://alamsherbaloch.com', // Replace with your actual Hostinger domain
-      'http://localhost:5173', // For local development
-      'http://localhost:5000'  // Alternative local port
+      'http://localhost:5173',
+      'http://localhost:3000',
+      'http://127.0.0.1:5173',
+      process.env.FRONTEND_URL || 'http://localhost:5173'
     ],
     credentials: true,
   })
@@ -39,8 +39,8 @@ app.use(
     saveUninitialized: false,
     cookie: {
       httpOnly: true,
-      secure: process.env.NODE_ENV === 'production', // HTTPS in production
-      sameSite: process.env.NODE_ENV === 'production' ? 'None' : 'Lax',
+      secure: false, // Set to false for local development
+      sameSite: 'lax',
       maxAge: 24 * 60 * 60 * 1000, // 1 day
     },
   })
@@ -61,6 +61,8 @@ const authRoutes = require('./routers/auth');
 // Add request logging middleware
 app.use((req, res, next) => {
   console.log(`${new Date().toISOString()} - ${req.method} ${req.path}`);
+  console.log('Request headers:', req.headers);
+  console.log('Request body:', req.body);
   next();
 });
 
@@ -83,6 +85,15 @@ app.get('/health', async (_req, res) => {
   } catch {
     res.status(500).json({ status: 'ERROR' });
   }
+});
+
+// Test endpoint to check if server is running
+app.get('/api/test', (req, res) => {
+  res.json({ 
+    message: 'Backend server is running!', 
+    timestamp: new Date().toISOString(),
+    cors: 'enabled'
+  });
 });
 
 app.listen(PORT, () => console.log(`✅ Server running on :${PORT}`));
