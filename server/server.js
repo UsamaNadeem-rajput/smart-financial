@@ -18,7 +18,7 @@ const sessionStore = new MySQLStore(
 /* ---------- CORS + JSON ---------- */
 app.use(
   cors({
-    origin: 'https://alamsherbaloch.com', // <-- your frontend URL
+    origin: 'https://smart-financial.netlify.app/', // <-- your frontend URL
     credentials: true,
   })
 );
