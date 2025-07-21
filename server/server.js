@@ -57,14 +57,21 @@ const searchAccounts = require('./routers/searchAccounts');
 const transaction= require('./routers/transactionApi');
 const showTransactions = require('./routers/showtransactions');
 const authRoutes = require('./routers/auth');
+
+// Add request logging middleware
+app.use((req, res, next) => {
+  console.log(`${new Date().toISOString()} - ${req.method} ${req.path}`);
+  next();
+});
+
 app.use('/', authRoutes); // or app.use('/api', authRoutes);
 app.use('/api', showTransactions);
 app.use('/api/accounts-list', list);
 app.use('/api/createnewaccount', createnewaccount); // 👈 backend endpoint
-app.use('/showbusinesses', showbusinessesRoute);
-app.use('/business', businessRoute);
-app.use('/register', registerRoute);
-app.use('/login', loginRoute);
+app.use('/api/showbusinesses', showbusinessesRoute);
+app.use('/api/business', businessRoute);
+app.use('/api/register', registerRoute);
+app.use('/api/login', loginRoute);
 app.use('/api/search-accounts', searchAccounts);
 app.use('/api', transaction );
 

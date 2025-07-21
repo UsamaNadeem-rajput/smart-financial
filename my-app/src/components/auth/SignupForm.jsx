@@ -12,8 +12,9 @@ export default function SignupForm() {
     password: ''
   });
 
-  const [message, setMessage] = useState(''); // Used to show success or error
-const apiUrl = import.meta.env.VITE_BACKEND_URL;
+  const [message, setMessage] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
+  const apiUrl = import.meta.env.VITE_BACKEND_URL || 'http://localhost:8080';
   
 
   const navigate = useNavigate();
@@ -27,18 +28,56 @@ const apiUrl = import.meta.env.VITE_BACKEND_URL;
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setIsLoading(true);
+    setMessage('');
+
+    // Basic validation
+    if (!formData.username || !formData.fullname || !formData.email || !formData.password) {
+      setMessage('Please fill in all fields');
+      setIsLoading(false);
+      return;
+    }
+
+    if (formData.password.length < 6) {
+      setMessage('Password must be at least 6 characters long');
+      setIsLoading(false);
+      return;
+    }
 
     try {
-      const res = await axios.post(`${apiUrl}/api/register`, formData,{ withCredentials: true});
-      setMessage(res.data.message); // Show server response on success
+      console.log('Attempting registration with:', { ...formData, password: '[HIDDEN]' });
+      console.log('API URL:', `${apiUrl}/api/register`);
+      
+      const res = await axios.post(`${apiUrl}/api/register`, formData, { 
+        withCredentials: true,
+        timeout: 10000 // 10 second timeout
+      });
+      
+      console.log('Registration response:', res.data);
+      setMessage(res.data.message);
       navigate('/business');
     } catch (err) {
-      if (err.response && err.response.data && err.response.data.error) {
-        setMessage('Registration failed: ' + err.response.data.error);
+      console.error('Registration error:', err);
+      
+      if (err.code === 'ECONNABORTED') {
+        setMessage('Registration failed: Request timeout. Please try again.');
+      } else if (err.code === 'ERR_NETWORK') {
+        setMessage('Registration failed: Cannot connect to server. Please check your internet connection.');
+      } else if (err.response) {
+        // Server responded with error
+        const errorMsg = err.response.data?.error || err.response.data?.message || 'Server error occurred';
+        setMessage(`Registration failed: ${errorMsg}`);
+        console.log('Server error response:', err.response.data);
+      } else if (err.request) {
+        // Request was made but no response received
+        setMessage('Registration failed: No response from server. Please try again.');
+        console.log('No response received:', err.request);
       } else {
-        setMessage('Registration failed: Unknown error');
+        // Something else happened
+        setMessage(`Registration failed: ${err.message}`);
       }
-      console.error(err);
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -59,7 +98,9 @@ const apiUrl = import.meta.env.VITE_BACKEND_URL;
 
                 {/* Display server response */}
                 {message && (
-                  <div className="alert alert-info">{message}</div>
+                  <div className={`alert ${message.includes('failed') ? 'alert-danger' : 'alert-success'}`}>
+                    {message}
+                  </div>
                 )}
 
                 {/* FORM STARTS */}
@@ -117,8 +158,19 @@ const apiUrl = import.meta.env.VITE_BACKEND_URL;
                   </div>
 
                   <div className="d-flex flex-column align-items-center mt-3">
-                    <button type="submit" className="btn btn-primary btn-block mb-2 mx-2">
-                      Sign up
+                    <button 
+                      type="submit" 
+                      className="btn btn-primary btn-block mb-2 mx-2"
+                      disabled={isLoading}
+                    >
+                      {isLoading ? (
+                        <>
+                          <span className="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+                          Signing up...
+                        </>
+                      ) : (
+                        'Sign up'
+                      )}
                     </button>
                     <Link to="/login" className="text-decoration-none mb-4 mt-2">
                       Go to Login

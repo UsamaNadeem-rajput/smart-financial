@@ -6,6 +6,8 @@ const router = express.Router();
 router.post('/', async (req, res) => {
   const { email, password } = req.body;
 
+  console.log('Login attempt for email:', email);
+
   if (!email || !password) {
     return res.status(400).json({ error: 'Email and password are required' });
   }
@@ -16,23 +18,29 @@ router.post('/', async (req, res) => {
     conn.release();
 
     if (rows.length === 0) {
+      console.log('User not found for email:', email);
       return res.status(401).json({ error: 'Invalid credentials' });
     }
 
     const user = rows[0];
     const match = await bcrypt.compare(password, user.password_hash);
     if (!match) {
+      console.log('Password mismatch for user:', email);
       return res.status(401).json({ error: 'Invalid credentials' });
     }
 
     req.session.username = user.username;
     console.log('Login session created:', req.session.username);
 
+    console.log('Login successful for user:', user.username);
     res.status(200).json({ message: 'Login successful', username: user.username });
 
   } catch (error) {
     console.error('Login Error:', error);
-    res.status(500).json({ error: 'Internal Server Error' });
+    res.status(500).json({ 
+      error: 'Internal Server Error',
+      details: process.env.NODE_ENV === 'development' ? error.message : undefined
+    });
   }
 });
 

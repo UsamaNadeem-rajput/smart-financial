@@ -12,9 +12,10 @@ export default function LoginForm() {
 
   // Message for feedback (success or error)
   const [message, setMessage] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
 
   const navigate = useNavigate();
-  const apiUrl = import.meta.env.VITE_BACKEND_URL;
+  const apiUrl = import.meta.env.VITE_BACKEND_URL || 'http://localhost:8080';
 
 
   // Handle input changes
@@ -28,29 +29,51 @@ export default function LoginForm() {
   // Handle form submit
   const handleSubmit = async (e) => {
     e.preventDefault();
-    // setIsLoading(true);
+    setIsLoading(true);
+    setMessage('');
+
+    // Basic validation
+    if (!formData.email || !formData.password) {
+      setMessage('Please fill in all fields');
+      setIsLoading(false);
+      return;
+    }
     
     try {
+      console.log('Attempting login with email:', formData.email);
+      console.log('API URL:', `${apiUrl}/api/login`);
+      
       // Send POST request to backend login endpoint
       const res = await axios.post(`${apiUrl}/api/login`, formData, { 
-        withCredentials: true 
+        withCredentials: true,
+        timeout: 10000 // 10 second timeout
       });
-      // localStorage.setItem('user', JSON.stringify(res.data.user));
-      // if (res.data.user && res.data.user.username) {
-        // localStorage.setItem('username', res.data.user.username);
-      // }
-      setMessage(res.data.message); // Show success message
+      
+      console.log('Login response:', res.data);
+      setMessage(res.data.message);
       navigate('/list');
     } catch (err) {
-      // Show error message from server
-      if (err.response && err.response.data && err.response.data.error) {
-        setMessage('Login failed: ' + err.response.data.error);
+      console.error('Login error:', err);
+      
+      if (err.code === 'ECONNABORTED') {
+        setMessage('Login failed: Request timeout. Please try again.');
+      } else if (err.code === 'ERR_NETWORK') {
+        setMessage('Login failed: Cannot connect to server. Please check your internet connection.');
+      } else if (err.response) {
+        // Server responded with error
+        const errorMsg = err.response.data?.error || err.response.data?.message || 'Server error occurred';
+        setMessage(`Login failed: ${errorMsg}`);
+        console.log('Server error response:', err.response.data);
+      } else if (err.request) {
+        // Request was made but no response received
+        setMessage('Login failed: No response from server. Please try again.');
+        console.log('No response received:', err.request);
       } else {
-        setMessage('Login failed: Unknown error');
+        // Something else happened
+        setMessage(`Login failed: ${err.message}`);
       }
-      console.error(err);
-    // } finally {
-    //   setIsLoading(false);
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -111,11 +134,28 @@ export default function LoginForm() {
                         </div>
 
                         {/* Feedback message */}
-                        {message && <div className="alert alert-info">{message}</div>}
+                        {message && (
+                          <div className={`alert ${message.includes('failed') ? 'alert-danger' : 'alert-success'}`}>
+                            {message}
+                          </div>
+                        )}
 
                         {/* Submit button */}
                         <div className="text-end">
-                          <button className="btn btn-primary w-100" type="submit">Log in</button>
+                          <button 
+                            className="btn btn-primary w-100" 
+                            type="submit"
+                            disabled={isLoading}
+                          >
+                            {isLoading ? (
+                              <>
+                                <span className="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+                                Logging in...
+                              </>
+                            ) : (
+                              'Log in'
+                            )}
+                          </button>
                         </div>
 
                         <div className="text-center mt-2">
