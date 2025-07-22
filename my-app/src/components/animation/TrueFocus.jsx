@@ -59,7 +59,7 @@ const TrueFocus = ({
   };
 
   return (
-    <div className="focus-container" ref={containerRef}>
+    <div className="focus-container" ref={containerRef} style={{width:'100%'}}>
       {words.map((word, index) => {
         const isActive = index === currentIndex;
         return (
