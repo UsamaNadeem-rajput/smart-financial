@@ -15,7 +15,7 @@ export default function SignupForm() {
   const [message, setMessage] = useState('');
   const [isLoading, setIsLoading] = useState(false);
 
-  
+
 
   const navigate = useNavigate();
 
@@ -47,20 +47,20 @@ export default function SignupForm() {
     try {
       console.log('Attempting registration with:', { ...formData, password: '[HIDDEN]' });
       console.log('API URL:', `${import.meta.env.VITE_BACKEND_URL}/api/register`);
-      
+
       const apiUrl = import.meta.env.VITE_BACKEND_URL || 'http://localhost:8080';
       console.log('Using API URL:', apiUrl);
-      
-      const res = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/register`, formData, { 
+
+      const res = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/register`, formData, {
         withCredentials: true
       });
-      
+
       console.log('Registration response:', res.data);
       setMessage(res.data.message);
       navigate('/business');
     } catch (err) {
       console.error('Registration error:', err);
-      
+
       if (err.code === 'ECONNABORTED') {
         setMessage('Registration failed: Request timeout. Please try again.');
       } else if (err.code === 'ERR_NETWORK') {
@@ -86,16 +86,27 @@ export default function SignupForm() {
   return (
     <div>
       <section className="text-center">
-        <div className="p-5 bg-image" style={{
-          backgroundImage: "url('./bgpicture.jpg')",
-          height: "300px",
-        }}></div>
+        <div
+          className="hidden md:block bg-image"
+          style={{
+            backgroundImage: "url('./bgpicture.jpg')",
+            height: "200px"
+          }}
+        >
+        </div>
 
         <div className="card mx-4 mx-md-5 shadow-5-strong bg-body-tertiary"
           style={{ marginTop: "-100px", backdropFilter: "blur(30px)" }}>
           <div className="card-body py-5 px-md-5">
             <div className="row d-flex justify-content-center">
               <div className="col-lg-8">
+                 <div className="md:ml-28 w-[20rem] h-[18rem] md:w-[40rem] md:h-[32rem]">
+                  <DotLottieReact
+                    src="https://lottie.host/c027fbf1-862a-4041-89a1-6ee30378a4fb/WvvjwTn1Ff.lottie"
+                    loop
+                    autoplay
+                  />
+                </div>
                 <h2 className="fw-bold mb-5">Sign up now</h2>
 
                 {/* Display server response */}
@@ -160,8 +171,8 @@ export default function SignupForm() {
                   </div>
 
                   <div className="d-flex flex-column align-items-center mt-3">
-                    <button 
-                      type="submit" 
+                    <button
+                      type="submit"
                       className="btn btn-primary btn-block mb-2 mx-2"
                       disabled={isLoading}
                     >
