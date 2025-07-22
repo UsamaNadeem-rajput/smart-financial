@@ -18,7 +18,7 @@ const sessionStore = new MySQLStore({ schema: { tableName: 'sessions' } }, pool)
 /* ---------- CORS + JSON ---------- */
 app.use(
   cors({
-    origin: 'https://smart-financial.netlify.app', // ✅ Your frontend
+    origin: ['https://smart-financial.netlify.app','http://localhost:5173'], // ✅ Your frontend
     credentials: true,
   })
 );
