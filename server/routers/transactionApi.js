@@ -31,7 +31,7 @@ router.post('/transactions', async (req, res) => {
         if (transaction_id) {
             // Insert with provided transaction_id
             [insertResult] = await conn.execute(
-                'INSERT INTO transactions (id_from_front_end, business_id, description, debit, credit, date) VALUES (?, ?, ?, ?, ?, ?)',
+                'INSERT INTO transactions (frontend_transaction_id, business_id, description, debit, credit, date) VALUES (?, ?, ?, ?, ?, ?)',
                 [transaction_id, business_id, description || '', debit, credit, date]
             );
         } else {
@@ -42,7 +42,7 @@ router.post('/transactions', async (req, res) => {
             );
         }
 
-        const new_transaction_id = transaction_id || insertResult.insertId;
+        const new_transaction_id = insertResult.insertId;
 
         // Insert entries into transaction_entries
         for (const entry of entries) {

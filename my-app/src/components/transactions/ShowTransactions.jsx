@@ -4,17 +4,24 @@ import autoTable from "jspdf-autotable";
 import Navbar from "../layout/Navbar";
 import { useBusiness } from "../../context/BusinessContext";
 
+// Helper to get local date string in YYYY-MM-DD
+function getLocalDateString() {
+  const now = new Date();
+  now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
+  return now.toISOString().split("T")[0];
+}
+
 export default function TransactionEntryTable() {
-  const [date, setDate] = useState("");
+  const [date, setDate] = useState(getLocalDateString());
   const [entries, setEntries] = useState([]);
   const [totals, setTotals] = useState({ debit: 0, credit: 0 });
   const { selectedBusiness } = useBusiness();
 
   const fetchData = async () => {
-    if (!date) return;
+    if (!date || !selectedBusiness?.business_id) return;
     try {
       const res = await fetch(
-        `${import.meta.env.VITE_BACKEND_URL}/api/showtransactions?date=${date}`
+        `${import.meta.env.VITE_BACKEND_URL}/api/showtransactions?date=${date}&business_id=${selectedBusiness.business_id}`
       );
       const data = await res.json();
 
@@ -51,8 +58,8 @@ export default function TransactionEntryTable() {
   };
 
   useEffect(() => {
-    if (date) fetchData();
-  }, [date]);
+    if (date && selectedBusiness?.business_id) fetchData();
+  }, [date, selectedBusiness]);
 
   const handlePrint = () => {
     const printWindow = window.open("", "", "height=600,width=800");

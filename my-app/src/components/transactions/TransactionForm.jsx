@@ -1,12 +1,11 @@
 import React, { useState, useEffect } from "react";
 import Navbar from "../layout/Navbar";
+import { useBusiness } from "../../context/BusinessContext";
 
 export default function TransectionForm() {
   const [date, setDate] = useState("");
   const [time, setTime] = useState("");
   const [number, setNumber] = useState(1);
-
-  // Each row: { accountName: '', debit: '', credit: '' }
   const [rows, setRows] = useState([
     { accountName: "", debit: "", credit: "" },
     { accountName: "", debit: "", credit: "" },
@@ -14,57 +13,49 @@ export default function TransectionForm() {
   const [suggestions, setSuggestions] = useState([]);
   const [showSuggestionsIdx, setShowSuggestionsIdx] = useState(null);
 
-  // Totals
+  const { selectedBusiness } = useBusiness();
+
   const debitTotal = rows.reduce((a, b) => a + (Number(b.debit) || 0), 0);
   const creditTotal = rows.reduce((a, b) => a + (Number(b.credit) || 0), 0);
   const isSubmitDisabled =
     debitTotal === 0 || creditTotal === 0 || debitTotal !== creditTotal;
 
-  // Helper to get value from localStorage
+  const allAccountNamesFilled = rows.every((row) => row.accountName.trim() !== "");
+
   const getNumber = () => {
     let stored = localStorage.getItem("myNumber");
-    let num = stored ? parseInt(stored, 10) : 1;
-    return num;
+    return stored ? parseInt(stored, 10) : 1;
   };
 
-  // Helper to increment value in localStorage
   const incrementNumber = () => {
-    let num = getNumber() + 1;
+    const num = getNumber() + 1;
     localStorage.setItem("myNumber", num);
     setNumber(num);
   };
 
   useEffect(() => {
     const now = new Date();
-    // Format date as YYYY-MM-DD for input type="date"
-    const yyyy = now.getFullYear();
-    const mm = String(now.getMonth() + 1).padStart(2, "0");
-    const dd = String(now.getDate()).padStart(2, "0");
-    setDate(`${yyyy}-${mm}-${dd}`);
+    setDate(now.toISOString().split("T")[0]);
     setTime(now.toLocaleTimeString());
     setNumber(getNumber());
   }, []);
 
-  const handleDateChange = (e) => {
-    setDate(e.target.value);
-  };
+  const handleDateChange = (e) => setDate(e.target.value);
 
-  // Submit handler to send transaction data to backend
   const handleSubmit = async (onSuccess) => {
-    // Prepare entries array
+    if (!selectedBusiness?.business_id) {
+      alert("No business selected. Please select a business first.");
+      return;
+    }
+
     const entries = rows
       .filter((row) => row.accountId && (row.debit || row.credit))
-      .map((row) => {
-        return row.debit
+      .map((row) =>
+        row.debit
           ? { account_id: row.accountId, amount: row.debit, type: "debit" }
-          : { account_id: row.accountId, amount: row.credit, type: "credit" };
-      });
+          : { account_id: row.accountId, amount: row.credit, type: "credit" }
+      );
 
-    // Calculate totals for validation
-    const debitTotal = rows.reduce((a, b) => a + (Number(b.debit) || 0), 0);
-    const creditTotal = rows.reduce((a, b) => a + (Number(b.credit) || 0), 0);
-
-    // Validate that debit and credit totals match
     if (debitTotal !== creditTotal) {
       alert("Debit and Credit totals must match.");
       return;
@@ -72,10 +63,10 @@ export default function TransectionForm() {
 
     const payload = {
       transaction_id: number,
-      business_id: 1, // Replace with actual business_id
-      description: "", // Add description if needed
-      debit: debitTotal, // Send debit total
-      credit: creditTotal, // Send credit total
+      business_id: selectedBusiness.business_id,
+      description: "",
+      debit: debitTotal,
+      credit: creditTotal,
       date,
       entries,
     };
@@ -87,11 +78,8 @@ export default function TransectionForm() {
         body: JSON.stringify(payload),
       });
       const data = await res.json();
-      if (data.success) {
-        onSuccess();
-      } else {
-        alert("Error: " + (data.error || "Failed to save transaction."));
-      }
+      if (data.success) onSuccess();
+      else alert("Error: " + (data.error || "Failed to save transaction."));
     } catch (err) {
       alert("Network error: " + err.message);
     }
@@ -121,7 +109,6 @@ export default function TransectionForm() {
     window.history.back();
   };
 
-  // Live search handler
   const handleAccountNameChange = async (idx, value) => {
     const newRows = [...rows];
     newRows[idx].accountName = value;
@@ -130,14 +117,12 @@ export default function TransectionForm() {
     if (value.length > 0) {
       try {
         const res = await fetch(
-          `${import.meta.env.VITE_BACKEND_URL}/api/search-accounts?query=${encodeURIComponent(
-            value
-          )}`
+          `${import.meta.env.VITE_BACKEND_URL}/api/search-accounts?query=${encodeURIComponent(value)}`
         );
         const data = await res.json();
         setSuggestions(data);
         setShowSuggestionsIdx(idx);
-      } catch (err) {
+      } catch {
         setSuggestions([]);
         setShowSuggestionsIdx(null);
       }
@@ -147,7 +132,6 @@ export default function TransectionForm() {
     }
   };
 
-  // When a suggestion is clicked, store both account_id and account_name
   const handleSuggestionClick = (idx, name, id) => {
     const newRows = [...rows];
     newRows[idx].accountName = name;
@@ -157,20 +141,10 @@ export default function TransectionForm() {
     setShowSuggestionsIdx(null);
   };
 
-  // Add new row
-  const addRow = () => {
-    setRows([...rows, { accountName: "", debit: "", credit: "" }]);
-  };
+  const addRow = () => setRows([...rows, { accountName: "", debit: "", credit: "" }]);
+  const removeRow = (idx) =>
+    setRows(rows.length > 1 ? rows.filter((_, i) => i !== idx) : rows);
 
-  // Remove row
-  const removeRow = (idx) => {
-    const newRows = rows.filter((_, i) => i !== idx);
-    setRows(
-      newRows.length ? newRows : [{ accountName: "", debit: "", credit: "" }]
-    );
-  };
-
-  // Debit/Credit input handlers
   const handleDebitChange = (idx, value) => {
     const newRows = [...rows];
     newRows[idx].debit = value;
@@ -183,71 +157,62 @@ export default function TransectionForm() {
     setRows(newRows);
   };
 
-  // Enter key handler for debit
   const handleDebitKeyDown = (idx, e) => {
-    if (e.key === "Enter") {
-      // Only add row if current row has at least accountName and debit
-      if (rows[idx].accountName && rows[idx].debit) {
-        addRow();
-      }
-    }
+    if (e.key === "Enter" && rows[idx].accountName && rows[idx].debit) addRow();
   };
 
-  // Enter key handler for credit
   const handleCreditKeyDown = (idx, e) => {
-    if (e.key === "Enter") {
-      // Only add row if current row has at least accountName and credit
-      if (rows[idx].accountName && rows[idx].credit) {
-        addRow();
-      }
-    }
+    if (e.key === "Enter" && rows[idx].accountName && rows[idx].credit) addRow();
   };
-
-  // Helper to check if all account name cells are filled
-  const allAccountNamesFilled = rows.every(
-    (row) => row.accountName.trim() !== ""
-  );
 
   return (
-    <div>
+    <div className="container">
       <Navbar />
-      <div
-        className="container mt-5 text-bg-light p-3"
-        style={{ width: "70vw", minWidth: "600px" }}
-      >
-        <h1>Transaction Form</h1>
-        <div
-          style={{
-            display: "flex",
-            justifyContent: "space-between",
-            alignItems: "center",
-            height: "23vh",
-          }}
-        >
-          <div style={{ display: "flex", gap: "10px" }}>
-            <div>
-              <label className="mx-2">Date: </label>
-              <input type="date" value={date} onChange={handleDateChange} />
+      <div className="container my-5 text-bg-light p-4 rounded" style={{ maxWidth: "100%", minWidth: "300px" }}>
+        <h2 className="mb-4">Transaction Form</h2>
+
+        {/* Top Row: Date, Time, Transaction ID */}
+        <div className="row g-3 align-items-center mb-4">
+          <div className="col-md-8 col-12 d-flex flex-wrap gap-3 align-items-center">
+            <div className="d-flex align-items-center gap-2">
+              <label className="form-label m-0">Date:</label>
+              <input
+                type="date"
+                value={date}
+                onChange={handleDateChange}
+                className="form-control"
+                style={{ minWidth: "150px" }}
+              />
             </div>
-            <div>
-              <label className="mx-2">Time: </label>
-              <span>{time}</span>
+            <div className="d-flex align-items-center gap-2">
+              <label className="form-label m-0">Time:</label>
+              <span className="form-control bg-light" style={{ minWidth: "120px" }}>
+                {time}
+              </span>
             </div>
           </div>
-          <div>
-            <div>
-              <label className="mx-2">Transaction ID: </label>
-              <input type="number" value={number} readOnly />
+          <div className="col-md-4 col-12 d-flex justify-content-md-end">
+            <div className="d-flex align-items-center gap-2 w-100">
+              <label className="form-label m-0">Transaction ID:</label>
+              <input
+                type="number"
+                value={number}
+                readOnly
+                className="form-control"
+                style={{ minWidth: "150px" }}
+              />
             </div>
           </div>
         </div>
+
+        {/* Table */}
         <table className="table table-striped table-hover table-bordered border-secondary">
           <thead className="table-dark">
             <tr>
-              <th scope="col">Account name</th>
-              <th scope="col">Debit</th>
-              <th scope="col">Credit</th>
-              <th scope="col">Remove</th>
+              <th>Account Name</th>
+              <th>Debit</th>
+              <th>Credit</th>
+              <th>Remove</th>
             </tr>
           </thead>
           <tbody>
@@ -255,49 +220,24 @@ export default function TransectionForm() {
               <tr key={idx}>
                 <td style={{ position: "relative" }}>
                   <input
-                    className="AccountName"
-                    style={{ width: "100%" }}
+                    className="form-control"
                     type="text"
                     value={row.accountName}
-                    onChange={(e) =>
-                      handleAccountNameChange(idx, e.target.value)
-                    }
+                    onChange={(e) => handleAccountNameChange(idx, e.target.value)}
                     autoComplete="off"
-                    onBlur={() =>
-                      setTimeout(() => setShowSuggestionsIdx(null), 100)
-                    }
-                    onFocus={() =>
-                      row.accountName && setShowSuggestionsIdx(idx)
-                    }
+                    onBlur={() => setTimeout(() => setShowSuggestionsIdx(null), 100)}
+                    onFocus={() => row.accountName && setShowSuggestionsIdx(idx)}
                   />
                   {showSuggestionsIdx === idx && suggestions.length > 0 && (
                     <ul
-                      style={{
-                        position: "absolute",
-                        top: "100%",
-                        left: 0,
-                        width: "100%",
-                        background: "#fff",
-                        border: "1px solid #ccc",
-                        zIndex: 10,
-                        listStyle: "none",
-                        margin: 0,
-                        padding: 0,
-                        maxHeight: "150px",
-                        overflowY: "auto",
-                      }}
+                      className="list-group position-absolute w-100"
+                      style={{ zIndex: 10, maxHeight: "150px", overflowY: "auto" }}
                     >
                       {suggestions.map((s) => (
                         <li
                           key={s.account_id}
-                          style={{ padding: "5px", cursor: "pointer" }}
-                          onMouseDown={() =>
-                            handleSuggestionClick(
-                              idx,
-                              s.account_name,
-                              s.account_id
-                            )
-                          }
+                          className="list-group-item list-group-item-action"
+                          onMouseDown={() => handleSuggestionClick(idx, s.account_name, s.account_id)}
                         >
                           {s.account_name}
                         </li>
@@ -308,7 +248,7 @@ export default function TransectionForm() {
                 <td>
                   <input
                     type="number"
-                    style={{ width: "100%" }}
+                    className="form-control"
                     value={row.debit}
                     onChange={(e) => handleDebitChange(idx, e.target.value)}
                     onKeyDown={(e) => handleDebitKeyDown(idx, e)}
@@ -317,18 +257,16 @@ export default function TransectionForm() {
                 <td>
                   <input
                     type="number"
-                    style={{ width: "100%" }}
+                    className="form-control"
                     value={row.credit}
                     onChange={(e) => handleCreditChange(idx, e.target.value)}
                     onKeyDown={(e) => handleCreditKeyDown(idx, e)}
                   />
                 </td>
-                <td>
+                <td className="text-center">
                   <button
                     type="button"
-                    className="btn btn-link btn-sm px-3"
-                    data-mdb-ripple-init
-                    data-ripple-color="primary"
+                    className="btn btn-link btn-sm"
                     onClick={() => removeRow(idx)}
                   >
                     <i className="fas fa-times"></i>
@@ -338,58 +276,39 @@ export default function TransectionForm() {
             ))}
           </tbody>
         </table>
-        <div
-          style={{
-            display: "flex",
-            marginTop: "40px",
-            justifyContent: "flex-end",
-          }}
-        >
-          <div>
-            <label className="mx-2">Debit Total: </label>
-            <input type="number" value={debitTotal} readOnly />
+
+        {/* Totals */}
+        <div className="d-flex justify-content-end gap-3 mt-4">
+          <div className="d-flex align-items-center">
+            <label className="me-2">Debit Total:</label>
+            <input type="number" className="form-control" value={debitTotal} readOnly />
           </div>
-          <div>
-            <label className="mx-2">Credit Total: </label>
-            <input type="number" value={creditTotal} readOnly />
+          <div className="d-flex align-items-center">
+            <label className="me-2">Credit Total:</label>
+            <input type="number" className="form-control" value={creditTotal} readOnly />
           </div>
         </div>
-        <div
-          style={{
-            marginTop: "40px",
-            display: "flex",
-            justifyContent: "space-between",
-            alignItems: "center",
-          }}
-        >
+
+        {/* Buttons */}
+        <div className="d-flex flex-wrap justify-content-between align-items-center mt-5 gap-3">
           <div>
-            <button
-              className="btn btn-success"
-              style={{ marginRight: "10px" }}
-              disabled={isSubmitDisabled || !allAccountNamesFilled}
-            >
+            <button className="btn btn-success me-2" disabled={isSubmitDisabled || !allAccountNamesFilled}>
               Edit
             </button>
-            <button
-              className="btn btn-primary"
-              style={{ marginRight: "10px" }}
-              disabled={isSubmitDisabled || !allAccountNamesFilled}
-            >
+            <button className="btn btn-danger" disabled={isSubmitDisabled || !allAccountNamesFilled}>
               Delete
             </button>
           </div>
           <div>
             <button
-              className="btn btn-success"
-              style={{ marginRight: "10px" }}
+              className="btn btn-success me-2"
               onClick={handleSaveAndNew}
               disabled={isSubmitDisabled || !allAccountNamesFilled}
             >
               Save and New
             </button>
             <button
-              className="btn btn-primary"
-              style={{ marginRight: "10px" }}
+              className="btn btn-primary me-2"
               onClick={handleSaveAndClose}
               disabled={isSubmitDisabled || !allAccountNamesFilled}
             >
