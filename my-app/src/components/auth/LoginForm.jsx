@@ -3,7 +3,8 @@ import { Link } from 'react-router-dom';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
 import TrueFocus from '../animation/TrueFocus';
-import './styles.css'
+import './styles.css';
+import { DotLottieReact } from '@lottiefiles/dotlottie-react';
 
 
 export default function LoginForm() {
@@ -96,7 +97,6 @@ export default function LoginForm() {
                             loop
                             autoplay
                           />
-
                         </div>
                         <div className="w-full h-1 bg-gray-300 mb-4"></div>
                         <TrueFocus
