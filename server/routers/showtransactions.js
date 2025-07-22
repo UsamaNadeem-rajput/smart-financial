@@ -10,7 +10,7 @@ router.get('/showtransactions', async (req, res) => {
 
   try {
     let transactionsQuery =
-      `SELECT transaction_id, DATE_FORMAT(date, '%Y-%m-%d') as date, 
+      `SELECT transaction_id, frontend_transaction_id, DATE_FORMAT(date, '%Y-%m-%d') as date, 
        debit, credit
        FROM transactions 
        WHERE DATE(date) = ?`;
@@ -57,6 +57,7 @@ router.get('/showtransactions', async (req, res) => {
       };
       return {
         transaction_id: tx.transaction_id,
+        frontend_transaction_id: tx.frontend_transaction_id,
         date: tx.date,
         entries: txEntries,
         totals: txTotals,

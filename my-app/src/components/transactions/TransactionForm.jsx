@@ -2,8 +2,15 @@ import React, { useState, useEffect } from "react";
 import Navbar from "../layout/Navbar";
 import { useBusiness } from "../../context/BusinessContext";
 
+// Helper to get local date string in YYYY-MM-DD
+function getLocalDateString() {
+  const now = new Date();
+  now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
+  return now.toISOString().split("T")[0];
+}
+
 export default function TransectionForm() {
-  const [date, setDate] = useState("");
+  const [date, setDate] = useState(getLocalDateString());
   const [time, setTime] = useState("");
   const [number, setNumber] = useState(1);
   const [rows, setRows] = useState([
@@ -35,7 +42,7 @@ export default function TransectionForm() {
 
   useEffect(() => {
     const now = new Date();
-    setDate(now.toISOString().split("T")[0]);
+    setDate(getLocalDateString());
     setTime(now.toLocaleTimeString());
     setNumber(getNumber());
   }, []);
@@ -91,9 +98,8 @@ export default function TransectionForm() {
       setRows([{ accountName: "", debit: "", credit: "" }]);
       setSuggestions([]);
       setShowSuggestionsIdx(null);
-      const now = new Date();
-      setDate(now.toISOString().split("T")[0]);
-      setTime(now.toLocaleTimeString());
+      setDate(getLocalDateString());
+      setTime(new Date().toLocaleTimeString());
     });
   };
 

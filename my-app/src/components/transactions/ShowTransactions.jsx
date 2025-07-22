@@ -27,16 +27,16 @@ export default function TransactionEntryTable() {
 
       const flat = data.entries.flatMap((tx) => {
         const entries = tx.entries.map((entry) => ({
-          transaction_id: tx.transaction_id,
+          frontend_transaction_id: tx.frontend_transaction_id,
           transaction_date: tx.date,
           account_name: entry.account_name,
           debit: entry.type === "debit" ? entry.amount : "",
           credit: entry.type === "credit" ? entry.amount : "",
         }));
         entries.push({
-          transaction_id: tx.transaction_id,
+          frontend_transaction_id: tx.frontend_transaction_id,
           transaction_date: tx.date,
-          account_name: `Total for Transaction ${tx.transaction_id}`,
+          account_name: `Total for Transaction ${tx.frontend_transaction_id}`,
           debit: tx.totals.debit,
           credit: tx.totals.credit,
           isTotal: true,
@@ -44,7 +44,7 @@ export default function TransactionEntryTable() {
         return entries;
       });
 
-      flat.sort((a, b) => a.transaction_id - b.transaction_id);
+      flat.sort((a, b) => a.frontend_transaction_id - b.frontend_transaction_id);
       setEntries(flat);
       setTotals({
         debit: data.totals.debit || 0,
@@ -64,8 +64,8 @@ export default function TransactionEntryTable() {
   const handlePrint = () => {
     const printWindow = window.open("", "", "height=600,width=800");
     const grouped = entries.reduce((acc, entry) => {
-      if (!acc[entry.transaction_id]) acc[entry.transaction_id] = [];
-      acc[entry.transaction_id].push(entry);
+      if (!acc[entry.frontend_transaction_id]) acc[entry.frontend_transaction_id] = [];
+      acc[entry.frontend_transaction_id].push(entry);
       return acc;
     }, {});
 
@@ -105,7 +105,7 @@ export default function TransactionEntryTable() {
           <table class="table table-bordered">
             <thead class="table-dark">
               <tr>
-                <th>Transaction ID / Date</th>
+                <th>Frontend Transaction ID / Date</th>
                 <th>Ledger Name</th>
                 <th>Debit</th>
                 <th>Credit</th>
@@ -114,13 +114,13 @@ export default function TransactionEntryTable() {
             <tbody>
     `);
 
-    Object.entries(grouped).forEach(([transaction_id, group], groupIndex) => {
+    Object.entries(grouped).forEach(([frontend_transaction_id, group], groupIndex) => {
       group.forEach((entry, idx) => {
         printWindow.document.write(`
           <tr class="${entry.isTotal ? "transaction-total-row" : ""}">
             ${
               idx === 0 && !entry.isTotal
-                ? `<td rowspan="${group.length}">${transaction_id}<br><span style="font-size: 0.8em; color: #888;">${
+                ? `<td rowspan="${group.length}">${frontend_transaction_id}<br><span style="font-size: 0.8em; color: #888;">${
                     entry.transaction_date || "No Date"
                   }</span></td>`
                 : ""
@@ -186,18 +186,18 @@ export default function TransactionEntryTable() {
 
     const buildTable = () => {
       const grouped = entries.reduce((acc, entry) => {
-        if (!acc[entry.transaction_id]) acc[entry.transaction_id] = [];
-        acc[entry.transaction_id].push(entry);
+        if (!acc[entry.frontend_transaction_id]) acc[entry.frontend_transaction_id] = [];
+        acc[entry.frontend_transaction_id].push(entry);
         return acc;
       }, {});
 
       const tableRows = [];
 
-      Object.entries(grouped).forEach(([transaction_id, group], groupIndex) => {
+      Object.entries(grouped).forEach(([frontend_transaction_id, group], groupIndex) => {
         group.forEach((entry, idx) => {
           tableRows.push([
             idx === 0 && !entry.isTotal
-              ? `${transaction_id}\n(${entry.transaction_date || "No Date"})`
+              ? `${frontend_transaction_id}\n(${entry.transaction_date || "No Date"})`
               : "",
             entry.account_name,
             entry.debit,
@@ -216,7 +216,7 @@ export default function TransactionEntryTable() {
 
       autoTable(doc, {
         startY: y + 10,
-        head: [["Transaction ID / Date", "Ledger Name", "Debit", "Credit"]],
+        head: [["Frontend Transaction ID / Date", "Ledger Name", "Debit", "Credit"]],
         body: tableRows,
         styles: {
           fontSize: 12,
@@ -297,7 +297,7 @@ export default function TransactionEntryTable() {
             <table className="table table-bordered">
               <thead className="table-dark">
                 <tr>
-                  <th>Transaction ID / Date</th>
+                  <th>Frontend Transaction ID / Date</th>
                   <th>Ledger Name</th>
                   <th>Debit</th>
                   <th>Credit</th>
@@ -306,21 +306,21 @@ export default function TransactionEntryTable() {
               <tbody>
                 {(() => {
                   const grouped = entries.reduce((acc, entry) => {
-                    if (!acc[entry.transaction_id])
-                      acc[entry.transaction_id] = [];
-                    acc[entry.transaction_id].push(entry);
+                    if (!acc[entry.frontend_transaction_id])
+                      acc[entry.frontend_transaction_id] = [];
+                    acc[entry.frontend_transaction_id].push(entry);
                     return acc;
                   }, {});
                   return Object.entries(grouped).flatMap(
-                    ([transaction_id, group]) =>
+                    ([frontend_transaction_id, group]) =>
                       group.map((entry, idx) => (
                         <tr
-                          key={`${transaction_id}-${idx}`}
+                          key={`${frontend_transaction_id}-${idx}`}
                           className={entry.isTotal ? "font-bold transaction-total-row" : ""}
                         >
                           {idx === 0 && !entry.isTotal && (
                             <td rowSpan={group.length}>
-                              {transaction_id}
+                              {frontend_transaction_id}
                               <br />
                               <span
                                 style={{ fontSize: "0.8em", color: "#888" }}
