@@ -24,6 +24,11 @@ app.use(
 );
 app.use(express.json());
 
+// Prevent caching on protected routes
+app.use((req, res, next) => {
+  res.set('Cache-Control', 'no-store');
+  next();
+});
 /* ---------- Session ---------- */
 app.use(
   session({
