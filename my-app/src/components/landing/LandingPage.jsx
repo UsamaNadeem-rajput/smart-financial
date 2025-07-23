@@ -1,11 +1,11 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { 
-  Building2, 
-  Users, 
-  FileText, 
-  TrendingUp, 
-  Shield, 
+import {
+  Building2,
+  Users,
+  FileText,
+  TrendingUp,
+  Shield,
   Clock,
   Check,
   Star,
@@ -15,9 +15,12 @@ import {
   Calculator,
   PieChart
 } from 'lucide-react';
+import { motion } from "motion/react";
+import { useRef } from "react";
 
 const LandingPage = () => {
   const [selectedPlan, setSelectedPlan] = useState('free');
+   const boxRef = useRef(null);
 
   const features = [
     {
@@ -124,7 +127,7 @@ const LandingPage = () => {
                 <span className="text-primary-600 block">simple & powerful</span>
               </h1>
               <p className="text-xl text-gray-600 mt-6 leading-relaxed">
-                Manage your business finances with professional-grade accounting software. 
+                Manage your business finances with professional-grade accounting software.
                 From startups to enterprises, we've got you covered.
               </p>
               <div className="flex flex-col sm:flex-row gap-4 mt-8">
@@ -147,7 +150,7 @@ const LandingPage = () => {
                 Free forever plan
               </div>
             </div>
-            
+
             <div className="relative animate-fade-in-right">
               <div className="bg-white rounded-2xl shadow-2xl p-8 transform rotate-3 hover:rotate-0 transition-transform duration-500">
                 <div className="space-y-4">
@@ -161,7 +164,7 @@ const LandingPage = () => {
                   </div>
                 </div>
               </div>
-              
+
               <div className="absolute -top-4 -right-4 bg-warning-100 rounded-xl p-4 animate-float">
                 <div className="flex items-center space-x-2">
                   <div className="w-3 h-3 bg-warning-500 rounded-full animate-pulse"></div>
@@ -184,14 +187,22 @@ const LandingPage = () => {
               Professional accounting features designed for businesses of all sizes
             </p>
           </div>
-          
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+
+          <div ref={boxRef} className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
             {features.map((feature, index) => {
               const Icon = feature.icon;
               return (
-                <div
+                <motion.div
+                  drag
+                  initial={{ opacity: 0, y: 40 }} // thoda neeche aur invisible
+                  animate={{ opacity: 1, y: 0 }}  // full visible aur position 0
+                  transition={{
+                    duration: 0.8,
+                    ease: [0.25, 0.1, 0.25, 1], // CSS-style cubic bezier easing
+                  }}
+                  dragConstraints={boxRef}
                   key={index}
-                  className="group p-6 rounded-xl border border-gray-200 hover:border-primary-300 hover:shadow-lg transition-all duration-300 animate-fade-in-up"
+                  className="group p-6 rounded-xl border border-gray-200 hover:border-primary-300 hover:shadow-lg "
                   style={{ animationDelay: `${index * 100}ms` }}
                 >
                   <div className="w-12 h-12 bg-primary-100 rounded-lg flex items-center justify-center mb-4 group-hover:bg-primary-200 transition-colors">
@@ -203,7 +214,7 @@ const LandingPage = () => {
                   <p className="text-gray-600">
                     {feature.description}
                   </p>
-                </div>
+                </motion.div>
               );
             })}
           </div>
@@ -221,14 +232,13 @@ const LandingPage = () => {
               Start free and upgrade as you grow
             </p>
           </div>
-          
+
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 max-w-5xl mx-auto">
             {plans.map((plan, index) => (
               <div
                 key={index}
-                className={`relative bg-white rounded-2xl shadow-lg p-8 transition-all duration-300 hover:shadow-xl animate-fade-in-up ${
-                  plan.popular ? 'ring-2 ring-primary-500 scale-105' : ''
-                }`}
+                className={`relative bg-white rounded-2xl shadow-lg p-8 transition-all duration-300 hover:shadow-xl animate-fade-in-up ${plan.popular ? 'ring-2 ring-primary-500 scale-105' : ''
+                  }`}
                 style={{ animationDelay: `${index * 200}ms` }}
               >
                 {plan.popular && (
@@ -239,7 +249,7 @@ const LandingPage = () => {
                     </div>
                   </div>
                 )}
-                
+
                 <div className="text-center mb-8">
                   <h3 className="text-2xl font-bold text-gray-900 mb-2">{plan.name}</h3>
                   <div className="flex items-baseline justify-center mb-2">
@@ -248,7 +258,7 @@ const LandingPage = () => {
                   </div>
                   <p className="text-gray-600">{plan.description}</p>
                 </div>
-                
+
                 <ul className="space-y-4 mb-8">
                   {plan.features.map((feature, featureIndex) => (
                     <li key={featureIndex} className="flex items-center">
@@ -257,14 +267,13 @@ const LandingPage = () => {
                     </li>
                   ))}
                 </ul>
-                
+
                 <Link
                   to="/register"
-                  className={`w-full py-3 px-6 rounded-lg font-medium text-center block transition-colors ${
-                    plan.popular
-                      ? 'bg-primary-600 hover:bg-primary-700 text-white'
-                      : 'bg-gray-100 hover:bg-gray-200 text-gray-900'
-                  }`}
+                  className={`w-full py-3 px-6 rounded-lg font-medium text-center block transition-colors ${plan.popular
+                    ? 'bg-primary-600 hover:bg-primary-700 text-white'
+                    : 'bg-gray-100 hover:bg-gray-200 text-gray-900'
+                    }`}
                 >
                   {plan.cta}
                 </Link>
@@ -275,8 +284,8 @@ const LandingPage = () => {
       </section>
 
       {/* CTA Section */}
-      <section className="py-20 bg-primary-600">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+      <section className="py-16 bg-gray-950 h-screen bg-center bg-no-repeat md:[background-size:100%]" style={{ backgroundImage: "url('/CTA_banner.jpg')" , width:'100vw' , height:'50vh' }}>
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center" >
           <h2 className="text-3xl lg:text-4xl font-bold text-white mb-4">
             Ready to transform your business finances?
           </h2>
@@ -314,7 +323,7 @@ const LandingPage = () => {
                 Professional accounting software for modern businesses.
               </p>
             </div>
-            
+
             <div>
               <h4 className="font-semibold text-white mb-4">Product</h4>
               <ul className="space-y-2">
@@ -323,7 +332,7 @@ const LandingPage = () => {
                 <li><a href="#" className="hover:text-white transition-colors">Security</a></li>
               </ul>
             </div>
-            
+
             <div>
               <h4 className="font-semibold text-white mb-4">Company</h4>
               <ul className="space-y-2">
@@ -332,7 +341,7 @@ const LandingPage = () => {
                 <li><a href="#" className="hover:text-white transition-colors">Support</a></li>
               </ul>
             </div>
-            
+
             <div>
               <h4 className="font-semibold text-white mb-4">Legal</h4>
               <ul className="space-y-2">
@@ -342,7 +351,7 @@ const LandingPage = () => {
               </ul>
             </div>
           </div>
-          
+
           <div className="border-t border-gray-800 mt-8 pt-8 text-center">
             <p className="text-gray-400">
               © 2025 Finance App. All rights reserved.
