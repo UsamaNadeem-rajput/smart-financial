@@ -123,7 +123,7 @@ export default function TransectionForm() {
     if (value.length > 0) {
       try {
         const res = await fetch(
-          `${import.meta.env.VITE_BACKEND_URL}/api/search-accounts?query=${encodeURIComponent(value)}`
+          `${import.meta.env.VITE_BACKEND_URL}/api/search-accounts?query=${encodeURIComponent(value)}&business_id=${selectedBusiness?.business_id}`
         );
         const data = await res.json();
         setSuggestions(data);
