@@ -9,6 +9,14 @@ function getLocalDateString() {
   return now.toISOString().split("T")[0];
 }
 
+// Helper to format numbers with commas
+function formatNumberWithCommas(value) {
+  if (value === null || value === undefined || value === '') return '';
+  const parts = value.toString().split('.');
+  parts[0] = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+  return parts.join('.');
+}
+
 export default function TransectionForm() {
   const [date, setDate] = useState(getLocalDateString());
   const [time, setTime] = useState("");
@@ -19,6 +27,7 @@ export default function TransectionForm() {
   ]);
   const [suggestions, setSuggestions] = useState([]);
   const [showSuggestionsIdx, setShowSuggestionsIdx] = useState(null);
+  const [highlightedSuggestion, setHighlightedSuggestion] = useState(-1);
 
   const { selectedBusiness } = useBusiness();
 
@@ -120,10 +129,31 @@ export default function TransectionForm() {
     window.history.back();
   };
 
+  const handleAccountNameKeyDown = (idx, e) => {
+    if (showSuggestionsIdx !== idx || suggestions.length === 0) return;
+    if (e.key === 'ArrowDown') {
+      e.preventDefault();
+      setHighlightedSuggestion((prev) => (prev + 1) % suggestions.length);
+    } else if (e.key === 'ArrowUp') {
+      e.preventDefault();
+      setHighlightedSuggestion((prev) => (prev - 1 + suggestions.length) % suggestions.length);
+    } else if (e.key === 'Enter') {
+      if (highlightedSuggestion >= 0 && highlightedSuggestion < suggestions.length) {
+        const s = suggestions[highlightedSuggestion];
+        handleSuggestionClick(idx, s.account_name, s.account_id);
+        setHighlightedSuggestion(-1);
+      }
+    } else if (e.key === 'Escape') {
+      setShowSuggestionsIdx(null);
+      setHighlightedSuggestion(-1);
+    }
+  };
+
   const handleAccountNameChange = async (idx, value) => {
     const newRows = [...rows];
     newRows[idx].accountName = value;
     setRows(newRows);
+    setHighlightedSuggestion(-1);
 
     if (value.length > 0) {
       try {
@@ -162,14 +192,20 @@ export default function TransectionForm() {
     setRows(rows.length > 1 ? rows.filter((_, i) => i !== idx) : rows);
 
   const handleDebitChange = (idx, value) => {
+    // Remove commas for storage
+    const raw = value.replace(/,/g, '');
+    if (!/^\d*(\.\d*)?$/.test(raw) && raw !== '') return; // Only allow numbers
     const newRows = [...rows];
-    newRows[idx].debit = value;
+    newRows[idx].debit = raw;
     setRows(newRows);
   };
 
   const handleCreditChange = (idx, value) => {
+    // Remove commas for storage
+    const raw = value.replace(/,/g, '');
+    if (!/^\d*(\.\d*)?$/.test(raw) && raw !== '') return; // Only allow numbers
     const newRows = [...rows];
-    newRows[idx].credit = value;
+    newRows[idx].credit = raw;
     setRows(newRows);
   };
 
@@ -247,37 +283,22 @@ export default function TransectionForm() {
                       className="form-control"
                       type="text"
                       value={row.accountName}
-                      onChange={(e) =>
-                        handleAccountNameChange(idx, e.target.value)
-                      }
+                      onChange={(e) => handleAccountNameChange(idx, e.target.value)}
                       autoComplete="off"
-                      onBlur={() =>
-                        setTimeout(() => setShowSuggestionsIdx(null), 100)
-                      }
-                      onFocus={() =>
-                        row.accountName && setShowSuggestionsIdx(idx)
-                      }
+                      onBlur={() => setTimeout(() => { setShowSuggestionsIdx(null); setHighlightedSuggestion(-1); }, 100)}
+                      onFocus={() => { row.accountName && setShowSuggestionsIdx(idx); }}
+                      onKeyDown={(e) => handleAccountNameKeyDown(idx, e)}
                     />
                     {showSuggestionsIdx === idx && suggestions.length > 0 && (
                       <ul
                         className="list-group position-absolute w-100"
-                        style={{
-                          zIndex: 10,
-                          maxHeight: "150px",
-                          overflowY: "auto",
-                        }}
+                        style={{ zIndex: 10, maxHeight: "150px", overflowY: "auto" }}
                       >
-                        {suggestions.map((s) => (
+                        {suggestions.map((s, sidx) => (
                           <li
                             key={s.account_id}
-                            className="list-group-item list-group-item-action"
-                            onMouseDown={() =>
-                              handleSuggestionClick(
-                                idx,
-                                s.account_name,
-                                s.account_id
-                              )
-                            }
+                            className={`list-group-item list-group-item-action${highlightedSuggestion === sidx ? ' active' : ''}`}
+                            onMouseDown={() => handleSuggestionClick(idx, s.account_name, s.account_id)}
                           >
                             {s.account_name}
                           </li>
@@ -287,18 +308,18 @@ export default function TransectionForm() {
                   </td>
                   <td>
                     <input
-                      type="number"
+                      type="text"
                       className="form-control"
-                      value={row.debit}
+                      value={formatNumberWithCommas(row.debit)}
                       onChange={(e) => handleDebitChange(idx, e.target.value)}
                       onKeyDown={(e) => handleDebitKeyDown(idx, e)}
                     />
                   </td>
                   <td>
                     <input
-                      type="number"
+                      type="text"
                       className="form-control"
-                      value={row.credit}
+                      value={formatNumberWithCommas(row.credit)}
                       onChange={(e) => handleCreditChange(idx, e.target.value)}
                       onKeyDown={(e) => handleCreditKeyDown(idx, e)}
                     />
@@ -322,18 +343,18 @@ export default function TransectionForm() {
             <div className="d-flex align-items-center">
               <label className="me-2">Debit Total:</label>
               <input
-                type="number"
+                type="text"
                 className="form-control"
-                value={debitTotal}
+                value={formatNumberWithCommas(debitTotal)}
                 readOnly
               />
             </div>
             <div className="d-flex align-items-center">
               <label className="me-2">Credit Total:</label>
               <input
-                type="number"
+                type="text"
                 className="form-control"
-                value={creditTotal}
+                value={formatNumberWithCommas(creditTotal)}
                 readOnly
               />
             </div>
