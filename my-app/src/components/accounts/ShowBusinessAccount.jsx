@@ -4,15 +4,16 @@ import { useBusiness } from '../../context/BusinessContext';
 import Navbar from '../layout/Navbar';
 import axios from 'axios';
 
-import { 
-  Search, 
-  Plus, 
-  Edit3, 
-  Trash2, 
+import {
+  Search,
+  Plus,
+  Edit3,
+  Trash2,
   Filter,
   DollarSign,
-  TrendingUp,
-  TrendingDown,
+  Wallet,
+  PiggyBank,
+  CreditCard,
   Eye
 } from 'lucide-react';
 
@@ -35,42 +36,13 @@ const ShowBusinessAccount = () => {
     filterAccounts();
   }, [accounts, searchTerm, selectedFilter]);
 
-  // useEffect(() => {
-  //   const storedUser = localStorage.getItem('user');
-  //   if (storedUser) {
-  //     setUser(JSON.parse(storedUser));
-  //   }}, []);
-
-  // const checkAuthAndFetchAccounts = async () => {
-  //   try {
-  //     // Check if user is authenticated
-  //     const authResponse = await axios.get('http://localhost:5000/api/check-auth', {
-  //       withCredentials: true
-  //     });
-      
-  //     if (authResponse.data.user) {
-  //       setUser(authResponse.data.user);
-  //       if (!selectedBusiness) {
-  //         navigate('/list');
-  //         return;
-  //       }
-  //       fetchAccounts();
-  //     } else {
-  //       navigate('/login');
-  //     }
-  //   } catch (error) {
-  //     console.error('Authentication check failed:', error);
-  //     navigate('/login');
-  //   }
-  // };
-
   const fetchAccounts = async () => {
     try {
       // Fetch accounts from backend API
       const response = await axios.get(`${apiUrl}/api/accounts-list/${selectedBusiness.business_id}`, {
         withCredentials: true
       });
-      
+
       setAccounts(response.data.accounts || []);
     } catch (error) {
       console.error('Failed to fetch accounts:', error);
@@ -136,9 +108,10 @@ const ShowBusinessAccount = () => {
   };
 
   const getAccountTypeIcon = (typeName) => {
-    if (typeName.includes('Assets')) return <TrendingUp className="w-4 h-4 text-success-600" />;
-    if (typeName.includes('Income')) return <TrendingUp className="w-4 h-4 text-primary-600" />;
-    if (typeName.includes('Expense')) return <TrendingDown className="w-4 h-4 text-error-600" />;
+    if (typeName.includes('Assets')) return <Wallet className="w-4 h-4 text-success-600" />;
+    if (typeName.includes('Income')) return <PiggyBank className="w-4 h-4 text-primary-600" />;
+    if (typeName.includes('Expense')) return <CreditCard className="w-4 h-4 text-error-600" />;
+
     return <DollarSign className="w-4 h-4 text-gray-600" />;
   };
 
@@ -229,20 +202,13 @@ const ShowBusinessAccount = () => {
                 {searchTerm || selectedFilter !== 'all' ? 'No accounts found' : 'No accounts yet'}
               </h3>
               <p className="mt-2 text-gray-500">
-                {searchTerm || selectedFilter !== 'all' 
+                {searchTerm || selectedFilter !== 'all'
                   ? 'Try adjusting your search or filter criteria'
                   : 'Create your first account to start tracking finances'
                 }
               </p>
-              {(!searchTerm && selectedFilter === 'all') && (
-                <Link
-                  to="/creatnewaccount"
-                  className="mt-4 inline-flex items-center btn-primary"
-                >
-                  <Plus className="w-4 h-4 mr-2" />
-                  Create Ledger
-                </Link>
-              )}
+
+
             </div>
           ) : (
             <div className="card p-0">

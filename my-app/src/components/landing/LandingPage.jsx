@@ -479,7 +479,7 @@ const LandingPage = () => {
 
       {/* CTA Banner */}
       <section
-        className="py-10 bg-gray-950 overflow-hidden bg-center bg-no-repeat"
+        className="py-10 bg-gray-950 overflow-hidden bg-center bg-no-repeat "
         style={{
           backgroundImage: "url('/CTA_banner.jpg')",
           backgroundSize: "cover",
