@@ -6,12 +6,11 @@ import {
   Building2,
   Users,
   FileText,
-  CreditCard,
-  Settings,
   LogOut,
   Menu,
   X,
-  Plus
+  Plus,
+  HomeIcon
 } from 'lucide-react';
 
 const Navbar = () => {
@@ -39,22 +38,23 @@ const Navbar = () => {
       await axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/auth/logout`, { withCredentials: true });
       localStorage.clear();
       clearBusiness();
-      navigate('/login');
+      navigate('/');
     } catch (error) {
       console.error('Logout failed:', error);
       // Force logout even if API call fails
       clearBusiness();
       // navigate('/login');
-      window.location.href = '/login';
+      window.location.href = '/';
     }
   };
 
   const navigation = [
+    { name: 'Home', href: '/', icon: HomeIcon },
     { name: 'Businesses', href: '/list', icon: Building2 },
     { name: 'Accounts', href: '/showbusinessaccount', icon: Users },
     { name: 'Post Transactions', href: '/transectionForm', icon: FileText },
     { name: 'Show Transactions', href: '/showtransections', icon: FileText },
-    { name: 'New Ledger', href: '/creatnewaccount', icon: Plus },
+    
   ];
 
   const isActive = (path) => location.pathname === path;
@@ -68,7 +68,7 @@ const Navbar = () => {
           <div className="flex">
             <div className="flex-shrink-0 flex items-center">
               <Link to="/list" className="text-2xl font-bold text-primary-600">
-                FinanceFlow
+                Smart Financial
               </Link>
             </div>
 

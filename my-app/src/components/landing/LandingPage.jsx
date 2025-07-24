@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect, useCallback } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
+import axios from "axios";
 import {
   Building2,
   FileText,
@@ -235,6 +236,31 @@ const plans = [
 
 const LandingPage = () => {
   const boxRef = useRef(null);
+  const navigate = useNavigate();
+  const [user, setUser] = useState(null);
+  useEffect(() => {
+    const fetchUser = async () => {
+      try {
+        const res = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/login/session`, { withCredentials: true });
+        setUser(res.data.username);
+      } catch {
+        setUser(null);
+      }
+    };
+    fetchUser();
+  }, []);
+
+  const handleLogout = async () => {
+    try {
+      await axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/auth/logout`, { withCredentials: true });
+      localStorage.clear();
+      setUser(null);
+      navigate('/login');
+    } catch {
+      setUser(null);
+      window.location.href = '/login';
+    }
+  };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-primary-50 via-white to-primary-50 overflow-x-hidden">
@@ -244,15 +270,29 @@ const LandingPage = () => {
           <div className="flex justify-between items-center h-16">
             <div className="flex items-center">
               <Building2 className="w-8 h-8 text-primary-600 mr-2" />
-              <span className="text-2xl font-bold text-gray-900">FinanceFlow</span>
+              <span className="text-2xl font-bold text-gray-900">Smart Financial</span>
             </div>
             <div className="flex items-center space-x-4">
-              <Link to="/login" className="text-gray-600 hover:text-gray-900 font-medium transition-colors">
-                Sign In
-              </Link>
-              <Link to="/register" className="btn-primary">
-                Get Started
-              </Link>
+              {user ? (
+                <>
+                  <span className="text-gray-700 font-medium">Logged-in</span>
+                  <button
+                    onClick={handleLogout}
+                    className="text-gray-600 hover:text-gray-900 font-medium transition-colors border border-gray-300 rounded px-3 py-1"
+                  >
+                    Logout
+                  </button>
+                </>
+              ) : (
+                <>
+                  <Link to="/login" className="text-gray-600 hover:text-gray-900 font-medium transition-colors">
+                    Sign In
+                  </Link>
+                  <Link to="/register" className="btn-primary">
+                    Get Started
+                  </Link>
+                </>
+              )}
             </div>
           </div>
         </div>
@@ -274,13 +314,23 @@ const LandingPage = () => {
                 software. From startups to enterprises, we've got you covered.
               </p>
               <div className="flex flex-col sm:flex-row gap-4 mt-8">
-                <Link
-                  to="/register"
-                  className="btn-primary text-lg px-8 py-4 flex items-center justify-center group"
-                >
-                  Start Free Today
-                  <ArrowRight className="w-5 h-5 ml-2 group-hover:translate-x-1 transition-transform" />
-                </Link>
+                {user ? (
+                  <button
+                    onClick={() => navigate('/list')}
+                    className="btn-primary text-lg px-8 py-4 flex items-center justify-center group"
+                  >
+                    Go to Dashboard
+                    <ArrowRight className="w-5 h-5 ml-2 group-hover:translate-x-1 transition-transform" />
+                  </button>
+                ) : (
+                  <Link
+                    to="/register"
+                    className="btn-primary text-lg px-8 py-4 flex items-center justify-center group"
+                  >
+                    Start Free Today
+                    <ArrowRight className="w-5 h-5 ml-2 group-hover:translate-x-1 transition-transform" />
+                  </Link>
+                )}
                 <button className="flex items-center justify-center text-gray-600 hover:text-gray-900 font-medium transition-colors">
                   <Play className="w-5 h-5 mr-2" />
                   Watch Demo

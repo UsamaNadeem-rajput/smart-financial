@@ -27,7 +27,9 @@ export default function TransectionForm() {
   const isSubmitDisabled =
     debitTotal === 0 || creditTotal === 0 || debitTotal !== creditTotal;
 
-  const allAccountNamesFilled = rows.every((row) => row.accountName.trim() !== "");
+  const allAccountNamesFilled = rows.every(
+    (row) => row.accountName.trim() !== ""
+  );
 
   const getNumber = () => {
     let stored = localStorage.getItem("myNumber");
@@ -79,11 +81,14 @@ export default function TransectionForm() {
     };
 
     try {
-      const res = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/transactions`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
-      });
+      const res = await fetch(
+        `${import.meta.env.VITE_BACKEND_URL}/api/transactions`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload),
+        }
+      );
       const data = await res.json();
       if (data.success) onSuccess();
       else alert("Error: " + (data.error || "Failed to save transaction."));
@@ -123,7 +128,11 @@ export default function TransectionForm() {
     if (value.length > 0) {
       try {
         const res = await fetch(
-          `${import.meta.env.VITE_BACKEND_URL}/api/search-accounts?query=${encodeURIComponent(value)}&business_id=${selectedBusiness?.business_id}`
+          `${
+            import.meta.env.VITE_BACKEND_URL
+          }/api/search-accounts?query=${encodeURIComponent(
+            value
+          )}&business_id=${selectedBusiness?.business_id}`
         );
         const data = await res.json();
         setSuggestions(data);
@@ -147,7 +156,8 @@ export default function TransectionForm() {
     setShowSuggestionsIdx(null);
   };
 
-  const addRow = () => setRows([...rows, { accountName: "", debit: "", credit: "" }]);
+  const addRow = () =>
+    setRows([...rows, { accountName: "", debit: "", credit: "" }]);
   const removeRow = (idx) =>
     setRows(rows.length > 1 ? rows.filter((_, i) => i !== idx) : rows);
 
@@ -168,168 +178,209 @@ export default function TransectionForm() {
   };
 
   const handleCreditKeyDown = (idx, e) => {
-    if (e.key === "Enter" && rows[idx].accountName && rows[idx].credit) addRow();
+    if (e.key === "Enter" && rows[idx].accountName && rows[idx].credit)
+      addRow();
   };
 
   return (
-    <div className="container">
+    <>
       <Navbar />
-      <div className="container my-5 text-bg-light p-4 rounded" style={{ maxWidth: "100%", minWidth: "300px" }}>
-        <h2 className="mb-4">Transaction Form</h2>
+      <div className="container">
+        <div
+          className="container my-5 text-bg-light p-4 rounded"
+          style={{ maxWidth: "100%", minWidth: "300px" }}
+        >
+          <h2 className="mb-4">Transaction Form</h2>
 
-        {/* Top Row: Date, Time, Transaction ID */}
-        <div className="row g-3 align-items-center mb-4">
-          <div className="col-md-8 col-12 d-flex flex-wrap gap-3 align-items-center">
-            <div className="d-flex align-items-center gap-2">
-              <label className="form-label m-0">Date:</label>
-              <input
-                type="date"
-                value={date}
-                onChange={handleDateChange}
-                className="form-control"
-                style={{ minWidth: "150px" }}
-              />
+          {/* Top Row: Date, Time, Transaction ID */}
+          <div className="row g-3 align-items-center mb-4">
+            <div className="col-md-8 col-12 d-flex flex-wrap gap-3 align-items-center">
+              <div className="d-flex align-items-center gap-2">
+                <label className="form-label m-0">Date:</label>
+                <input
+                  type="date"
+                  value={date}
+                  onChange={handleDateChange}
+                  className="form-control"
+                  style={{ minWidth: "150px" }}
+                />
+              </div>
+              <div className="d-flex align-items-center gap-2">
+                <label className="form-label m-0">Time:</label>
+                <span
+                  className="form-control bg-light"
+                  style={{ minWidth: "120px" }}
+                >
+                  {time}
+                </span>
+              </div>
             </div>
-            <div className="d-flex align-items-center gap-2">
-              <label className="form-label m-0">Time:</label>
-              <span className="form-control bg-light" style={{ minWidth: "120px" }}>
-                {time}
-              </span>
+            <div className="col-md-4 col-12 d-flex justify-content-md-end">
+              <div className="d-flex align-items-center gap-2 w-100">
+                <label className="form-label m-0">Transaction ID:</label>
+                <input
+                  type="number"
+                  value={number}
+                  readOnly
+                  className="form-control"
+                  style={{ minWidth: "150px" }}
+                />
+              </div>
             </div>
           </div>
-          <div className="col-md-4 col-12 d-flex justify-content-md-end">
-            <div className="d-flex align-items-center gap-2 w-100">
-              <label className="form-label m-0">Transaction ID:</label>
+
+          {/* Table */}
+          <table className="table table-striped table-hover table-bordered border-secondary">
+            <thead className="table-dark">
+              <tr>
+                <th>Account Name</th>
+                <th>Debit</th>
+                <th>Credit</th>
+                <th>Remove</th>
+              </tr>
+            </thead>
+            <tbody>
+              {rows.map((row, idx) => (
+                <tr key={idx}>
+                  <td style={{ position: "relative" }}>
+                    <input
+                      className="form-control"
+                      type="text"
+                      value={row.accountName}
+                      onChange={(e) =>
+                        handleAccountNameChange(idx, e.target.value)
+                      }
+                      autoComplete="off"
+                      onBlur={() =>
+                        setTimeout(() => setShowSuggestionsIdx(null), 100)
+                      }
+                      onFocus={() =>
+                        row.accountName && setShowSuggestionsIdx(idx)
+                      }
+                    />
+                    {showSuggestionsIdx === idx && suggestions.length > 0 && (
+                      <ul
+                        className="list-group position-absolute w-100"
+                        style={{
+                          zIndex: 10,
+                          maxHeight: "150px",
+                          overflowY: "auto",
+                        }}
+                      >
+                        {suggestions.map((s) => (
+                          <li
+                            key={s.account_id}
+                            className="list-group-item list-group-item-action"
+                            onMouseDown={() =>
+                              handleSuggestionClick(
+                                idx,
+                                s.account_name,
+                                s.account_id
+                              )
+                            }
+                          >
+                            {s.account_name}
+                          </li>
+                        ))}
+                      </ul>
+                    )}
+                  </td>
+                  <td>
+                    <input
+                      type="number"
+                      className="form-control"
+                      value={row.debit}
+                      onChange={(e) => handleDebitChange(idx, e.target.value)}
+                      onKeyDown={(e) => handleDebitKeyDown(idx, e)}
+                    />
+                  </td>
+                  <td>
+                    <input
+                      type="number"
+                      className="form-control"
+                      value={row.credit}
+                      onChange={(e) => handleCreditChange(idx, e.target.value)}
+                      onKeyDown={(e) => handleCreditKeyDown(idx, e)}
+                    />
+                  </td>
+                  <td className="text-center">
+                    <button
+                      type="button"
+                      className="btn btn-link btn-sm"
+                      onClick={() => removeRow(idx)}
+                    >
+                      <i className="fas fa-times"></i>
+                    </button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+
+          {/* Totals */}
+          <div className="d-flex justify-content-end gap-3 mt-4">
+            <div className="d-flex align-items-center">
+              <label className="me-2">Debit Total:</label>
               <input
                 type="number"
-                value={number}
-                readOnly
                 className="form-control"
-                style={{ minWidth: "150px" }}
+                value={debitTotal}
+                readOnly
+              />
+            </div>
+            <div className="d-flex align-items-center">
+              <label className="me-2">Credit Total:</label>
+              <input
+                type="number"
+                className="form-control"
+                value={creditTotal}
+                readOnly
               />
             </div>
           </div>
-        </div>
 
-        {/* Table */}
-        <table className="table table-striped table-hover table-bordered border-secondary">
-          <thead className="table-dark">
-            <tr>
-              <th>Account Name</th>
-              <th>Debit</th>
-              <th>Credit</th>
-              <th>Remove</th>
-            </tr>
-          </thead>
-          <tbody>
-            {rows.map((row, idx) => (
-              <tr key={idx}>
-                <td style={{ position: "relative" }}>
-                  <input
-                    className="form-control"
-                    type="text"
-                    value={row.accountName}
-                    onChange={(e) => handleAccountNameChange(idx, e.target.value)}
-                    autoComplete="off"
-                    onBlur={() => setTimeout(() => setShowSuggestionsIdx(null), 100)}
-                    onFocus={() => row.accountName && setShowSuggestionsIdx(idx)}
-                  />
-                  {showSuggestionsIdx === idx && suggestions.length > 0 && (
-                    <ul
-                      className="list-group position-absolute w-100"
-                      style={{ zIndex: 10, maxHeight: "150px", overflowY: "auto" }}
-                    >
-                      {suggestions.map((s) => (
-                        <li
-                          key={s.account_id}
-                          className="list-group-item list-group-item-action"
-                          onMouseDown={() => handleSuggestionClick(idx, s.account_name, s.account_id)}
-                        >
-                          {s.account_name}
-                        </li>
-                      ))}
-                    </ul>
-                  )}
-                </td>
-                <td>
-                  <input
-                    type="number"
-                    className="form-control"
-                    value={row.debit}
-                    onChange={(e) => handleDebitChange(idx, e.target.value)}
-                    onKeyDown={(e) => handleDebitKeyDown(idx, e)}
-                  />
-                </td>
-                <td>
-                  <input
-                    type="number"
-                    className="form-control"
-                    value={row.credit}
-                    onChange={(e) => handleCreditChange(idx, e.target.value)}
-                    onKeyDown={(e) => handleCreditKeyDown(idx, e)}
-                  />
-                </td>
-                <td className="text-center">
-                  <button
-                    type="button"
-                    className="btn btn-link btn-sm"
-                    onClick={() => removeRow(idx)}
-                  >
-                    <i className="fas fa-times"></i>
-                  </button>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-
-        {/* Totals */}
-        <div className="d-flex justify-content-end gap-3 mt-4">
-          <div className="d-flex align-items-center">
-            <label className="me-2">Debit Total:</label>
-            <input type="number" className="form-control" value={debitTotal} readOnly />
-          </div>
-          <div className="d-flex align-items-center">
-            <label className="me-2">Credit Total:</label>
-            <input type="number" className="form-control" value={creditTotal} readOnly />
-          </div>
-        </div>
-
-        {/* Buttons */}
-        <div className="d-flex flex-wrap justify-content-between align-items-center mt-5 gap-3">
-          <div>
-            <button className="btn btn-success me-2" disabled={isSubmitDisabled || !allAccountNamesFilled}>
-              Edit
-            </button>
-            <button className="btn btn-danger" disabled={isSubmitDisabled || !allAccountNamesFilled}>
-              Delete
-            </button>
-          </div>
-          <div>
-            <button
-              className="btn btn-success me-2"
-              onClick={handleSaveAndNew}
-              disabled={isSubmitDisabled || !allAccountNamesFilled}
-            >
-              Save and New
-            </button>
-            <button
-              className="btn btn-primary me-2"
-              onClick={handleSaveAndClose}
-              disabled={isSubmitDisabled || !allAccountNamesFilled}
-            >
-              Save and Close
-            </button>
-            <button
-              className="btn btn-secondary"
-              onClick={handleClose}
-              disabled={!allAccountNamesFilled}
-            >
-              Close
-            </button>
+          {/* Buttons */}
+          <div className="d-flex flex-wrap justify-content-between align-items-center mt-5 gap-3">
+            <div>
+              <button
+                className="btn btn-success me-2"
+                disabled={isSubmitDisabled || !allAccountNamesFilled}
+              >
+                Edit
+              </button>
+              <button
+                className="btn btn-danger"
+                disabled={isSubmitDisabled || !allAccountNamesFilled}
+              >
+                Delete
+              </button>
+            </div>
+            <div>
+              <button
+                className="btn btn-success me-2"
+                onClick={handleSaveAndNew}
+                disabled={isSubmitDisabled || !allAccountNamesFilled}
+              >
+                Save and New
+              </button>
+              <button
+                className="btn btn-primary me-2"
+                onClick={handleSaveAndClose}
+                disabled={isSubmitDisabled || !allAccountNamesFilled}
+              >
+                Save and Close
+              </button>
+              <button
+                className="btn btn-secondary"
+                onClick={handleClose}
+                disabled={!allAccountNamesFilled}
+              >
+                Close
+              </button>
+            </div>
           </div>
         </div>
       </div>
-    </div>
+    </>
   );
 }
