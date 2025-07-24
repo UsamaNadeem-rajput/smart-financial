@@ -91,7 +91,7 @@ export default function LoginForm() {
                   <div className="row g-0">
                     <div className="col-lg-6 bg-white">
                       <div className="card-body p-md-5 mx-md-4">
-                        <div className="ml-5 w-72 h-45 md:w-80 md:h-64">
+                        <div className="w-72 h-45 md:w-80 md:h-64">
                           <DotLottieReact
                             src="https://lottie.host/b57769dd-de23-4b79-acb7-8f275ee9ccaa/i1qkmQtZ8q.lottie"
                             loop
