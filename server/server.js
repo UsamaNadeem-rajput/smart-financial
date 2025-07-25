@@ -80,6 +80,7 @@ app.use('/api/search-accounts', require('./routers/searchAccounts'));
 app.use('/api', require('./routers/transactionApi'));
 app.use('/api', require('./routers/showtransactions'));
 app.use('/api/auth', require('./routers/auth')); // ✅ Mounted under /api
+app.use('/api/contact', require('./routers/contact')); // ✅ Contact form route
 
 /* ---------- Fallback ---------- */
 app.use('/api/*', (req, res) => {

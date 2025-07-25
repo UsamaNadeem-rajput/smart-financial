@@ -9,6 +9,7 @@ import EditAccount from './components/accounts/EditAccount';
 import ShowBusinessAccount from './components/accounts/ShowBusinessAccount';
 import TransactionForm from './components/transactions/TransactionForm';
 import ShowTransactions from './components/transactions/ShowTransactions';
+import ContactForm from './components/conatct_us/ContactForm';
 import PrivateRoute from './components/contexts/PrivateRoute';
 import { BusinessProvider } from './context/BusinessContext';
 
@@ -35,6 +36,7 @@ function App() {
             <Route path="/showbusinessaccount" element={<PrivateRoute><ShowBusinessAccount /></PrivateRoute>} />
             <Route path="/transectionForm" element={<PrivateRoute><TransactionForm /></PrivateRoute>} />
             <Route path="/showtransections" element={<PrivateRoute><ShowTransactions /></PrivateRoute>} />
+            <Route path="/contact" element={<PrivateRoute><ContactForm /></PrivateRoute>} />
           </Routes>
         </div>
       </Router>
