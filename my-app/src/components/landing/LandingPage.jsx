@@ -270,18 +270,19 @@ const LandingPage = () => {
           <div className="flex justify-between items-center h-16">
             <div className="flex items-center">
               <Building2 className="w-8 h-8 text-primary-600 mr-2" />
-              <span className="text-2xl font-bold text-gray-900">Smart Financial</span>
+              <span className="sm:text-2xl font-bold text-gray-900">Smart Financial</span>
+              <small className=" font-bold">By khushi vijay</small>
             </div>
             <div className="flex items-center space-x-4">
               {user ? (
                 <>
-                  <Link to="/list" className="text-gray-600 hover:bg-gray-900 hover:text-warning-50 no-underline font-medium  p-1 rounded border-solid border-black transition-colors">
+                  <Link to="/list" className="text-gray-600 hover:bg-gray-900 hover:text-warning-50 no-underline max-sm:text-xs font-medium  p-1 rounded border-solid border-black transition-colors">
                     Dashboard
                     </Link> 
-                  <span className="text-gray-700 font-medium">Logged-in</span>
+                  <span className="sm:text-gray-700 font-medium max-sm:text-xs">Logged-in</span>
                   <button
                     onClick={handleLogout}
-                    className="text-gray-600 hover:text-gray-900 font-medium transition-colors border border-gray-300 rounded px-3 py-1"
+                    className="text-gray-600 hover:text-gray-900 font-medium max-sm:text-xs transition-colors border border-gray-300 rounded px-3 py-1"
                   >
                     Logout
                   </button>

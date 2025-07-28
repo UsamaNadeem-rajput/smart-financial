@@ -116,7 +116,7 @@ const ShowBusinessAccount = () => {
   };
 
   const accountTypeFilters = [
-    { value: 'all', label: 'All Accounts' },
+    { value: 'all', label: 'All Ledgers' },
     { value: 'assets', label: 'Assets' },
     { value: 'income', label: 'Income' },
     { value: 'expense', label: 'Expense' },
@@ -145,7 +145,7 @@ const ShowBusinessAccount = () => {
           {/* Header */}
           <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-8">
             <div>
-              <h1 className="text-3xl font-bold text-gray-900">Chart of Accounts</h1>
+              <h1 className="text-3xl font-bold text-gray-900">Chart of Accounts-Ledgers</h1>
               <p className="mt-2 text-gray-600">
                 Manage accounts for "{selectedBusiness?.business_name}"
               </p>

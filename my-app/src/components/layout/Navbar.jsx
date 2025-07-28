@@ -10,7 +10,8 @@ import {
   Menu,
   X,
   Plus,
-  HomeIcon
+  HomeIcon,
+  Contact
 } from 'lucide-react';
 
 const Navbar = () => {
@@ -51,9 +52,10 @@ const Navbar = () => {
   const navigation = [
     { name: 'Home', href: '/', icon: HomeIcon },
     { name: 'Businesses', href: '/list', icon: Building2 },
-    { name: 'Accounts', href: '/showbusinessaccount', icon: Users },
+    { name: 'Ledgers', href: '/showbusinessaccount', icon: Users },
     { name: 'Post Transactions', href: '/transectionForm', icon: FileText },
     { name: 'Show Transactions', href: '/showtransections', icon: FileText },
+    { name: 'contact', href: '/contact', icon: Contact }
     
   ];
 
@@ -61,13 +63,13 @@ const Navbar = () => {
 
 
   return (
-    <nav className="bg-white shadow-sm border-b border-gray-200">
+    <nav className="bg-white shadow-sm border-b border-gray-200 ">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between h-16">
           {/* Logo and main navigation */}
           <div className="flex">
             <div className="flex-shrink-0 flex items-center">
-              <Link to="/list" className="text-2xl font-bold text-primary-600">
+              <Link to="/list" className="lg:text-2xl font-bold lg:text-primary-600">
                 Smart Financial
               </Link>
             </div>

@@ -3,9 +3,20 @@ const router = express.Router();
 const db = require('../db'); // replace with your actual db connection import
 
 router.get('/showtransactions', async (req, res) => {
-  const { date, business_id } = req.query;
-  if (!date || !/^\d{4}-\d{2}-\d{2}$/.test(date)) {
-    return res.status(400).json({ error: 'Date must be in YYYY-MM-DD format' });
+  const { date, from, to, business_id } = req.query;
+
+  // Validate date range
+  let fromDate = from, toDate = to;
+  if (!fromDate || !toDate) {
+    if (date && /^\d{4}-\d{2}-\d{2}$/.test(date)) {
+      fromDate = date;
+      toDate = date;
+    } else {
+      return res.status(400).json({ error: 'from and to dates (YYYY-MM-DD) are required' });
+    }
+  }
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(fromDate) || !/^\d{4}-\d{2}-\d{2}$/.test(toDate)) {
+    return res.status(400).json({ error: 'from and to must be in YYYY-MM-DD format' });
   }
 
   try {
@@ -13,8 +24,8 @@ router.get('/showtransactions', async (req, res) => {
       `SELECT transaction_id, frontend_transaction_id, DATE_FORMAT(date, '%Y-%m-%d') as date, 
        debit, credit
        FROM transactions 
-       WHERE DATE(date) = ?`;
-    let queryParams = [date];
+       WHERE DATE(date) BETWEEN ? AND ?`;
+    let queryParams = [fromDate, toDate];
     if (business_id) {
       transactionsQuery += ' AND business_id = ?';
       queryParams.push(business_id);

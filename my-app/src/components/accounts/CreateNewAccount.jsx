@@ -243,7 +243,7 @@ const CreateNewAccount = () => {
                       onChange={handleChange}
                       className={`input-field ${errors.type_id ? 'border-error-300 focus:border-error-500 focus:ring-error-500' : ''}`}
                     >
-                      <option value="">Select account type</option>
+                      <option value="">Select Ledger type</option>
                       {getFilteredAccountTypes().map(type => (
                         <optgroup key={type.type_id} label={type.type_name}>
                           <option value={type.type_id}>{type.type_name}</option>
@@ -272,7 +272,7 @@ const CreateNewAccount = () => {
                       value={formData.account_name}
                       onChange={handleChange}
                       className={`input-field ${errors.account_name ? 'border-error-300 focus:border-error-500 focus:ring-error-500' : ''}`}
-                      placeholder="Enter account name"
+                      placeholder="Enter Ledger name"
                     />
                     {errors.account_name && (
                       <p className="mt-1 text-sm text-error-600">{errors.account_name}</p>
@@ -332,7 +332,7 @@ const CreateNewAccount = () => {
                       value={formData.description}
                       onChange={handleChange}
                       className="input-field"
-                      placeholder="Enter account description (optional)"
+                      placeholder="Enter Ledger description (optional)"
                     />
                   </div>
 
@@ -371,7 +371,7 @@ const CreateNewAccount = () => {
             {accountSuggestions.length > 0 && (
               <div className="lg:col-span-1">
                 <div className="card">
-                  <h3 className="text-lg font-medium text-gray-900 mb-4">Suggested Account Names</h3>
+                  <h3 className="text-lg font-medium text-gray-900 mb-4">Suggested Ledger Names</h3>
                   <select
                     className="w-full px-3 py-2 text-sm text-gray-700 rounded-md border border-gray-300"
                     onChange={e => handleSuggestionClick(e.target.value)}

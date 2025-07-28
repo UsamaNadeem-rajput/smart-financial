@@ -11,6 +11,17 @@ function getLocalDateString() {
   return now.toISOString().split("T")[0];
 }
 
+// Helper to format numbers with commas and 2 decimals
+function formatAmount(val) {
+  if (val === "" || val === undefined || val === null) return "";
+  const num = Number(val);
+  if (isNaN(num)) return val;
+  return num.toLocaleString(undefined, {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  });
+}
+
 export default function TransactionEntryTable() {
   const [date, setDate] = useState(getLocalDateString());
   const [entries, setEntries] = useState([]);
@@ -30,15 +41,15 @@ export default function TransactionEntryTable() {
           frontend_transaction_id: tx.frontend_transaction_id,
           transaction_date: tx.date,
           account_name: entry.account_name,
-          debit: entry.type === "debit" ? entry.amount : "",
-          credit: entry.type === "credit" ? entry.amount : "",
+          debit: entry.type === "debit" ? formatAmount(entry.amount) : "",
+          credit: entry.type === "credit" ? formatAmount(entry.amount) : "",
         }));
         entries.push({
           frontend_transaction_id: tx.frontend_transaction_id,
           transaction_date: tx.date,
           account_name: `Total for Transaction ${tx.frontend_transaction_id}`,
-          debit: tx.totals.debit,
-          credit: tx.totals.credit,
+          debit: formatAmount(tx.totals.debit),
+          credit: formatAmount(tx.totals.credit),
           isTotal: true,
         });
         return entries;
@@ -126,8 +137,8 @@ export default function TransactionEntryTable() {
                 : ""
             }
             <td>${entry.account_name}</td>
-            <td>${entry.debit || ""}</td>
-            <td>${entry.credit || ""}</td>
+            <td>${formatAmount(entry.debit)}</td>
+            <td>${formatAmount(entry.credit)}</td>
           </tr>
         `);
       });
@@ -142,8 +153,8 @@ export default function TransactionEntryTable() {
     printWindow.document.write(`
           <tr class="total-row">
             <td colspan="2" class="text-right">Total</td>
-            <td>${totals.debit.toFixed(2)}</td>
-            <td>${totals.credit.toFixed(2)}</td>
+            <td>${formatAmount(totals.debit)}</td>
+            <td>${formatAmount(totals.credit)}</td>
           </tr>
         </tbody>
       </table>
@@ -200,8 +211,8 @@ export default function TransactionEntryTable() {
               ? `${frontend_transaction_id}\n(${entry.transaction_date || "No Date"})`
               : "",
             entry.account_name,
-            entry.debit,
-            entry.credit,
+            formatAmount(entry.debit),
+            formatAmount(entry.credit),
             entry.isTotal ? "transaction-total-row" : "",
           ]);
         });
@@ -210,7 +221,7 @@ export default function TransactionEntryTable() {
         }
       });
 
-      tableRows.push(["", "Total", totals.debit.toFixed(2), totals.credit.toFixed(2), ""]);
+      tableRows.push(["", "Total", formatAmount(totals.debit), formatAmount(totals.credit), ""]);
 
       let totalRowIndex = tableRows.length - 1;
 
@@ -330,8 +341,8 @@ export default function TransactionEntryTable() {
                             </td>
                           )}
                           <td>{entry.account_name}</td>
-                          <td>{entry.debit}</td>
-                          <td>{entry.credit}</td>
+                          <td>{formatAmount(entry.debit)}</td>
+                          <td>{formatAmount(entry.credit)}</td>
                         </tr>
                       ))
                   );
@@ -340,8 +351,8 @@ export default function TransactionEntryTable() {
                   <td colSpan={2} className="text-right">
                     Total
                   </td>
-                  <td>{totals.debit.toFixed(2)}</td>
-                  <td>{totals.credit.toFixed(2)}</td>
+                  <td>{formatAmount(totals.debit)}</td>
+                  <td>{formatAmount(totals.credit)}</td>
                 </tr>
               </tbody>
             </table>
