@@ -23,16 +23,17 @@ function formatAmount(val) {
 }
 
 export default function TransactionEntryTable() {
-  const [date, setDate] = useState(getLocalDateString());
+  const [fromDate, setFromDate] = useState(getLocalDateString());
+  const [toDate, setToDate] = useState(getLocalDateString());
   const [entries, setEntries] = useState([]);
   const [totals, setTotals] = useState({ debit: 0, credit: 0 });
   const { selectedBusiness } = useBusiness();
 
   const fetchData = async () => {
-    if (!date || !selectedBusiness?.business_id) return;
+    if (!fromDate || !toDate || !selectedBusiness?.business_id) return;
     try {
       const res = await fetch(
-        `${import.meta.env.VITE_BACKEND_URL}/api/showtransactions?date=${date}&business_id=${selectedBusiness.business_id}`
+        `${import.meta.env.VITE_BACKEND_URL}/api/showtransactions?from=${fromDate}&to=${toDate}&business_id=${selectedBusiness.business_id}`
       );
       const data = await res.json();
 
@@ -69,8 +70,8 @@ export default function TransactionEntryTable() {
   };
 
   useEffect(() => {
-    if (date && selectedBusiness?.business_id) fetchData();
-  }, [date, selectedBusiness]);
+    if (fromDate && toDate && selectedBusiness?.business_id) fetchData();
+  }, [fromDate, toDate, selectedBusiness]);
 
   const handlePrint = () => {
     const printWindow = window.open("", "", "height=600,width=800");
@@ -116,7 +117,7 @@ export default function TransactionEntryTable() {
           <table class="table table-bordered">
             <thead class="table-dark">
               <tr>
-                <th>Frontend Transaction ID / Date</th>
+                <th>Transaction ID / Date</th>
                 <th>Ledger Name</th>
                 <th>Debit</th>
                 <th>Credit</th>
@@ -257,7 +258,7 @@ export default function TransactionEntryTable() {
         },
       });
 
-      doc.save(`transactions_${date}.pdf`);
+      doc.save(`transactions_${fromDate}_to_${toDate}.pdf`);
     };
 
     addHeader(buildTable);
@@ -269,14 +270,27 @@ export default function TransactionEntryTable() {
       <div className="container mt-4">
         <h2>General Journal</h2>
 
-        <div className="mb-3">
-          <label>Select Date:</label>
-          <input
-            type="date"
-            value={date}
-            onChange={(e) => setDate(e.target.value)}
-            className="form-control"
-          />
+        <div className="mb-3 row">
+          <div className="col-md-3">
+            <label>From Date:</label>
+            <input
+              type="date"
+              value={fromDate}
+              onChange={(e) => setFromDate(e.target.value)}
+              className="form-control"
+              max={toDate}
+            />
+          </div>
+          <div className="col-md-3">
+            <label>To Date:</label>
+            <input
+              type="date"
+              value={toDate}
+              onChange={(e) => setToDate(e.target.value)}
+              className="form-control"
+              min={fromDate}
+            />
+          </div>
         </div>
 
         <div className="mb-3 d-flex gap-2">
@@ -308,7 +322,7 @@ export default function TransactionEntryTable() {
             <table className="table table-bordered">
               <thead className="table-dark">
                 <tr>
-                  <th>Frontend Transaction ID / Date</th>
+                  <th>Transaction ID / Date</th>
                   <th>Ledger Name</th>
                   <th>Debit</th>
                   <th>Credit</th>
@@ -357,7 +371,7 @@ export default function TransactionEntryTable() {
               </tbody>
             </table>
           ) : (
-            date && <p>No transactions found for selected date.</p>
+            fromDate && toDate && <p>No transactions found for selected date range.</p>
           )}
         </div>
       </div>

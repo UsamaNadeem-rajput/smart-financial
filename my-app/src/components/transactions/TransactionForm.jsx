@@ -269,7 +269,7 @@ export default function TransectionForm() {
           <table className="table table-striped table-hover table-bordered border-secondary">
             <thead className="table-dark">
               <tr>
-                <th>Account Name</th>
+                <th>Ledgers Name</th>
                 <th>Debit</th>
                 <th>Credit</th>
                 <th>Remove</th>
