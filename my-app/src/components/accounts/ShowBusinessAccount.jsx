@@ -199,7 +199,7 @@ const ShowBusinessAccount = () => {
             <div className="card text-center py-12">
               <DollarSign className="mx-auto h-12 w-12 text-gray-400" />
               <h3 className="mt-4 text-lg font-medium text-gray-900">
-                {searchTerm || selectedFilter !== 'all' ? 'No accounts found' : 'No accounts yet'}
+                {searchTerm || selectedFilter !== 'all' ? 'No Ledger found' : 'No Ledger yet'}
               </h3>
               <p className="mt-2 text-gray-500">
                 {searchTerm || selectedFilter !== 'all'

@@ -271,18 +271,18 @@ const LandingPage = () => {
             <div className="flex flex-col items-center">
               <Building2 className="w-8 h-8 text-primary-600 mr-2" />
               <div> <span className="sm:text-2xl font-bold text-gray-900">Smart Financial</span></div>
-              
+
               <div>
-                <small className="mt-2 ml-72 sm:font-bold max-sm:text-xs max-sm:ml-1 ">By khushi vijay</small>
+                <small className="mt-2 sm:font-bold max-sm:text-xs max-sm:ml-1 ">By khushi vijay</small>
               </div>
-              
+
             </div>
             <div className="flex items-center space-x-4">
               {user ? (
                 <>
-                  <Link to="/list" className="text-gray-600 hover:bg-gray-900 hover:text-warning-50 no-underline max-sm:text-xs font-medium  p-1 rounded border-solid border-black transition-colors">
+                  {/* <Link to="/list" className="text-gray-600 hover:bg-gray-900 hover:text-warning-50 no-underline max-sm:text-xs font-medium  p-1 rounded border-solid border-black transition-colors">
                     Dashboard
-                    </Link> 
+                  </Link> */}
                   <span className="sm:text-gray-700 font-medium max-sm:text-xs">Logged-in</span>
                   <button
                     onClick={handleLogout}
@@ -436,9 +436,8 @@ const LandingPage = () => {
             {plans.map((plan, index) => (
               <div
                 key={index}
-                className={`relative bg-white rounded-2xl shadow-lg p-8 transition-all duration-300 hover:shadow-xl animate-fade-in-up ${
-                  plan.popular ? "ring-2 ring-primary-500 scale-105" : ""
-                }`}
+                className={`relative bg-white rounded-2xl shadow-lg p-8 transition-all duration-300 hover:shadow-xl animate-fade-in-up ${plan.popular ? "ring-2 ring-primary-500 scale-105" : ""
+                  }`}
                 style={{ animationDelay: `${index * 200}ms` }}
               >
                 {plan.popular && (
@@ -471,11 +470,10 @@ const LandingPage = () => {
                 </ul>
                 <Link
                   to="/register"
-                  className={`w-full py-3 px-6 rounded-lg font-medium text-center block transition-colors ${
-                    plan.popular
+                  className={`w-full py-3 px-6 rounded-lg font-medium text-center block transition-colors ${plan.popular
                       ? "bg-primary-600 hover:bg-primary-700 text-white"
                       : "bg-gray-100 hover:bg-gray-200 text-gray-900"
-                  }`}
+                    }`}
                 >
                   {plan.cta}
                 </Link>

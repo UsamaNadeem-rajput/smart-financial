@@ -86,7 +86,7 @@ const Navbar = () => {
 
   return (
     <nav className="bg-white shadow-sm border-b border-gray-200 ">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div className="max-w-screen-2xl mx-auto px-1 sm:px-6 lg:px-8">
         <div className="flex justify-between h-16">
           {/* Logo and main navigation */}
           <div className="flex">
@@ -106,7 +106,7 @@ const Navbar = () => {
                     return (
                       <div
                         key={item.name}
-                        className="relative underline group mt-3"
+                        className="relative group"
                         onMouseEnter={() => {
                           if (!isMobile()) setOpenDropdown(item.name);
                         }}
@@ -116,7 +116,7 @@ const Navbar = () => {
                       >
                         <button
                           type="button"
-                          className="inline-flex items-center px-1 pt-1 text-[12px] font-medium text-gray-500 hover:text-gray-700 cursor-pointer border-b-2 border-transparent hover:border-gray-300 transition-colors duration-200 bg-transparent"
+                          className=" inline-flex items-center px-1 pt-4 text-[14px] underline font-medium text-gray-500 hover:text-gray-700 cursor-pointer border-b-2 border-transparent hover:border-gray-300 transition-colors duration-200 bg-transparent"
                           onClick={() => handleDropdownToggle(item.name)}
                           aria-haspopup="true"
                           aria-expanded={openDropdown === item.name}
@@ -149,7 +149,7 @@ const Navbar = () => {
                     <Link
                       key={item.name}
                       to={item.href}
-                      className={`inline-flex items-center px-1 pt-1 text-[12px] font-medium border-b-2 ${
+                      className={`inline-flex items-center px-1 pt-1 text-[14px] font-medium border-b-2 ${
                         isActive(item.href)
                           ? "border-primary-500 text-primary-600"
                           : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"

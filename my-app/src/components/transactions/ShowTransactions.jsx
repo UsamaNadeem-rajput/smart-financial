@@ -177,7 +177,7 @@ export default function TransactionEntryTable() {
     const addHeader = (callback) => {
       doc.setFontSize(18);
       doc.setTextColor(30, 144, 255);
-      doc.text("FinanceFlow", 10, y);
+      doc.text("Smart Financial", 10, y);
 
       doc.setFontSize(14);
       doc.setTextColor(0, 0, 0);
@@ -228,7 +228,7 @@ export default function TransactionEntryTable() {
 
       autoTable(doc, {
         startY: y + 10,
-        head: [["Frontend Transaction ID / Date", "Ledger Name", "Debit", "Credit"]],
+        head: [["Transaction ID/  Date", "Ledger Name", "Debit", "Credit"]],
         body: tableRows,
         styles: {
           fontSize: 12,
