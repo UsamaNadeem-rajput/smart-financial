@@ -275,6 +275,9 @@ const LandingPage = () => {
             <div className="flex items-center space-x-4">
               {user ? (
                 <>
+                  <Link to="/list" className="text-gray-600 hover:bg-gray-900 hover:text-warning-50 no-underline font-medium  p-1 rounded border-solid border-black transition-colors">
+                    Dashboard
+                    </Link> 
                   <span className="text-gray-700 font-medium">Logged-in</span>
                   <button
                     onClick={handleLogout}

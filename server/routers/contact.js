@@ -7,9 +7,6 @@ const path = require('path');
 
 const router = express.Router();
 
-// Enable CORS (optional here, already handled globally in server.js)
-router.use(cors());
-
 // Multer setup for file uploads
 const upload = multer({ dest: 'uploads/' });
 
@@ -21,7 +18,7 @@ router.post('/send-email', upload.single('screenshot'), async (req, res) => {
     service: 'gmail',
     auth: {
       user: 'rajputusama826@gmail.com', // ✅ Use your Gmail
-      pass: 'smart-financial@123',   // ✅ Use app password, NOT real password
+      pass: 'znti enie uuzg bhgd',   // ✅ Use app password, NOT real password
     },
   });
 
