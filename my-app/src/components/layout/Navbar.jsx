@@ -86,7 +86,7 @@ const Navbar = () => {
 
   return (
     <nav className="bg-white shadow-sm border-b border-gray-200 ">
-      <div className="max-w-screen-2xl mx-auto px-1 sm:px-6 lg:px-8">
+      <div className="max-w-screen-2xl mx-auto px-3 sm:px-6 lg:px-8">
         <div className="flex justify-between h-16">
           {/* Logo and main navigation */}
           <div className="flex">

@@ -40,23 +40,39 @@ export default function TransectionForm() {
     (row) => row.accountName.trim() !== ""
   );
 
-  const getNumber = () => {
-    let stored = localStorage.getItem("myNumber");
-    return stored ? parseInt(stored, 10) : 1;
+  const getNextTransactionId = async () => {
+    if (!selectedBusiness?.business_id) return 1;
+    
+    try {
+      const res = await fetch(
+        `${import.meta.env.VITE_BACKEND_URL}/api/next-transaction-id/${selectedBusiness.business_id}`
+      );
+      const data = await res.json();
+      if (data.success) {
+        return data.next_transaction_id;
+      }
+    } catch (err) {
+      console.error('Error fetching next transaction ID:', err);
+    }
+    return 1;
   };
 
-  const incrementNumber = () => {
-    const num = getNumber() + 1;
-    localStorage.setItem("myNumber", num);
-    setNumber(num);
+  const incrementNumber = async () => {
+    const nextId = await getNextTransactionId();
+    setNumber(nextId);
   };
 
   useEffect(() => {
-    const now = new Date();
-    setDate(getLocalDateString());
-    setTime(now.toLocaleTimeString());
-    setNumber(getNumber());
-  }, []);
+    const initializeForm = async () => {
+      const now = new Date();
+      setDate(getLocalDateString());
+      setTime(now.toLocaleTimeString());
+      const nextId = await getNextTransactionId();
+      setNumber(nextId);
+    };
+    
+    initializeForm();
+  }, [selectedBusiness?.business_id]);
 
   const handleDateChange = (e) => setDate(e.target.value);
 
@@ -107,8 +123,8 @@ export default function TransectionForm() {
   };
 
   const handleSaveAndNew = () => {
-    handleSubmit(() => {
-      incrementNumber();
+    handleSubmit(async () => {
+      await incrementNumber();  // ✅ Increments transaction ID
       setRows([{ accountName: "", debit: "", credit: "" }]);
       setSuggestions([]);
       setShowSuggestionsIdx(null);
@@ -118,15 +134,16 @@ export default function TransectionForm() {
   };
 
   const handleSaveAndClose = () => {
-    handleSubmit(() => {
-      incrementNumber();
+    handleSubmit(async () => {
+      await incrementNumber();  // ✅ Increments transaction ID
       window.history.back();
     });
   };
 
   const handleClose = () => {
-    incrementNumber();
-    window.history.back();
+    incrementNumber().then(() => {
+      window.history.back();
+    });
   };
 
   const handleAccountNameKeyDown = (idx, e) => {

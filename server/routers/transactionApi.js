@@ -8,6 +8,33 @@ const cors = require('cors');
 // Enable CORS
 router.use(cors());
 
+// GET /api/next-transaction-id/:business_id
+router.get('/next-transaction-id/:business_id', async (req, res) => {
+    const { business_id } = req.params;
+
+    if (!business_id) {
+        return res.status(400).json({ error: 'Business ID is required' });
+    }
+
+    let conn;
+    try {
+        conn = await pool.getConnection();
+        
+        // Get the maximum frontend_transaction_id for this business
+        const [rows] = await conn.execute(
+            'SELECT COALESCE(MAX(frontend_transaction_id), 0) as max_id FROM transactions WHERE business_id = ?',
+            [business_id]
+        );
+        
+        const nextId = (rows[0].max_id || 0) + 1;
+        res.json({ success: true, next_transaction_id: nextId });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    } finally {
+        if (conn) conn.release();
+    }
+});
+
 // POST /api/transactions
 router.post('/transactions', async (req, res) => {
     const { transaction_id, business_id, description, debit, credit, date, entries } = req.body;
