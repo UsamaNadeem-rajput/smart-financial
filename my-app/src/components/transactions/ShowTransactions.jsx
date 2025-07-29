@@ -97,6 +97,7 @@ export default function TransactionEntryTable() {
               .table th, .table td { border: 1px solid #000; padding: 8px; text-align: left; }
               .table th { background-color: #4169e1; color: #fff; font-size: 14px; }
               .table td { font-size: 12px; }
+              .table th:first-child, .table td:first-child { width: 120px; max-width: 120px; }
               .transaction-total-row { background-color: #e6f3ff; font-weight: bold; }
               .total-row { border-top: 2px solid black; border-bottom: 2px solid black; font-weight: bold; }
               .separator-row td { border: none; padding: 4px; }
@@ -230,6 +231,12 @@ export default function TransactionEntryTable() {
         startY: y + 10,
         head: [["Transaction ID/  Date", "Ledger Name", "Debit", "Credit"]],
         body: tableRows,
+        columnStyles: {
+          0: { cellWidth: 35 }, // Transaction ID/Date column - reduced width
+          1: { cellWidth: 'auto' }, // Ledger Name column - auto width
+          2: { cellWidth: 25 }, // Debit column
+          3: { cellWidth: 25 }, // Credit column
+        },
         styles: {
           fontSize: 12,
           textColor: [0, 0, 0],
@@ -239,6 +246,17 @@ export default function TransactionEntryTable() {
           textColor: [255, 255, 255],
         },
         didDrawCell: (data) => {
+          // Check if this is a "Total for Transaction" row by checking the account name
+          if (data.section === "body" && data.row.raw[1] && data.row.raw[1].includes("Total for Transaction")) {
+            // Make the text bold for transaction total rows
+            doc.setFont(undefined, 'bold');
+            doc.setFontSize(12);
+          } else {
+            // Reset to normal font for other rows
+            doc.setFont(undefined, 'normal');
+            doc.setFontSize(12);
+          }
+          
           if (
             data.section === "body" &&
             data.row.raw.every((cell) => cell === "")
@@ -322,7 +340,7 @@ export default function TransactionEntryTable() {
             <table className="table table-bordered">
               <thead className="table-dark">
                 <tr>
-                  <th>Transaction ID / Date</th>
+                  <th style={{ width: "150px", maxWidth: "150px" }}>Transaction ID / Date</th>
                   <th>Ledger Name</th>
                   <th>Debit</th>
                   <th>Credit</th>
@@ -344,7 +362,7 @@ export default function TransactionEntryTable() {
                           className={entry.isTotal ? "font-bold transaction-total-row" : ""}
                         >
                           {idx === 0 && !entry.isTotal && (
-                            <td rowSpan={group.length}>
+                            <td rowSpan={group.length} style={{ width: "150px", maxWidth: "150px" }}>
                               {frontend_transaction_id}
                               <br />
                               <span
