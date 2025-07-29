@@ -74,14 +74,14 @@ const EditAccount = () => {
       const mockAccountTypes = [
         { type_id: 1, type_name: 'Income', parent_type_id: null, is_subtype: false },
         { type_id: 2, type_name: 'Expense', parent_type_id: null, is_subtype: false },
-        { type_id: 3, type_name: 'Assets', parent_type_id: null, is_subtype: false },
+        { type_id: 3, type_name: 'Assets', parent_type_id: null, is_subtype: false, is_heading: true },
         { type_id: 4, type_name: 'Fixed Assets', parent_type_id: 3, is_subtype: true },
         { type_id: 5, type_name: 'Current Assets', parent_type_id: 3, is_subtype: true },
-        { type_id: 6, type_name: 'Liability', parent_type_id: null, is_subtype: false },
+        { type_id: 6, type_name: 'Liability', parent_type_id: null, is_subtype: false, is_heading: true },
         { type_id: 7, type_name: 'Current Liability', parent_type_id: 6, is_subtype: true },
         { type_id: 8, type_name: 'Non-Current Liabilities', parent_type_id: 6, is_subtype: true },
         { type_id: 9, type_name: 'Equity', parent_type_id: null, is_subtype: false },
-        { type_id: 10, type_name: 'Others', parent_type_id: null, is_subtype: false },
+        { type_id: 10, type_name: 'Others', parent_type_id: null, is_subtype: false, is_heading: true },
         { type_id: 11, type_name: 'Other Assets', parent_type_id: 10, is_subtype: true },
         { type_id: 12, type_name: 'Other Incomes', parent_type_id: 10, is_subtype: true },
         { type_id: 13, type_name: 'Other Expenses', parent_type_id: 10, is_subtype: true },
@@ -151,7 +151,7 @@ const EditAccount = () => {
   };
 
   const getFilteredAccountTypes = () => {
-    return accountTypes.filter(type => !type.is_subtype);
+    return accountTypes.filter(type => !type.is_subtype && !type.is_heading);
   };
 
   const getSubTypes = (parentTypeId) => {
@@ -200,16 +200,40 @@ const EditAccount = () => {
                   className={`input-field ${errors.type_id ? 'border-error-300 focus:border-error-500 focus:ring-error-500' : ''}`}
                 >
                   <option value="">Select account type</option>
-                  {getFilteredAccountTypes().map(type => (
-                    <optgroup key={type.type_id} label={type.type_name}>
-                      <option value={type.type_id}>{type.type_name}</option>
-                      {getSubTypes(type.type_id).map(subType => (
-                        <option key={subType.type_id} value={subType.type_id}>
-                          &nbsp;&nbsp;{subType.type_name}
-                        </option>
-                      ))}
-                    </optgroup>
-                  ))}
+                  {/* Income */}
+                  <optgroup label="Income">
+                    <option value="1">Income</option>
+                  </optgroup>
+                  
+                  {/* Assets */}
+                  <optgroup label="Assets">
+                    <option value="4">Fixed Assets</option>
+                    <option value="5">Current Assets</option>
+                  </optgroup>
+                  
+                  {/* Liability */}
+                  <optgroup label="Liability">
+                    <option value="7">Current Liability</option>
+                    <option value="8">Non-Current Liabilities</option>
+                  </optgroup>
+                  
+                  {/* Equity */}
+                  <optgroup label="Equity">
+                    <option value="9">Equity</option>
+                  </optgroup>
+                  
+                  {/* Expense */}
+                  <optgroup label="Expense">
+                    <option value="2">Expense</option>
+                  </optgroup>
+                  
+                  {/* Others */}
+                  <optgroup label="Others">
+                    <option value="11">Other Assets</option>
+                    <option value="12">Other Incomes</option>
+                    <option value="13">Other Expenses</option>
+                    <option value="14">Cost Of Goods Sold</option>
+                  </optgroup>
                 </select>
                 {errors.type_id && (
                   <p className="mt-1 text-sm text-error-600">{errors.type_id}</p>

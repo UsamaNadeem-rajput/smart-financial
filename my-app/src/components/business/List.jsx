@@ -96,7 +96,17 @@ const List = () => {
   }
 
   return (
-    <div>
+    <div 
+    style={{
+      minHeight: "100vh", // ensures it covers the full viewport height
+      width: "100vw",     // ensures it covers the full viewport width
+      backgroundImage: "url('/business-banner.jpg')",
+      // backgroundSize: "contain",
+      backgroundSize: "cover",
+      backgroundPosition: "center",
+      backgroundRepeat: "no-repeat",
+    }}
+    >
       <Navbar />
       <div className="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
         <div className="px-4 py-6 sm:px-0">
@@ -104,7 +114,7 @@ const List = () => {
           <div className="flex justify-between items-center mb-8">
             <div>
               <h1 className="text-3xl font-bold text-gray-900">Your Businesses</h1>
-              <p className="mt-2 text-gray-600">
+              <p className="mt-2 text-black">
                 Select a business to manage or create a new one
               </p>
             </div>
