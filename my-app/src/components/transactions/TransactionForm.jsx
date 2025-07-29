@@ -31,12 +31,17 @@ export default function TransectionForm() {
 
   const { selectedBusiness } = useBusiness();
 
-  const debitTotal = rows.reduce((a, b) => a + (Number(b.debit) || 0), 0);
-  const creditTotal = rows.reduce((a, b) => a + (Number(b.credit) || 0), 0);
+  // Filter rows that have actual data (account name and either debit or credit)
+  const validRows = rows.filter(row => 
+    row.accountName.trim() !== "" && (row.debit !== "" || row.credit !== "")
+  );
+  
+  const debitTotal = validRows.reduce((a, b) => a + (Number(b.debit) || 0), 0);
+  const creditTotal = validRows.reduce((a, b) => a + (Number(b.credit) || 0), 0);
   const isSubmitDisabled =
-    debitTotal === 0 || creditTotal === 0 || debitTotal !== creditTotal;
+    validRows.length === 0 || debitTotal === 0 || creditTotal === 0 || debitTotal !== creditTotal;
 
-  const allAccountNamesFilled = rows.every(
+  const allAccountNamesFilled = validRows.every(
     (row) => row.accountName.trim() !== ""
   );
 
@@ -214,6 +219,10 @@ export default function TransectionForm() {
     if (!/^\d*(\.\d*)?$/.test(raw) && raw !== '') return; // Only allow numbers
     const newRows = [...rows];
     newRows[idx].debit = raw;
+    // Clear credit if debit is entered
+    if (raw !== '') {
+      newRows[idx].credit = '';
+    }
     setRows(newRows);
   };
 
@@ -223,6 +232,10 @@ export default function TransectionForm() {
     if (!/^\d*(\.\d*)?$/.test(raw) && raw !== '') return; // Only allow numbers
     const newRows = [...rows];
     newRows[idx].credit = raw;
+    // Clear debit if credit is entered
+    if (raw !== '') {
+      newRows[idx].debit = '';
+    }
     setRows(newRows);
   };
 
@@ -330,6 +343,7 @@ export default function TransectionForm() {
                       value={formatNumberWithCommas(row.debit)}
                       onChange={(e) => handleDebitChange(idx, e.target.value)}
                       onKeyDown={(e) => handleDebitKeyDown(idx, e)}
+                      disabled={row.credit !== ''}
                     />
                   </td>
                   <td>
@@ -339,6 +353,7 @@ export default function TransectionForm() {
                       value={formatNumberWithCommas(row.credit)}
                       onChange={(e) => handleCreditChange(idx, e.target.value)}
                       onKeyDown={(e) => handleCreditKeyDown(idx, e)}
+                      disabled={row.debit !== ''}
                     />
                   </td>
                   <td className="text-center">

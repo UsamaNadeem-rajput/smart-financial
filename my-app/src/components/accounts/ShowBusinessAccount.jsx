@@ -264,24 +264,15 @@ const ShowBusinessAccount = () => {
                             {formatCurrency(account.balance)}
                           </span>
                         </td>
-                        {/* <td className="px-6 py-4 whitespace-nowrap">
-                          <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
-                            account.status === 'active'
-                              ? 'bg-success-100 text-success-800'
-                              : 'bg-gray-100 text-gray-800'
-                          }`}>
-                            {account.status}
-                          </span>
-                        </td> */}
                         <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                           <div className="flex justify-end space-x-2">
-                            <button
+                            {/* <button
                               onClick={() => navigate(`/account-details/${account.account_id}`)}
                               className="p-2 text-gray-400 hover:text-primary-600 transition-colors"
                               title="View transactions"
                             >
                               <Eye className="w-4 h-4" />
-                            </button>
+                            </button> */}
                             <button
                               onClick={() => navigate('/editaccount', { state: { account } })}
                               className="p-2 text-gray-400 hover:text-primary-600 transition-colors"
