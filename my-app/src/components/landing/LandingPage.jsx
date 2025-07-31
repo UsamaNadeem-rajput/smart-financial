@@ -268,14 +268,8 @@ const LandingPage = () => {
       <nav className="bg-white/80 backdrop-blur-md border-b border-gray-200 sticky top-0 z-50 min-h-24">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-3">
           <div className="flex justify-between items-center h-16">
-            <div className="flex flex-col items-center">
-              <Building2 className="w-8 h-8 text-primary-600 mr-2" />
-              <div> <span className="sm:text-2xl font-bold text-gray-900">Smart Financial</span></div>
-
-              <div>
-                <small className="mt-2 sm:font-bold max-sm:text-xs max-sm:ml-1 ">By khushi vijay</small>
-              </div>
-
+            <div className="flex flex-col items-center"  >
+              <img src="/final.png" alt="Logo" className="h-16 w-auto mr-2" style={{ marginTop: "18px" }} />
             </div>
             <div className="flex items-center space-x-4">
               {user ? (

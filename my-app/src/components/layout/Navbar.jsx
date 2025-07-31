@@ -90,13 +90,16 @@ const Navbar = () => {
         <div className="flex justify-between h-16">
           {/* Logo and main navigation */}
           <div className="flex">
-            <div className="flex-shrink-0 flex items-center">
+            {/* <div className="flex-shrink-0 flex items-center">
               <Link
                 to="/list"
                 className="lg:text-2xl font-bold lg:text-primary-600"
               >
                 Smart Financial
               </Link>
+            </div> */}
+            <div>
+             <img src="/final.png" alt="Logo" className="h-16 w-auto mr-2"  />
             </div>
 
             {selectedBusiness && (
