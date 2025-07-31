@@ -35,6 +35,75 @@ router.get('/next-transaction-id/:business_id', async (req, res) => {
     }
 });
 
+// Function to update account balances
+async function updateAccountBalances(conn, business_id) {
+    // Get all accounts for this business with their account types
+    const [accounts] = await conn.execute(
+        `SELECT a.account_id, a.balance, t.type_name, t.type_id
+         FROM accounts a
+         LEFT JOIN account_types t ON a.type_id = t.type_id
+         WHERE a.business_id = ?`,
+        [business_id]
+    );
+
+    // Update balance for each account
+    for (const account of accounts) {
+        // Get all transaction entries for this account
+        const [entries] = await conn.execute(
+            `SELECT te.amount, te.type
+             FROM transaction_entries te
+             JOIN transactions t ON te.transaction_id = t.transaction_id
+             WHERE te.account_id = ? AND t.business_id = ?`,
+            [account.account_id, business_id]
+        );
+
+        let newBalance = 0;
+
+        // Check if this is an Assets or Expense account (including subtypes)
+        const isAssetsAccount = account.type_name === 'Assets' || 
+                               account.type_name === 'Fixed Assets' || 
+                               account.type_name === 'Current Assets' || 
+                               account.type_name === 'Other Assets' ||
+                               account.type_id === 3 || // Assets
+                               account.type_id === 4 || // Fixed Assets
+                               account.type_id === 5 || // Current Assets
+                               account.type_id === 11;  // Other Assets
+
+        const isExpenseAccount = account.type_name === 'Expense' || 
+                                account.type_name === 'Other Expenses' ||
+                                account.type_name === 'Cost Of Goods Sold' ||
+                                account.type_id === 2 || // Expense
+                                account.type_id === 13 || // Other Expenses
+                                account.type_id === 14;   // Cost Of Goods Sold
+
+        if (isAssetsAccount || isExpenseAccount) {
+            // For Assets and Expenses: Balance = (add all debits) - (subtract all credits)
+            for (const entry of entries) {
+                if (entry.type === 'debit') {
+                    newBalance += parseFloat(entry.amount);
+                } else if (entry.type === 'credit') {
+                    newBalance -= parseFloat(entry.amount);
+                }
+            }
+        } else {
+            // For other accounts (Income, Liability, Equity): Balance = (add all credits) - (subtract all debits)
+            for (const entry of entries) {
+                if (entry.type === 'credit') {
+                    newBalance += parseFloat(entry.amount);
+                } else if (entry.type === 'debit') {
+                    newBalance -= parseFloat(entry.amount);
+                }
+            }
+        }
+
+        // Update the account balance
+        await conn.execute(
+            'UPDATE accounts SET balance = ? WHERE account_id = ?',
+            [newBalance, account.account_id]
+        );
+    }
+}
+
 // POST /api/transactions
 router.post('/transactions', async (req, res) => {
     const { transaction_id, business_id, description, debit, credit, date, entries } = req.body;
@@ -83,10 +152,69 @@ router.post('/transactions', async (req, res) => {
             );
         }
 
+        // Update account balances after inserting transaction entries
+        await updateAccountBalances(conn, business_id);
+
         await conn.commit();
         res.json({ success: true, transaction_id: new_transaction_id });
     } catch (err) {
         if (conn) await conn.rollback();
+        res.status(500).json({ error: err.message });
+    } finally {
+        if (conn) conn.release();
+    }
+});
+
+// POST /api/recalculate-balances/:business_id
+router.post('/recalculate-balances/:business_id', async (req, res) => {
+    const { business_id } = req.params;
+
+    if (!business_id) {
+        return res.status(400).json({ error: 'Business ID is required' });
+    }
+
+    let conn;
+    try {
+        conn = await pool.getConnection();
+        await conn.beginTransaction();
+
+        // Recalculate all account balances for this business
+        await updateAccountBalances(conn, business_id);
+
+        await conn.commit();
+        res.json({ success: true, message: 'Account balances recalculated successfully' });
+    } catch (err) {
+        if (conn) await conn.rollback();
+        res.status(500).json({ error: err.message });
+    } finally {
+        if (conn) conn.release();
+    }
+});
+
+// GET /api/account-balances/:business_id
+router.get('/account-balances/:business_id', async (req, res) => {
+    const { business_id } = req.params;
+
+    if (!business_id) {
+        return res.status(400).json({ error: 'Business ID is required' });
+    }
+
+    let conn;
+    try {
+        conn = await pool.getConnection();
+        
+        // Get all accounts with their current balances and types
+        const [accounts] = await conn.execute(
+            `SELECT a.account_id, a.account_name, a.balance, t.type_name, t.type_id
+             FROM accounts a
+             LEFT JOIN account_types t ON a.type_id = t.type_id
+             WHERE a.business_id = ?
+             ORDER BY t.type_name, a.account_name`,
+            [business_id]
+        );
+
+        res.json({ success: true, accounts });
+    } catch (err) {
         res.status(500).json({ error: err.message });
     } finally {
         if (conn) conn.release();

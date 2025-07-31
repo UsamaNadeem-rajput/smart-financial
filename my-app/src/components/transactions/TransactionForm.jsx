@@ -120,8 +120,34 @@ export default function TransectionForm() {
         }
       );
       const data = await res.json();
-      if (data.success) onSuccess();
-      else alert("Error: " + (data.error || "Failed to save transaction."));
+      if (data.success) {
+        console.log("Transaction posted successfully. Account balances have been updated.");
+        onSuccess();
+      } else alert("Error: " + (data.error || "Failed to save transaction."));
+    } catch (err) {
+      alert("Network error: " + err.message);
+    }
+  };
+
+  // Utility function to recalculate all account balances
+  const recalculateBalances = async () => {
+    if (!selectedBusiness?.business_id) {
+      alert("No business selected. Please select a business first.");
+      return;
+    }
+
+    try {
+      const res = await fetch(
+        `${import.meta.env.VITE_BACKEND_URL}/api/recalculate-balances/${selectedBusiness.business_id}`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+        }
+      );
+      const data = await res.json();
+      if (data.success) {
+        alert("Account balances recalculated successfully!");
+      } else alert("Error: " + (data.error || "Failed to recalculate balances."));
     } catch (err) {
       alert("Network error: " + err.message);
     }
@@ -180,9 +206,7 @@ export default function TransectionForm() {
     if (value.length > 0) {
       try {
         const res = await fetch(
-          `${
-            import.meta.env.VITE_BACKEND_URL
-          }/api/search-accounts?query=${encodeURIComponent(
+          `${import.meta.env.VITE_BACKEND_URL}/api/search-accounts?query=${encodeURIComponent(
             value
           )}&business_id=${selectedBusiness?.business_id}`
         );
@@ -330,7 +354,12 @@ export default function TransectionForm() {
                             className={`list-group-item list-group-item-action${highlightedSuggestion === sidx ? ' active' : ''}`}
                             onMouseDown={() => handleSuggestionClick(idx, s.account_name, s.account_id)}
                           >
-                            {s.account_name}
+                            <div className="d-flex justify-content-between align-items-center">
+                              <span>{s.account_name}</span>
+                              <small className="text-muted">
+                                Balance: ${(s.balance || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                              </small>
+                            </div>
                           </li>
                         ))}
                       </ul>
@@ -406,6 +435,14 @@ export default function TransectionForm() {
                 disabled={isSubmitDisabled || !allAccountNamesFilled}
               >
                 Delete
+              </button>
+              <button
+                type="button"
+                className="btn btn-warning ms-2"
+                onClick={recalculateBalances}
+                title="Recalculate all account balances"
+              >
+                Recalculate Balances
               </button>
             </div>
             <div>
