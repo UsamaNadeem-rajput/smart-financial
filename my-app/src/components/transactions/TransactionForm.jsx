@@ -28,6 +28,7 @@ export default function TransectionForm() {
   const [suggestions, setSuggestions] = useState([]);
   const [showSuggestionsIdx, setShowSuggestionsIdx] = useState(null);
   const [highlightedSuggestion, setHighlightedSuggestion] = useState(-1);
+  const [isLoading, setIsLoading] = useState(false);
 
   const { selectedBusiness } = useBusiness();
 
@@ -126,6 +127,8 @@ export default function TransectionForm() {
       } else alert("Error: " + (data.error || "Failed to save transaction."));
     } catch (err) {
       alert("Network error: " + err.message);
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -154,6 +157,7 @@ export default function TransectionForm() {
   };
 
   const handleSaveAndNew = () => {
+    setIsLoading(true);
     handleSubmit(async () => {
       await incrementNumber();  // ✅ Increments transaction ID
       setRows([{ accountName: "", debit: "", credit: "" }]);
@@ -165,6 +169,7 @@ export default function TransectionForm() {
   };
 
   const handleSaveAndClose = () => {
+    setIsLoading(true);
     handleSubmit(async () => {
       await incrementNumber();  // ✅ Increments transaction ID
       window.history.back();
@@ -426,13 +431,13 @@ export default function TransectionForm() {
             <div>
               <button
                 className="btn btn-success me-2"
-                disabled={isSubmitDisabled || !allAccountNamesFilled}
+                disabled={isSubmitDisabled || !allAccountNamesFilled || isLoading}
               >
                 Edit
               </button>
               <button
                 className="btn btn-danger"
-                disabled={isSubmitDisabled || !allAccountNamesFilled}
+                disabled={isSubmitDisabled || !allAccountNamesFilled || isLoading}
               >
                 Delete
               </button>
@@ -440,6 +445,7 @@ export default function TransectionForm() {
                 type="button"
                 className="btn btn-warning ms-2"
                 onClick={recalculateBalances}
+                disabled={isLoading}
                 title="Recalculate all account balances"
               >
                 Recalculate Balances
@@ -449,21 +455,35 @@ export default function TransectionForm() {
               <button
                 className="btn btn-success me-2"
                 onClick={handleSaveAndNew}
-                disabled={isSubmitDisabled || !allAccountNamesFilled}
+                disabled={isSubmitDisabled || !allAccountNamesFilled || isLoading}
               >
-                Save and New
+                {isLoading ? (
+                  <>
+                    <span className="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+                    Saving...
+                  </>
+                ) : (
+                  "Save and New"
+                )}
               </button>
               <button
                 className="btn btn-primary me-2"
                 onClick={handleSaveAndClose}
-                disabled={isSubmitDisabled || !allAccountNamesFilled}
+                disabled={isSubmitDisabled || !allAccountNamesFilled || isLoading}
               >
-                Save and Close
+                {isLoading ? (
+                  <>
+                    <span className="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+                    Saving...
+                  </>
+                ) : (
+                  "Save and Close"
+                )}
               </button>
               <button
                 className="btn btn-secondary"
                 onClick={handleClose}
-                disabled={!allAccountNamesFilled}
+                disabled={!allAccountNamesFilled || isLoading}
               >
                 Close
               </button>
