@@ -1,0 +1,15 @@
+{
+  "name": "smart-financial-orangehost",
+  "version": "1.0.0",
+  "description": "Smart Financial Application for OrangeHost deployment",
+  "scripts": {
+    "deploy": "./deploy-orangehost.sh",
+    "build-frontend": "cd my-app && npm install && npm run build",
+    "prepare-backend": "cd server && npm install --production",
+    "create-zip": "cd orangehost-deploy && zip -r ../orangehost-deploy.zip .",
+    "full-deploy": "npm run build-frontend && npm run prepare-backend && npm run create-zip"
+  },
+  "keywords": ["accounting", "finance", "orangehost", "deployment"],
+  "author": "Your Name",
+  "license": "MIT"
+}

@@ -6,7 +6,8 @@
     "test": "echo \"Error: no test specified\" && exit 1",
     "start": "node server.js",
     "dev": "node server.js",
-    "build": "echo \"No build step needed\""
+    "build": "echo \"No build step needed\"",
+    "install-production": "npm install --production --no-optional"
   },
   "keywords": [],
   "author": "",
