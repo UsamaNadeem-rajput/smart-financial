@@ -3,6 +3,7 @@ import axios from 'axios';
 import { Link } from 'react-router-dom';
 import { useNavigate } from 'react-router-dom';
 import { DotLottieReact } from '@lottiefiles/dotlottie-react';
+import Validation from '../validation/Validation';
 
 
 export default function SignupForm() {
@@ -15,6 +16,7 @@ export default function SignupForm() {
 
   const [message, setMessage] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [errors, setErrors] = useState({});
 
 
 
@@ -31,16 +33,10 @@ export default function SignupForm() {
     e.preventDefault();
     setIsLoading(true);
     setMessage('');
+    setErrors(Validation(formData));
 
-    // Basic validation
-    if (!formData.username || !formData.fullname || !formData.email || !formData.password) {
-      setMessage('Please fill in all fields');
-      setIsLoading(false);
-      return;
-    }
-
-    if (formData.password.length < 6) {
-      setMessage('Password must be at least 6 characters long');
+    if (Object.keys(errors).length > 0) {
+      setMessage('Please fix the validation errors');
       setIsLoading(false);
       return;
     }
@@ -129,6 +125,7 @@ export default function SignupForm() {
                         value={formData.username}
                         onChange={handleChange}
                       />
+                      {errors.username && <p className="text-danger mt-1">{errors.username}</p>}
                     </div>
                     <div className="col-md-6 mb-4">
                       <input
@@ -139,6 +136,7 @@ export default function SignupForm() {
                         value={formData.fullname}
                         onChange={handleChange}
                       />
+                      {errors.fullname && <p className="text-danger mt-1">{errors.fullname}</p>}
                     </div>
                   </div>
 
@@ -151,6 +149,7 @@ export default function SignupForm() {
                       value={formData.email}
                       onChange={handleChange}
                     />
+                    {errors.email && <p className="text-danger mt-1">{errors.email}</p>}
                   </div>
 
                   <div className="form-outline mb-4">
@@ -162,13 +161,7 @@ export default function SignupForm() {
                       value={formData.password}
                       onChange={handleChange}
                     />
-                  </div>
-
-                  <div className="form-check d-flex justify-content-center mb-4">
-                    <input className="form-check-input" type="checkbox" id="checkDefault" />
-                    <label className="form-check-label ms-2" htmlFor="checkDefault">
-                      Subscribe to our newsletter
-                    </label>
+                    {errors.password && <p className="text-danger mt-1">{errors.password}</p>}
                   </div>
 
                   <div className="d-flex flex-column align-items-center mt-3">
