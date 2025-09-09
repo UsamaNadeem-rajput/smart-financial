@@ -490,7 +490,7 @@ const LandingPage = () => {
       <nav className="bg-white/95 backdrop-blur-lg border-b border-gray-200 sticky top-0 z-50 min-h-24 shadow-sm">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-3">
           <div className="flex justify-between items-center h-16">
-            <motion.div 
+            <motion.div
               className="flex flex-col items-center"
               initial={{ opacity: 0, x: -20 }}
               animate={{ opacity: 1, x: 0 }}
@@ -498,7 +498,7 @@ const LandingPage = () => {
             >
               <img src="/final.png" alt="Logo" className="h-16 w-auto mr-2" style={{ marginTop: "18px" }} />
             </motion.div>
-            <motion.div 
+            <motion.div
               className="flex items-center space-x-4"
               initial={{ opacity: 0, x: 20 }}
               animate={{ opacity: 1, x: 0 }}
@@ -519,14 +519,14 @@ const LandingPage = () => {
                 </>
               ) : (
                 <>
-                  <Link 
-                    to="/login" 
+                  <Link
+                    to="/login"
                     className="text-gray-600 hover:text-gray-900 font-medium transition-colors duration-300"
                   >
                     Sign In
                   </Link>
-                  <Link 
-                    to="/register" 
+                  <Link
+                    to="/register"
                     className="btn-primary shadow-lg hover:shadow-xl transition-shadow duration-300"
                   >
                     Get Started
@@ -541,10 +541,63 @@ const LandingPage = () => {
       {/* Enhanced Hero Section */}
       <section className="relative overflow-hidden py-20 lg:py-32 min-h-screen flex items-center">
         <FloatingElements />
-        
-        {/* Animated background gradient */}
-        <div className="absolute inset-0 bg-gradient-to-br from-blue-50 via-purple-50 to-pink-50 opacity-70"></div>
-        
+
+        {/* Enhanced Financial Background */}
+        <div className="absolute inset-0">
+          {/* Primary gradient background */}
+          <div className="absolute inset-0 bg-gradient-to-br from-slate-900 via-blue-900 to-indigo-900"></div>
+
+          {/* Overlay gradients for depth */}
+          <div className="absolute inset-0 bg-gradient-to-t from-blue-600/20 via-transparent to-purple-600/20"></div>
+          <div className="absolute inset-0 bg-gradient-to-r from-cyan-500/10 via-transparent to-pink-500/10"></div>
+
+          {/* Financial pattern overlay */}
+          <div className="absolute inset-0 opacity-10">
+            <div className="absolute inset-0" style={{
+              backgroundImage: `
+          linear-gradient(45deg, rgba(255,255,255,0.1) 1px, transparent 1px),
+          linear-gradient(-45deg, rgba(255,255,255,0.1) 1px, transparent 1px)
+        `,
+              backgroundSize: '20px 20px'
+            }}></div>
+          </div>
+
+          {/* Animated financial elements */}
+          <div className="absolute inset-0">
+            {/* Floating money symbols */}
+            <div className="absolute top-20 left-10 text-4xl text-green-400/20 animate-pulse">$</div>
+            <div className="absolute top-40 right-20 text-3xl text-yellow-400/20 animate-bounce">€</div>
+            <div className="absolute bottom-40 left-32 text-5xl text-blue-400/20 animate-pulse">£</div>
+            <div className="absolute bottom-20 right-40 text-3xl text-purple-400/20 animate-bounce">¥</div>
+
+            {/* Chart lines effect */}
+            <svg className="absolute inset-0 w-full h-full" style={{ filter: 'blur(1px)' }}>
+              <defs>
+                <linearGradient id="chartGradient" x1="0%" y1="0%" x2="100%" y2="0%">
+                  <stop offset="0%" style={{ stopColor: '#3b82f6', stopOpacity: 0.2 }} />
+                  <stop offset="50%" style={{ stopColor: '#8b5cf6', stopOpacity: 0.3 }} />
+                  <stop offset="100%" style={{ stopColor: '#06b6d4', stopOpacity: 0.2 }} />
+                </linearGradient>
+              </defs>
+              <path
+                d="M0,400 Q200,200 400,300 T800,250 L800,600 L0,600 Z"
+                fill="url(#chartGradient)"
+                className="animate-pulse"
+              />
+              <path
+                d="M0,500 Q300,100 600,200 T1200,180"
+                stroke="rgba(59, 130, 246, 0.3)"
+                strokeWidth="2"
+                fill="none"
+                className="animate-pulse"
+              />
+            </svg>
+          </div>
+
+          {/* Subtle mesh pattern */}
+          <div className="absolute inset-0 bg-black/20"></div>
+        </div>
+
         <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 z-10">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
             <motion.div
@@ -561,20 +614,20 @@ const LandingPage = () => {
                 <Sparkles className="w-4 h-4 mr-2" />
                 Now with Enhanced Features!
               </motion.div>
-              
-              <h1 className="text-4xl sm:text-5xl lg:text-7xl font-bold text-gray-900 leading-tight">
+
+              <h1 className="text-4xl sm:text-5xl lg:text-7xl font-bold text-white leading-tight">
                 Accounting made{" "}
-                <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary-600 to-purple-600 block">
+                <span className="text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-purple-400 block">
                   simple & powerful
                 </span>
               </h1>
-              
-              <p className="text-lg sm:text-xl text-gray-600 mt-6 leading-relaxed">
+
+              <p className="text-lg sm:text-xl text-gray-300 mt-6 leading-relaxed">
                 Manage your business finances with professional-grade accounting
                 software. From startups to enterprises, we've got you covered with
                 intelligent automation and beautiful design.
               </p>
-              
+
               <div className="flex flex-col sm:flex-row gap-4 mt-8">
                 {user ? (
                   <motion.button
@@ -600,36 +653,36 @@ const LandingPage = () => {
                     </Link>
                   </motion.div>
                 )}
-                
-                <motion.button 
-                  className="flex items-center justify-center text-gray-600 hover:text-gray-900 font-medium transition-colors duration-300 group"
+
+                <motion.button
+                  className="flex items-center justify-center text-gray-300 hover:text-white font-medium transition-colors duration-300 group"
                   whileHover={{ scale: 1.05 }}
                   whileTap={{ scale: 0.95 }}
                 >
-                  <div className="w-12 h-12 bg-white rounded-full flex items-center justify-center shadow-lg mr-3 group-hover:shadow-xl transition-shadow duration-300">
-                    <Play className="w-5 h-5 ml-1 text-primary-600" />
+                  <div className="w-12 h-12 bg-white/10 backdrop-blur-sm rounded-full flex items-center justify-center shadow-lg mr-3 group-hover:shadow-xl group-hover:bg-white/20 transition-all duration-300">
+                    <Play className="w-5 h-5 ml-1 text-cyan-400" />
                   </div>
                   Watch Demo
                 </motion.button>
               </div>
-              
-              <div className="flex flex-wrap items-center mt-8 text-sm text-gray-500 gap-6">
+
+              <div className="flex flex-wrap items-center mt-8 text-sm text-gray-400 gap-6">
                 <span className="flex items-center">
-                  <Check className="w-4 h-4 text-success-500 mr-2" />
+                  <Check className="w-4 h-4 text-green-400 mr-2" />
                   No credit card required
                 </span>
                 <span className="flex items-center">
-                  <Check className="w-4 h-4 text-success-500 mr-2" />
+                  <Check className="w-4 h-4 text-green-400 mr-2" />
                   Free forever plan
                 </span>
                 <span className="flex items-center">
-                  <Check className="w-4 h-4 text-success-500 mr-2" />
+                  <Check className="w-4 h-4 text-green-400 mr-2" />
                   Setup in under 5 minutes
                 </span>
               </div>
             </motion.div>
-            
-            <motion.div 
+
+            <motion.div
               className="relative mt-10 lg:mt-0"
               initial={{ opacity: 0, x: 50 }}
               animate={{ opacity: 1, x: 0 }}
@@ -637,9 +690,9 @@ const LandingPage = () => {
             >
               {/* Enhanced Dashboard Preview */}
               <div className="relative">
-                <motion.div 
+                <motion.div
                   className="bg-white rounded-3xl shadow-2xl p-8 transform hover:scale-105 transition-transform duration-500"
-                  style={{ 
+                  style={{
                     transform: `perspective(1000px) rotateX(${scrollY * 0.01}deg) rotateY(${scrollY * 0.005}deg)`
                   }}
                 >
@@ -656,7 +709,7 @@ const LandingPage = () => {
                         <div className="w-3 h-3 bg-green-400 rounded-full"></div>
                       </div>
                     </div>
-                    
+
                     {/* Revenue Card */}
                     <div className="bg-gradient-to-r from-blue-500 to-purple-600 rounded-xl p-6 text-white">
                       <div className="flex items-center justify-between">
@@ -673,7 +726,7 @@ const LandingPage = () => {
                         </div>
                       </div>
                     </div>
-                    
+
                     {/* Quick Stats */}
                     <div className="grid grid-cols-2 gap-4">
                       <div className="bg-gray-50 rounded-lg p-4">
@@ -685,7 +738,7 @@ const LandingPage = () => {
                         <div className="text-sm text-gray-500">This Month</div>
                       </div>
                     </div>
-                    
+
                     {/* Progress Bar */}
                     <div>
                       <div className="flex justify-between text-sm text-gray-600 mb-2">
@@ -693,7 +746,7 @@ const LandingPage = () => {
                         <span>78%</span>
                       </div>
                       <div className="h-2 bg-gray-200 rounded-full overflow-hidden">
-                        <motion.div 
+                        <motion.div
                           className="h-full bg-gradient-to-r from-primary-500 to-primary-600 rounded-full"
                           initial={{ width: 0 }}
                           animate={{ width: "78%" }}
@@ -703,9 +756,9 @@ const LandingPage = () => {
                     </div>
                   </div>
                 </motion.div>
-                
+
                 {/* Floating notification */}
-                <motion.div 
+                <motion.div
                   className="absolute -top-4 -right-4 bg-gradient-to-r from-green-400 to-blue-500 rounded-xl p-4 shadow-lg"
                   animate={{
                     y: [0, -10, 0],
@@ -722,7 +775,7 @@ const LandingPage = () => {
                     <span className="text-sm font-medium">Live Updates</span>
                   </div>
                 </motion.div>
-                
+
                 {/* Additional floating elements */}
                 <motion.div
                   className="absolute -bottom-6 -left-6 bg-gradient-to-r from-yellow-400 to-orange-500 rounded-full p-3 shadow-lg"
@@ -758,7 +811,7 @@ const LandingPage = () => {
               <Zap className="w-4 h-4 mr-2" />
               Powerful Features
             </motion.div>
-            <motion.h2 
+            <motion.h2
               className="text-3xl sm:text-4xl lg:text-5xl font-bold text-gray-900 mb-6"
               initial={{ opacity: 0, y: 20 }}
               whileInView={{ opacity: 1, y: 0 }}
@@ -767,7 +820,7 @@ const LandingPage = () => {
             >
               Everything you need to manage your finances
             </motion.h2>
-            <motion.p 
+            <motion.p
               className="text-xl text-gray-600 max-w-3xl mx-auto"
               initial={{ opacity: 0, y: 20 }}
               whileInView={{ opacity: 1, y: 0 }}
@@ -778,12 +831,12 @@ const LandingPage = () => {
               with modern design and intelligent automation
             </motion.p>
           </div>
-          
+
           {/* Mobile/Tablet: Animated Cards */}
           <div className="block lg:hidden">
             <ScrollTriggeredFeatures features={features} />
           </div>
-          
+
           {/* Desktop: Enhanced Feature Grid */}
           <div
             ref={boxRef}
@@ -811,7 +864,7 @@ const LandingPage = () => {
       <section className="py-20 bg-gradient-to-br from-gray-50 to-blue-50 relative overflow-hidden">
         <div className="absolute top-0 right-0 w-96 h-96 bg-gradient-to-l from-blue-200 to-transparent rounded-full opacity-20 -translate-y-1/2 translate-x-1/2"></div>
         <div className="absolute bottom-0 left-0 w-96 h-96 bg-gradient-to-r from-purple-200 to-transparent rounded-full opacity-20 translate-y-1/2 -translate-x-1/2"></div>
-        
+
         <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-16">
             <motion.div
@@ -823,7 +876,7 @@ const LandingPage = () => {
               <DollarSign className="w-4 h-4 mr-2" />
               Simple Pricing
             </motion.div>
-            <motion.h2 
+            <motion.h2
               className="text-3xl sm:text-4xl lg:text-5xl font-bold text-gray-900 mb-6"
               initial={{ opacity: 0, y: 20 }}
               whileInView={{ opacity: 1, y: 0 }}
@@ -832,7 +885,7 @@ const LandingPage = () => {
             >
               Choose the perfect plan for your business
             </motion.h2>
-            <motion.p 
+            <motion.p
               className="text-xl text-gray-600"
               initial={{ opacity: 0, y: 20 }}
               whileInView={{ opacity: 1, y: 0 }}
@@ -842,7 +895,7 @@ const LandingPage = () => {
               Start free and upgrade as you grow
             </motion.p>
           </div>
-          
+
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 max-w-5xl mx-auto">
             {plans.map((plan, index) => (
               <motion.div
@@ -852,11 +905,10 @@ const LandingPage = () => {
                 viewport={{ once: true }}
                 transition={{ delay: index * 0.2, duration: 0.6 }}
                 whileHover={{ y: -10, scale: 1.02 }}
-                className={`relative bg-white/80 backdrop-blur-sm rounded-3xl shadow-xl p-8 transition-all duration-300 hover:shadow-2xl border ${
-                  plan.popular 
-                    ? "ring-2 ring-primary-500 lg:scale-105 border-primary-200" 
+                className={`relative bg-white/80 backdrop-blur-sm rounded-3xl shadow-xl p-8 transition-all duration-300 hover:shadow-2xl border ${plan.popular
+                    ? "ring-2 ring-primary-500 lg:scale-105 border-primary-200"
                     : "border-gray-200"
-                }`}
+                  }`}
               >
                 {plan.popular && (
                   <div className="absolute -top-4 left-1/2 transform -translate-x-1/2">
@@ -866,7 +918,7 @@ const LandingPage = () => {
                     </div>
                   </div>
                 )}
-                
+
                 <div className="text-center mb-8">
                   <h3 className="text-2xl font-bold text-gray-900 mb-2">
                     {plan.name}
@@ -879,11 +931,11 @@ const LandingPage = () => {
                   </div>
                   <p className="text-gray-600 text-lg">{plan.description}</p>
                 </div>
-                
+
                 <ul className="space-y-4 mb-8">
                   {plan.features.map((feature, featureIndex) => (
-                    <motion.li 
-                      key={featureIndex} 
+                    <motion.li
+                      key={featureIndex}
                       className="flex items-center"
                       initial={{ opacity: 0, x: -10 }}
                       whileInView={{ opacity: 1, x: 0 }}
@@ -897,18 +949,17 @@ const LandingPage = () => {
                     </motion.li>
                   ))}
                 </ul>
-                
+
                 <motion.div
                   whileHover={{ scale: 1.05 }}
                   whileTap={{ scale: 0.95 }}
                 >
                   <Link
                     to="/register"
-                    className={`w-full py-4 px-6 rounded-xl font-semibold text-center block transition-all duration-300 shadow-lg hover:shadow-xl ${
-                      plan.popular
+                    className={`w-full py-4 px-6 rounded-xl font-semibold text-center block transition-all duration-300 shadow-lg hover:shadow-xl ${plan.popular
                         ? "bg-gradient-to-r from-primary-600 to-purple-600 hover:from-primary-700 hover:to-purple-700 text-white"
                         : "bg-gradient-to-r from-gray-100 to-gray-200 hover:from-gray-200 hover:to-gray-300 text-gray-900"
-                    }`}
+                      }`}
                   >
                     {plan.cta}
                   </Link>
@@ -925,7 +976,7 @@ const LandingPage = () => {
       {/* Enhanced CTA Banner */}
       <section className="py-20 bg-gradient-to-r from-gray-900 via-blue-900 to-purple-900 relative overflow-hidden">
         <div className="absolute inset-0 bg-black/50"></div>
-        <div 
+        <div
           className="absolute inset-0 opacity-20"
           style={{
             backgroundImage: "url('/CTA_banner.jpg')",
@@ -933,7 +984,7 @@ const LandingPage = () => {
             backgroundPosition: "center",
           }}
         ></div>
-        
+
         {/* Animated particles */}
         <div className="absolute inset-0">
           {[...Array(20)].map((_, i) => (
@@ -956,9 +1007,9 @@ const LandingPage = () => {
             />
           ))}
         </div>
-        
+
         <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-          <motion.h2 
+          <motion.h2
             className="text-4xl sm:text-5xl lg:text-6xl font-bold text-white mb-6"
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
@@ -966,7 +1017,7 @@ const LandingPage = () => {
           >
             Ready to transform your business finances?
           </motion.h2>
-          <motion.p 
+          <motion.p
             className="text-xl text-primary-100 mb-10 max-w-3xl mx-auto"
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
@@ -976,7 +1027,7 @@ const LandingPage = () => {
             Join thousands of businesses that trust FinanceFlow for their
             accounting needs. Start your journey to better financial management today.
           </motion.p>
-          <motion.div 
+          <motion.div
             className="flex flex-col sm:flex-row gap-6 justify-center"
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
@@ -1008,7 +1059,7 @@ const LandingPage = () => {
               </Link>
             </motion.div>
           </motion.div>
-          
+
           {/* Trust indicators */}
           <motion.div
             className="mt-12 flex items-center justify-center space-x-8 text-white/60"
@@ -1063,7 +1114,7 @@ const LandingPage = () => {
                 </div>
               </div>
             </div>
-            
+
             <div>
               <h4 className="font-semibold text-white mb-6 text-lg">Product</h4>
               <ul className="space-y-3">
@@ -1093,7 +1144,7 @@ const LandingPage = () => {
                 </li>
               </ul>
             </div>
-            
+
             <div>
               <h4 className="font-semibold text-white mb-6 text-lg">Company</h4>
               <ul className="space-y-3">
@@ -1123,7 +1174,7 @@ const LandingPage = () => {
                 </li>
               </ul>
             </div>
-            
+
             <div>
               <h4 className="font-semibold text-white mb-6 text-lg">Legal</h4>
               <ul className="space-y-3">
@@ -1154,7 +1205,7 @@ const LandingPage = () => {
               </ul>
             </div>
           </div>
-          
+
           <div className="border-t border-gray-700 pt-8">
             <div className="flex flex-col md:flex-row justify-between items-center">
               <p className="text-gray-400 mb-4 md:mb-0">
