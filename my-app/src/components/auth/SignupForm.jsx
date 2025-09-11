@@ -193,7 +193,6 @@ export default function SignupForm() {
                       <p className="text-danger mt-1">{errors.password}</p>
                     )}
                   </div>
-                 
 
                   <div className="d-flex flex-column align-items-center mt-3">
                     <button
@@ -251,7 +250,19 @@ export default function SignupForm() {
                   </div>
                 </form>
                 {/* FORM ENDS */}
-                
+                {/* 🚀 Move Google login OUTSIDE the form */}
+                <div className="text-center mt-3">
+                  <button
+                    type="button"
+                    className="btn btn-danger"
+                    onClick={() =>
+                      (window.location.href =
+                        "https://server.khushifinances.com/api/auth/google")
+                    }
+                  >
+                    <i className="fab fa-google me-2"></i> Sign in with Google
+                  </button>
+                </div>
               </div>
             </div>
           </div>
