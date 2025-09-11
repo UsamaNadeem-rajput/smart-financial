@@ -283,9 +283,83 @@ export default function TransactionEntryTable() {
   };
 
   return (
-    <>
-      <Navbar />
-      <div className="container mt-4">
+    <div 
+      className="min-h-screen relative overflow-hidden"
+      style={{
+        minHeight: "100vh",
+        width: "100vw",
+      }}
+    >
+      {/* Enhanced Professional Background */}
+      <div className="absolute inset-0">
+        {/* Primary gradient background - different from List.js and TransactionForm.js */}
+        <div className="absolute inset-0 bg-gradient-to-br from-slate-900 via-purple-900 to-violet-900"></div>
+        
+        {/* Overlay gradients for depth */}
+        <div className="absolute inset-0 bg-gradient-to-t from-indigo-900/30 via-transparent to-purple-800/20"></div>
+        <div className="absolute inset-0 bg-gradient-to-r from-violet-800/20 via-transparent to-purple-800/20"></div>
+        
+        {/* Professional grid pattern */}
+        <div className="absolute inset-0 opacity-10">
+          <div className="absolute inset-0" style={{
+            backgroundImage: `
+              linear-gradient(90deg, rgba(255,255,255,0.1) 1px, transparent 1px),
+              linear-gradient(0deg, rgba(255,255,255,0.1) 1px, transparent 1px)
+            `,
+            backgroundSize: '50px 50px'
+          }}></div>
+        </div>
+        
+        {/* Animated transaction display elements */}
+        <div className="absolute inset-0 overflow-hidden">
+          {/* Floating transaction display icons */}
+          <div className="absolute top-20 left-10 text-4xl text-purple-400/20 animate-pulse">📊</div>
+          <div className="absolute top-40 right-20 text-3xl text-violet-400/20 animate-bounce">📋</div>
+          <div className="absolute bottom-40 left-32 text-5xl text-indigo-400/20 animate-pulse">📈</div>
+          <div className="absolute bottom-20 right-40 text-3xl text-purple-400/20 animate-bounce">📑</div>
+          <div className="absolute top-1/2 left-1/4 text-2xl text-violet-400/20 animate-pulse">📊</div>
+          <div className="absolute top-1/3 right-1/3 text-4xl text-purple-400/20 animate-bounce">📊</div>
+          
+          {/* Subtle geometric shapes */}
+          <div className="absolute top-1/4 right-10 w-32 h-32 border border-white/10 rounded-full animate-pulse"></div>
+          <div className="absolute bottom-1/4 left-10 w-24 h-24 border border-purple-400/20 rounded-lg rotate-45 animate-spin" style={{animationDuration: '20s'}}></div>
+          <div className="absolute top-1/2 right-1/4 w-20 h-20 bg-gradient-to-r from-violet-500/10 to-purple-500/10 rounded-full animate-pulse"></div>
+          
+          {/* Network connection lines */}
+          <svg className="absolute inset-0 w-full h-full" style={{ filter: 'blur(0.5px)' }}>
+            <defs>
+              <linearGradient id="transactionsGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" style={{ stopColor: '#8b5cf6', stopOpacity: 0.1 }} />
+                <stop offset="50%" style={{ stopColor: '#7c3aed', stopOpacity: 0.2 }} />
+                <stop offset="100%" style={{ stopColor: '#6366f1', stopOpacity: 0.1 }} />
+              </linearGradient>
+            </defs>
+            <path 
+              d="M100,100 L300,200 L600,150 L900,300 L1200,200" 
+              stroke="url(#transactionsGradient)" 
+              strokeWidth="2" 
+              fill="none"
+              className="animate-pulse"
+            />
+            <path 
+              d="M200,400 L500,300 L800,450 L1100,350" 
+              stroke="rgba(139, 92, 246, 0.2)" 
+              strokeWidth="1" 
+              fill="none"
+              className="animate-pulse"
+              style={{animationDelay: '1s'}}
+            />
+          </svg>
+        </div>
+        
+        {/* Subtle overlay for content readability */}
+        <div className="absolute inset-0 bg-black/20"></div>
+      </div>
+
+      {/* Content */}
+      <div className="relative z-10">
+        <Navbar />
+        <div className="container mt-4">
         <h2>General Journal</h2>
 
         <div className="mb-3 row">
@@ -392,7 +466,8 @@ export default function TransactionEntryTable() {
             fromDate && toDate && <p>No transactions found for selected date range.</p>
           )}
         </div>
+        </div>
       </div>
-    </>
+    </div>
   );
 }
