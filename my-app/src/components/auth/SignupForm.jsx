@@ -193,11 +193,7 @@ export default function SignupForm() {
                       <p className="text-danger mt-1">{errors.password}</p>
                     )}
                   </div>
-                  <a href="https://server.khushifinances.com/api/auth/google">
-                    <button className="google-login-btn">
-                      Sign in with Google
-                    </button>
-                  </a>
+                 
 
                   <div className="d-flex flex-column align-items-center mt-3">
                     <button
@@ -255,6 +251,7 @@ export default function SignupForm() {
                   </div>
                 </form>
                 {/* FORM ENDS */}
+                
               </div>
             </div>
           </div>
