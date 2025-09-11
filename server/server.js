@@ -20,7 +20,7 @@ app.use(
   cors({
     origin: [
       'http://localhost:5173',
-      process.env.FRONTEND_URL || 'https://yourdomain.com'
+      process.env.FRONTEND_URL || 'https://khushifinances.com'
     ], // ✅ Your frontend domains
     credentials: true,
   })
@@ -84,6 +84,7 @@ app.use('/api', require('./routers/transactionApi'));
 app.use('/api', require('./routers/showtransactions'));
 app.use('/api/auth', require('./routers/auth')); // ✅ Mounted under /api
 app.use('/api/contact', require('./routers/contact')); // ✅ Contact form route
+app.use('/api/verify', require('./routers/verify'));
 
 /* ---------- Fallback ---------- */
 app.use('/api/*', (req, res) => {

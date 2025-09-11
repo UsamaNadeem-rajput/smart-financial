@@ -11,6 +11,7 @@ import TransactionForm from './components/transactions/TransactionForm';
 import ShowTransactions from './components/transactions/ShowTransactions';
 import ContactForm from './components/conatct_us/ContactForm';
 import PrivateRoute from './components/contexts/PrivateRoute';
+import VerifyPage from './components/auth/VerifyPage';
 import { BusinessProvider } from './context/BusinessContext';
 
 import './index.css';
@@ -27,6 +28,7 @@ function App() {
             <Route path="/" element={<LandingPage />} />
             <Route path="/register" element={<SignupForm />} />
             <Route path="/login" element={<LoginForm />} />
+            <Route path="/verify" element={<VerifyPage />} />
 
             {/* Protected Routes */}
             <Route path="/business" element={<PrivateRoute><BusinessForm /></PrivateRoute>} />

@@ -2,6 +2,23 @@ const express = require('express');
 const bcrypt = require('bcrypt');
 const pool = require('../db');
 const router = express.Router();
+const nodemailer = require('nodemailer');
+
+// Nodemailer transporter (OrangeHost SMTP)
+const transporter = nodemailer.createTransport({
+  host: "mail.khushifinances.com",
+  port: 465,
+  secure: true,
+  auth: {
+    user: "support@khushifinances.com",
+    pass: "Usamark@123" 
+  }
+});
+
+// Generate 6 digit code
+function generateCode() {
+  return Math.floor(100000 + Math.random() * 900000).toString();
+}
 
 router.post('/', async (req, res) => {
   const { username, fullname, email, password } = req.body;
@@ -30,18 +47,30 @@ router.post('/', async (req, res) => {
     }
 
     const hashedPassword = await bcrypt.hash(password, 10);
+    const verificationCode = generateCode();
+
     const [result] = await conn.query(
-      'INSERT INTO users (username, full_name, email, password_hash) VALUES (?, ?, ?, ?)',
-      [username, fullname, email, hashedPassword]
+      'INSERT INTO users (username, full_name, email, password_hash, is_verified, verification_code) VALUES (?, ?, ?, ?, ?, ?)',
+      [username, fullname, email, hashedPassword, 0, verificationCode]
     );
 
-    conn.release(); // ✅ release first
+    conn.release();
 
+    // ⚠️ Purana session wala code keep kar raha hoon
     req.session.username = username;
-    req.session.userId = result.insertId; // ✅ store userId too
+    req.session.userId = result.insertId;
 
     console.log('✅ Registered:', username);
-    res.status(201).json({ message: 'User registered successfully', username });
+
+    // 🔹 Send email (new addition)
+    await transporter.sendMail({
+      from: '"Khushi Finances" <support@khushifinances.com>',
+      to: email,
+      subject: "Verify your account",
+      text: `Your verification code is: ${verificationCode}`
+    });
+
+    res.status(201).json({ message: 'User registered successfully. Please check your email for verification code.', username });
 
   } catch (error) {
     console.error('❌ Registration Error:', error);

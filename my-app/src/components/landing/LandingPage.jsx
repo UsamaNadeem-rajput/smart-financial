@@ -130,7 +130,9 @@ const StatsSection = () => {
                 <div className="inline-flex items-center justify-center w-16 h-16 bg-white/10 rounded-full mb-4 group-hover:bg-white/20 transition-colors">
                   <Icon className="w-8 h-8 text-white" />
                 </div>
-                <div className="text-3xl font-bold text-white mb-2">{stat.number}</div>
+                <div className="text-3xl font-bold text-white mb-2">
+                  {stat.number}
+                </div>
                 <div className="text-gray-300 font-medium">{stat.label}</div>
               </motion.div>
             );
@@ -147,22 +149,28 @@ const TestimonialsSection = () => {
     {
       name: "Sarah Johnson",
       role: "CEO, Tech Startup",
-      content: "FinanceFlow transformed how we handle our accounting. The interface is intuitive and the features are exactly what we needed.",
-      avatar: "https://images.unsplash.com/photo-1494790108755-2616b612b47c?w=64&h=64&fit=crop&crop=face",
+      content:
+        "FinanceFlow transformed how we handle our accounting. The interface is intuitive and the features are exactly what we needed.",
+      avatar:
+        "https://images.unsplash.com/photo-1494790108755-2616b612b47c?w=64&h=64&fit=crop&crop=face",
       rating: 5,
     },
     {
       name: "Michael Chen",
       role: "Small Business Owner",
-      content: "The multi-business management feature is a game-changer. I can handle all my ventures from one place effortlessly.",
-      avatar: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=64&h=64&fit=crop&crop=face",
+      content:
+        "The multi-business management feature is a game-changer. I can handle all my ventures from one place effortlessly.",
+      avatar:
+        "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=64&h=64&fit=crop&crop=face",
       rating: 5,
     },
     {
       name: "Emily Rodriguez",
       role: "Freelance Consultant",
-      content: "Simple, powerful, and reliable. FinanceFlow handles everything I need without the complexity of enterprise software.",
-      avatar: "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=64&h=64&fit=crop&crop=face",
+      content:
+        "Simple, powerful, and reliable. FinanceFlow handles everything I need without the complexity of enterprise software.",
+      avatar:
+        "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=64&h=64&fit=crop&crop=face",
       rating: 5,
     },
   ];
@@ -201,10 +209,15 @@ const TestimonialsSection = () => {
             >
               <div className="flex items-center mb-4">
                 {[...Array(testimonial.rating)].map((_, i) => (
-                  <Star key={i} className="w-5 h-5 text-yellow-400 fill-current" />
+                  <Star
+                    key={i}
+                    className="w-5 h-5 text-yellow-400 fill-current"
+                  />
                 ))}
               </div>
-              <p className="text-gray-700 mb-6 italic">"{testimonial.content}"</p>
+              <p className="text-gray-700 mb-6 italic">
+                "{testimonial.content}"
+              </p>
               <div className="flex items-center">
                 <img
                   src={testimonial.avatar}
@@ -212,8 +225,12 @@ const TestimonialsSection = () => {
                   className="w-12 h-12 rounded-full mr-4 object-cover"
                 />
                 <div>
-                  <div className="font-semibold text-gray-900">{testimonial.name}</div>
-                  <div className="text-gray-600 text-sm">{testimonial.role}</div>
+                  <div className="font-semibold text-gray-900">
+                    {testimonial.name}
+                  </div>
+                  <div className="text-gray-600 text-sm">
+                    {testimonial.role}
+                  </div>
                 </div>
               </div>
             </motion.div>
@@ -249,7 +266,9 @@ function ScrollTriggeredFeatures({ features }) {
       {features.map((feature, i) => {
         const Icon = feature.icon;
         const [hueA, hueB] = colorPairs[i % colorPairs.length];
-        const background = `linear-gradient(306deg, ${hue(hueA)}, ${hue(hueB)})`;
+        const background = `linear-gradient(306deg, ${hue(hueA)}, ${hue(
+          hueB
+        )})`;
         return (
           <div
             key={feature.title}
@@ -359,7 +378,9 @@ const FeatureBox = ({ feature, Icon, boxRef }) => {
       {isPC ? (
         <motion.div
           drag
-          dragConstraints={boxRef?.current || { top: 0, bottom: 0, left: 0, right: 0 }}
+          dragConstraints={
+            boxRef?.current || { top: 0, bottom: 0, left: 0, right: 0 }
+          }
           initial={{ opacity: 0, y: 40 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.8, ease: [0.25, 0.1, 0.25, 1] }}
@@ -385,32 +406,38 @@ const features = [
   {
     icon: Building2,
     title: "Multi-Business Management",
-    description: "Manage multiple businesses from one dashboard with ease and precision",
+    description:
+      "Manage multiple businesses from one dashboard with ease and precision",
   },
   {
     icon: BarChart3,
     title: "Chart of Accounts",
-    description: "Organize your finances with a comprehensive chart of accounts system",
+    description:
+      "Organize your finances with a comprehensive chart of accounts system",
   },
   {
     icon: Calculator,
     title: "Double-Entry Accounting",
-    description: "Professional accounting with automatic balance validation and accuracy",
+    description:
+      "Professional accounting with automatic balance validation and accuracy",
   },
   {
     icon: FileText,
     title: "Transaction Management",
-    description: "Track all your financial transactions with detailed records and insights",
+    description:
+      "Track all your financial transactions with detailed records and insights",
   },
   {
     icon: PieChart,
     title: "Financial Reports",
-    description: "Generate insightful reports to understand your business performance",
+    description:
+      "Generate insightful reports to understand your business performance",
   },
   {
     icon: Shield,
     title: "Secure & Reliable",
-    description: "Your financial data is protected with enterprise-grade security protocols",
+    description:
+      "Your financial data is protected with enterprise-grade security protocols",
   },
 ];
 
@@ -457,7 +484,10 @@ const LandingPage = () => {
   useEffect(() => {
     const fetchUser = async () => {
       try {
-        const res = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/login/session`, { withCredentials: true });
+        const res = await axios.get(
+          `${import.meta.env.VITE_BACKEND_URL}/api/login/session`,
+          { withCredentials: true }
+        );
         setUser(res.data.username);
       } catch {
         setUser(null);
@@ -474,13 +504,15 @@ const LandingPage = () => {
 
   const handleLogout = async () => {
     try {
-      await axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/auth/logout`, { withCredentials: true });
+      await axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/auth/logout`, {
+        withCredentials: true,
+      });
       localStorage.clear();
       setUser(null);
-      navigate('/login');
+      navigate("/login");
     } catch {
       setUser(null);
-      window.location.href = '/login';
+      window.location.href = "/login";
     }
   };
 
@@ -496,7 +528,12 @@ const LandingPage = () => {
               animate={{ opacity: 1, x: 0 }}
               transition={{ duration: 0.5 }}
             >
-              <img src="/final.png" alt="Logo" className="h-16 w-auto mr-2" style={{ marginTop: "18px" }} />
+              <img
+                src="/final.png"
+                alt="Logo"
+                className="h-16 w-auto mr-2"
+                style={{ marginTop: "18px" }}
+              />
             </motion.div>
             <motion.div
               className="flex items-center space-x-4"
@@ -553,30 +590,59 @@ const LandingPage = () => {
 
           {/* Financial pattern overlay */}
           <div className="absolute inset-0 opacity-10">
-            <div className="absolute inset-0" style={{
-              backgroundImage: `
+            <div
+              className="absolute inset-0"
+              style={{
+                backgroundImage: `
           linear-gradient(45deg, rgba(255,255,255,0.1) 1px, transparent 1px),
           linear-gradient(-45deg, rgba(255,255,255,0.1) 1px, transparent 1px)
         `,
-              backgroundSize: '20px 20px'
-            }}></div>
+                backgroundSize: "20px 20px",
+              }}
+            ></div>
           </div>
 
           {/* Animated financial elements */}
           <div className="absolute inset-0">
             {/* Floating money symbols */}
-            <div className="absolute top-20 left-10 text-4xl text-green-400/20 animate-pulse">$</div>
-            <div className="absolute top-40 right-20 text-3xl text-yellow-400/20 animate-bounce">€</div>
-            <div className="absolute bottom-40 left-32 text-5xl text-blue-400/20 animate-pulse">£</div>
-            <div className="absolute bottom-20 right-40 text-3xl text-purple-400/20 animate-bounce">¥</div>
+            <div className="absolute top-20 left-10 text-4xl text-green-400/20 animate-pulse">
+              $
+            </div>
+            <div className="absolute top-40 right-20 text-3xl text-yellow-400/20 animate-bounce">
+              €
+            </div>
+            <div className="absolute bottom-40 left-32 text-5xl text-blue-400/20 animate-pulse">
+              £
+            </div>
+            <div className="absolute bottom-20 right-40 text-3xl text-purple-400/20 animate-bounce">
+              ¥
+            </div>
 
             {/* Chart lines effect */}
-            <svg className="absolute inset-0 w-full h-full" style={{ filter: 'blur(1px)' }}>
+            <svg
+              className="absolute inset-0 w-full h-full"
+              style={{ filter: "blur(1px)" }}
+            >
               <defs>
-                <linearGradient id="chartGradient" x1="0%" y1="0%" x2="100%" y2="0%">
-                  <stop offset="0%" style={{ stopColor: '#3b82f6', stopOpacity: 0.2 }} />
-                  <stop offset="50%" style={{ stopColor: '#8b5cf6', stopOpacity: 0.3 }} />
-                  <stop offset="100%" style={{ stopColor: '#06b6d4', stopOpacity: 0.2 }} />
+                <linearGradient
+                  id="chartGradient"
+                  x1="0%"
+                  y1="0%"
+                  x2="100%"
+                  y2="0%"
+                >
+                  <stop
+                    offset="0%"
+                    style={{ stopColor: "#3b82f6", stopOpacity: 0.2 }}
+                  />
+                  <stop
+                    offset="50%"
+                    style={{ stopColor: "#8b5cf6", stopOpacity: 0.3 }}
+                  />
+                  <stop
+                    offset="100%"
+                    style={{ stopColor: "#06b6d4", stopOpacity: 0.2 }}
+                  />
                 </linearGradient>
               </defs>
               <path
@@ -624,14 +690,14 @@ const LandingPage = () => {
 
               <p className="text-lg sm:text-xl text-gray-300 mt-6 leading-relaxed">
                 Manage your business finances with professional-grade accounting
-                software. From startups to enterprises, we've got you covered with
-                intelligent automation and beautiful design.
+                software. From startups to enterprises, we've got you covered
+                with intelligent automation and beautiful design.
               </p>
 
               <div className="flex flex-col sm:flex-row gap-4 mt-8">
                 {user ? (
                   <motion.button
-                    onClick={() => navigate('/list')}
+                    onClick={() => navigate("/list")}
                     className="btn-primary text-lg px-8 py-4 flex items-center justify-center group shadow-2xl hover:shadow-3xl transition-all duration-300"
                     whileHover={{ scale: 1.05 }}
                     whileTap={{ scale: 0.95 }}
@@ -693,15 +759,21 @@ const LandingPage = () => {
                 <motion.div
                   className="bg-white rounded-3xl shadow-2xl p-8 transform hover:scale-105 transition-transform duration-500"
                   style={{
-                    transform: `perspective(1000px) rotateX(${scrollY * 0.01}deg) rotateY(${scrollY * 0.005}deg)`
+                    transform: `perspective(1000px) rotateX(${
+                      scrollY * 0.01
+                    }deg) rotateY(${scrollY * 0.005}deg)`,
                   }}
                 >
                   <div className="space-y-6">
                     {/* Header */}
                     <div className="flex items-center justify-between">
                       <div>
-                        <h3 className="text-lg font-semibold text-gray-900">Dashboard Overview</h3>
-                        <p className="text-sm text-gray-500">Real-time business insights</p>
+                        <h3 className="text-lg font-semibold text-gray-900">
+                          Dashboard Overview
+                        </h3>
+                        <p className="text-sm text-gray-500">
+                          Real-time business insights
+                        </p>
                       </div>
                       <div className="flex space-x-2">
                         <div className="w-3 h-3 bg-red-400 rounded-full"></div>
@@ -714,15 +786,21 @@ const LandingPage = () => {
                     <div className="bg-gradient-to-r from-blue-500 to-purple-600 rounded-xl p-6 text-white">
                       <div className="flex items-center justify-between">
                         <div>
-                          <span className="text-sm opacity-90">Total Revenue</span>
-                          <div className="text-3xl font-bold mt-1">$124,563</div>
+                          <span className="text-sm opacity-90">
+                            Total Revenue
+                          </span>
+                          <div className="text-3xl font-bold mt-1">
+                            $124,563
+                          </div>
                         </div>
                         <TrendingUp className="w-8 h-8 opacity-90" />
                       </div>
                       <div className="mt-4">
                         <div className="flex items-center text-sm">
                           <span className="text-green-300">↗ +12.5%</span>
-                          <span className="ml-2 opacity-90">from last month</span>
+                          <span className="ml-2 opacity-90">
+                            from last month
+                          </span>
                         </div>
                       </div>
                     </div>
@@ -730,11 +808,17 @@ const LandingPage = () => {
                     {/* Quick Stats */}
                     <div className="grid grid-cols-2 gap-4">
                       <div className="bg-gray-50 rounded-lg p-4">
-                        <div className="text-2xl font-bold text-gray-900">248</div>
-                        <div className="text-sm text-gray-500">Transactions</div>
+                        <div className="text-2xl font-bold text-gray-900">
+                          248
+                        </div>
+                        <div className="text-sm text-gray-500">
+                          Transactions
+                        </div>
                       </div>
                       <div className="bg-gray-50 rounded-lg p-4">
-                        <div className="text-2xl font-bold text-gray-900">$45.2K</div>
+                        <div className="text-2xl font-bold text-gray-900">
+                          $45.2K
+                        </div>
                         <div className="text-sm text-gray-500">This Month</div>
                       </div>
                     </div>
@@ -827,8 +911,8 @@ const LandingPage = () => {
               viewport={{ once: true }}
               transition={{ delay: 0.3 }}
             >
-              Professional accounting features designed for businesses of all sizes,
-              with modern design and intelligent automation
+              Professional accounting features designed for businesses of all
+              sizes, with modern design and intelligent automation
             </motion.p>
           </div>
 
@@ -905,10 +989,11 @@ const LandingPage = () => {
                 viewport={{ once: true }}
                 transition={{ delay: index * 0.2, duration: 0.6 }}
                 whileHover={{ y: -10, scale: 1.02 }}
-                className={`relative bg-white/80 backdrop-blur-sm rounded-3xl shadow-xl p-8 transition-all duration-300 hover:shadow-2xl border ${plan.popular
+                className={`relative bg-white/80 backdrop-blur-sm rounded-3xl shadow-xl p-8 transition-all duration-300 hover:shadow-2xl border ${
+                  plan.popular
                     ? "ring-2 ring-primary-500 lg:scale-105 border-primary-200"
                     : "border-gray-200"
-                  }`}
+                }`}
               >
                 {plan.popular && (
                   <div className="absolute -top-4 left-1/2 transform -translate-x-1/2">
@@ -927,7 +1012,9 @@ const LandingPage = () => {
                     <span className="text-5xl font-bold bg-gradient-to-r from-gray-900 to-gray-700 bg-clip-text text-transparent">
                       {plan.price}
                     </span>
-                    <span className="text-gray-500 ml-2 text-lg">/{plan.period}</span>
+                    <span className="text-gray-500 ml-2 text-lg">
+                      /{plan.period}
+                    </span>
                   </div>
                   <p className="text-gray-600 text-lg">{plan.description}</p>
                 </div>
@@ -940,12 +1027,14 @@ const LandingPage = () => {
                       initial={{ opacity: 0, x: -10 }}
                       whileInView={{ opacity: 1, x: 0 }}
                       viewport={{ once: true }}
-                      transition={{ delay: (index * 0.2) + (featureIndex * 0.1) }}
+                      transition={{ delay: index * 0.2 + featureIndex * 0.1 }}
                     >
                       <div className="w-6 h-6 bg-gradient-to-r from-green-400 to-green-500 rounded-full flex items-center justify-center mr-3 flex-shrink-0">
                         <Check className="w-3 h-3 text-white" />
                       </div>
-                      <span className="text-gray-700 font-medium">{feature}</span>
+                      <span className="text-gray-700 font-medium">
+                        {feature}
+                      </span>
                     </motion.li>
                   ))}
                 </ul>
@@ -956,10 +1045,11 @@ const LandingPage = () => {
                 >
                   <Link
                     to="/register"
-                    className={`w-full py-4 px-6 rounded-xl font-semibold text-center block transition-all duration-300 shadow-lg hover:shadow-xl ${plan.popular
+                    className={`w-full py-4 px-6 rounded-xl font-semibold text-center block transition-all duration-300 shadow-lg hover:shadow-xl ${
+                      plan.popular
                         ? "bg-gradient-to-r from-primary-600 to-purple-600 hover:from-primary-700 hover:to-purple-700 text-white"
                         : "bg-gradient-to-r from-gray-100 to-gray-200 hover:from-gray-200 hover:to-gray-300 text-gray-900"
-                      }`}
+                    }`}
                   >
                     {plan.cta}
                   </Link>
@@ -1025,7 +1115,8 @@ const LandingPage = () => {
             transition={{ delay: 0.2 }}
           >
             Join thousands of businesses that trust FinanceFlow for their
-            accounting needs. Start your journey to better financial management today.
+            accounting needs. Start your journey to better financial management
+            today.
           </motion.p>
           <motion.div
             className="flex flex-col sm:flex-row gap-6 justify-center"
@@ -1034,10 +1125,7 @@ const LandingPage = () => {
             viewport={{ once: true }}
             transition={{ delay: 0.4 }}
           >
-            <motion.div
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-            >
+            <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
               <Link
                 to="/register"
                 className="bg-white text-primary-600 hover:bg-gray-100 font-semibold py-4 px-8 rounded-xl transition-colors flex items-center justify-center shadow-2xl hover:shadow-3xl group"
@@ -1119,25 +1207,37 @@ const LandingPage = () => {
               <h4 className="font-semibold text-white mb-6 text-lg">Product</h4>
               <ul className="space-y-3">
                 <li>
-                  <a href="#" className="hover:text-white transition-colors flex items-center group">
+                  <a
+                    href="#"
+                    className="hover:text-white transition-colors flex items-center group"
+                  >
                     <ChevronDown className="w-4 h-4 mr-2 rotate-90 group-hover:translate-x-1 transition-transform" />
                     Features
                   </a>
                 </li>
                 <li>
-                  <a href="#" className="hover:text-white transition-colors flex items-center group">
+                  <a
+                    href="#"
+                    className="hover:text-white transition-colors flex items-center group"
+                  >
                     <ChevronDown className="w-4 h-4 mr-2 rotate-90 group-hover:translate-x-1 transition-transform" />
                     Pricing
                   </a>
                 </li>
                 <li>
-                  <a href="#" className="hover:text-white transition-colors flex items-center group">
+                  <a
+                    href="#"
+                    className="hover:text-white transition-colors flex items-center group"
+                  >
                     <ChevronDown className="w-4 h-4 mr-2 rotate-90 group-hover:translate-x-1 transition-transform" />
                     Security
                   </a>
                 </li>
                 <li>
-                  <a href="#" className="hover:text-white transition-colors flex items-center group">
+                  <a
+                    href="#"
+                    className="hover:text-white transition-colors flex items-center group"
+                  >
                     <ChevronDown className="w-4 h-4 mr-2 rotate-90 group-hover:translate-x-1 transition-transform" />
                     Integrations
                   </a>
@@ -1149,25 +1249,37 @@ const LandingPage = () => {
               <h4 className="font-semibold text-white mb-6 text-lg">Company</h4>
               <ul className="space-y-3">
                 <li>
-                  <a href="#" className="hover:text-white transition-colors flex items-center group">
+                  <a
+                    href="#"
+                    className="hover:text-white transition-colors flex items-center group"
+                  >
                     <ChevronDown className="w-4 h-4 mr-2 rotate-90 group-hover:translate-x-1 transition-transform" />
                     About
                   </a>
                 </li>
                 <li>
-                  <a href="#" className="hover:text-white transition-colors flex items-center group">
+                  <a
+                    href="#"
+                    className="hover:text-white transition-colors flex items-center group"
+                  >
                     <ChevronDown className="w-4 h-4 mr-2 rotate-90 group-hover:translate-x-1 transition-transform" />
                     Contact
                   </a>
                 </li>
                 <li>
-                  <a href="#" className="hover:text-white transition-colors flex items-center group">
+                  <a
+                    href="#"
+                    className="hover:text-white transition-colors flex items-center group"
+                  >
                     <ChevronDown className="w-4 h-4 mr-2 rotate-90 group-hover:translate-x-1 transition-transform" />
                     Support
                   </a>
                 </li>
                 <li>
-                  <a href="#" className="hover:text-white transition-colors flex items-center group">
+                  <a
+                    href="#"
+                    className="hover:text-white transition-colors flex items-center group"
+                  >
                     <ChevronDown className="w-4 h-4 mr-2 rotate-90 group-hover:translate-x-1 transition-transform" />
                     Careers
                   </a>
@@ -1179,25 +1291,37 @@ const LandingPage = () => {
               <h4 className="font-semibold text-white mb-6 text-lg">Legal</h4>
               <ul className="space-y-3">
                 <li>
-                  <a href="#" className="hover:text-white transition-colors flex items-center group">
+                  <a
+                    href="#"
+                    className="hover:text-white transition-colors flex items-center group"
+                  >
                     <ChevronDown className="w-4 h-4 mr-2 rotate-90 group-hover:translate-x-1 transition-transform" />
                     Privacy
                   </a>
                 </li>
                 <li>
-                  <a href="#" className="hover:text-white transition-colors flex items-center group">
+                  <a
+                    href="#"
+                    className="hover:text-white transition-colors flex items-center group"
+                  >
                     <ChevronDown className="w-4 h-4 mr-2 rotate-90 group-hover:translate-x-1 transition-transform" />
                     Terms
                   </a>
                 </li>
                 <li>
-                  <a href="#" className="hover:text-white transition-colors flex items-center group">
+                  <a
+                    href="#"
+                    className="hover:text-white transition-colors flex items-center group"
+                  >
                     <ChevronDown className="w-4 h-4 mr-2 rotate-90 group-hover:translate-x-1 transition-transform" />
                     Cookies
                   </a>
                 </li>
                 <li>
-                  <a href="#" className="hover:text-white transition-colors flex items-center group">
+                  <a
+                    href="#"
+                    className="hover:text-white transition-colors flex items-center group"
+                  >
                     <ChevronDown className="w-4 h-4 mr-2 rotate-90 group-hover:translate-x-1 transition-transform" />
                     GDPR
                   </a>
@@ -1209,7 +1333,8 @@ const LandingPage = () => {
           <div className="border-t border-gray-700 pt-8">
             <div className="flex flex-col md:flex-row justify-between items-center">
               <p className="text-gray-400 mb-4 md:mb-0">
-                © 2025 FinanceFlow. All rights reserved. Built with ❤️ for modern businesses.
+                © 2025 FinanceFlow. All rights reserved. Built with ❤️ for
+                modern businesses.
               </p>
               <div className="flex items-center space-x-4 text-sm text-gray-400">
                 <span>🌍 English</span>
