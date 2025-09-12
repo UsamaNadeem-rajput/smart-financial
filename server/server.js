@@ -1,27 +1,31 @@
-// server.js
 require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
 const session = require('express-session');
 const MySQLStore = require('express-mysql-session')(session);
 const pool = require('./db');
+const passport = require("passport");
+require("./auth");
 
 const app = express();
-const PORT = process.env.PORT || 8080;
+const PORT = process.env.PORT || 3000;
 
-/* ---------- Trust proxy for Railway ---------- */
-app.set('trust proxy', 1); // ✅ Required for secure cookies to work on Railway
+
+
+/* ---------- Trust proxy for OrangeHost ---------- */
+app.set('trust proxy', 1);
 
 /* ---------- Session store ---------- */
 const sessionStore = new MySQLStore({ schema: { tableName: 'sessions' } }, pool);
+
 
 /* ---------- CORS + JSON ---------- */
 app.use(
   cors({
     origin: [
       'http://localhost:5173',
-      process.env.FRONTEND_URL || 'https://khushifinances.com'
-    ], // ✅ Your frontend domains
+      'https://khushifinances.com'
+    ],
     credentials: true,
   })
 );
@@ -32,6 +36,7 @@ app.use((req, res, next) => {
   res.set('Cache-Control', 'no-store');
   next();
 });
+
 /* ---------- Session ---------- */
 app.use(
   session({
@@ -42,12 +47,15 @@ app.use(
     saveUninitialized: false,
     cookie: {
       httpOnly: true,
-      secure: true,         // ✅ Must be true for production HTTPS
-      sameSite: 'none',     // ✅ Must be 'none' for cross-origin
+      secure: true,
+      sameSite: 'none',
       maxAge: 24 * 60 * 60 * 1000,
     },
   })
 );
+app.use(passport.initialize());
+app.use(passport.session());
+
 
 /* ---------- Logging ---------- */
 app.use((req, res, next) => {
@@ -58,12 +66,15 @@ app.use((req, res, next) => {
   next();
 });
 
-/* ---------- Health & Test ---------- */
-app.get('/api/test', (req, res) => {
+// ✅ CREATE A ROUTER FOR ALL SERVER ROUTES
+const serverRouter = express.Router();
+
+/* ---------- Health & Test routes ---------- */
+serverRouter.get('/api/test', (req, res) => {
   res.json({ message: 'Backend is running', timestamp: new Date().toISOString() });
 });
 
-app.get('/health', async (_req, res) => {
+serverRouter.get('/health', async (_req, res) => {
   try {
     await pool.query('SELECT 1');
     res.json({ status: 'OK' });
@@ -72,23 +83,37 @@ app.get('/health', async (_req, res) => {
   }
 });
 
-/* ---------- Routes ---------- */
-app.use('/api/register', require('./routers/register'));
-app.use('/api/login', require('./routers/login'));
-app.use('/api/business', require('./routers/business'));
-app.use('/api/showbusinesses', require('./routers/showbusinesses'));
-app.use('/api/createnewaccount', require('./routers/createnewaccount'));
-app.use('/api/accounts-list', require('./routers/list'));
-app.use('/api/search-accounts', require('./routers/searchAccounts'));
-app.use('/api', require('./routers/transactionApi'));
-app.use('/api', require('./routers/showtransactions'));
-app.use('/api/auth', require('./routers/auth')); // ✅ Mounted under /api
-app.use('/api/contact', require('./routers/contact')); // ✅ Contact form route
-app.use('/api/verify', require('./routers/verify'));
+/* ---------- API Routes ---------- */
+serverRouter.use('/api/register', require('./routers/register'));
+serverRouter.use('/api/login', require('./routers/login'));
+serverRouter.use('/api/business', require('./routers/business'));
+serverRouter.use('/api/showbusinesses', require('./routers/showbusinesses'));
+serverRouter.use('/api/createnewaccount', require('./routers/createnewaccount'));
+serverRouter.use('/api/accounts-list', require('./routers/list'));
+serverRouter.use('/api/search-accounts', require('./routers/searchAccounts'));
+serverRouter.use('/api', require('./routers/transactionApi'));
+serverRouter.use('/api', require('./routers/showtransactions'));
+serverRouter.use('/api/auth', require('./routers/auth'));
+serverRouter.use('/api/contact', require('./routers/contact'));
+serverRouter.use('/api/verify', require('./routers/verify'));
+// ✅ Google Auth Router
+serverRouter.use("/api/auth", require("./routers/googleAuth"));
 
-/* ---------- Fallback ---------- */
-app.use('/api/*', (req, res) => {
+/* ---------- Fallback for API routes ---------- */
+serverRouter.use('/api/*', (req, res) => {
   res.status(404).json({ error: 'API endpoint not found', path: req.path });
 });
 
-app.listen(PORT, () => console.log(`✅ Server running on :${PORT}`));
+// ✅ MOUNT ROUTER at root
+app.use('/', serverRouter);
+
+// ✅ ROOT ROUTE REDIRECT
+app.get('/', (req, res) => {
+  res.redirect('/api/test');
+});
+
+app.listen(PORT, '0.0.0.0', () => {
+  console.log(`✅ Server running on port ${PORT}`);
+  console.log(`✅ Available at: https://server.khushifinances.com`);
+  console.log('GOOGLE_CALLBACK_URL:', process.env.GOOGLE_CALLBACK_URL);
+});
