@@ -1,29 +1,25 @@
-/* 1️⃣  NEW IMPORT ---------------------------------------------------- */
 import React, { useState, useEffect } from 'react';
-import { Link, useNavigate, useSearchParams } from 'react-router-dom';   // ⬅️ added useSearchParams
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import axios from 'axios';
 import TrueFocus from '../animation/TrueFocus';
 import './styles.css';
 import { DotLottieReact } from '@lottiefiles/dotlottie-react';
 
 export default function LoginForm() {
-  /* 2️⃣  STATE SECTION ---------------------------------------------- */
   const [formData, setFormData] = useState({ email: '', password: '' });
   const [message, setMessage] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-  const [isGoogleLoading, setIsGoogleLoading] = useState(false);   // ⬅️ new
+  const [isGoogleLoading, setIsGoogleLoading] = useState(false);
 
   const navigate = useNavigate();
-  const [searchParams] = useSearchParams();                        // ⬅️ new
+  const [searchParams] = useSearchParams();
 
-  /* 3️⃣  GOOGLE CALLBACK HANDLER (copy from SignupForm) ------------- */
   useEffect(() => {
     const authStatus = searchParams.get('auth');
     const error = searchParams.get('error');
-
     if (authStatus === 'success') {
       setMessage('Google login successful! Redirecting…');
-      setTimeout(() => navigate('/business'), 1500);
+      setTimeout(() => navigate('/list'), 1500);
     }
     if (error === 'auth_failed') {
       setMessage('Google login failed. Please try again.');
@@ -31,39 +27,28 @@ export default function LoginForm() {
     }
   }, [searchParams, navigate]);
 
-  /* 4️⃣  ORIGINAL handleChange / handleSubmit STAY UNCHANGED -------- */
-  const handleChange = (e) => {
-    setFormData(prev => ({ ...prev, [e.target.name]: e.target.value }));
-  };
+  const handleChange = (e) => setFormData(prev => ({ ...prev, [e.target.name]: e.target.value }));
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setIsLoading(true);
-    setMessage('');
-    if (!formData.email || !formData.password) {
-      setMessage('Please fill in all fields');
-      setIsLoading(false);
-      return;
-    }
+    setIsLoading(true); setMessage('');
+    if (!formData.email || !formData.password) { setMessage('Please fill in all fields'); setIsLoading(false); return; }
     try {
       const apiUrl = import.meta.env.VITE_BACKEND_URL || 'http://localhost:8080';
       const res = await axios.post(`${apiUrl}/api/login`, formData, { withCredentials: true });
-      setMessage(res.data.message);
-      navigate('/list');
+      setMessage(res.data.message); navigate('/list');
     } catch (err) {
-      /* … existing error handling … */
-    } finally {
-      setIsLoading(false);
-    }
+      const msg = err.response?.data?.error || err.response?.data?.message || 'Server error';
+      setMessage(`Login failed: ${msg}`);
+    } finally { setIsLoading(false); }
   };
 
-  /* 5️⃣  GOOGLE LOGIN HANDLER --------------------------------------- */
+  /*  Google login  */
   const handleGoogleLogin = () => {
     setIsGoogleLoading(true);
-    window.location.href = 'https://server.khushifinances.com/api/auth/google';
+    window.location.href = "https://server.khushifinances.com/api/auth/google"; // <-- NO SPACE
   };
 
-  /* 6️⃣  RENDER – button inserted RIGHT ABOVE the e-mail field ----- */
   return (
     <div className="login-page-wrapper">
       <div>
@@ -92,7 +77,7 @@ export default function LoginForm() {
                           pauseBetweenAnimations={1}
                         />
 
-                        {/*  Google Login Button  */}
+                        {/* Google button */}
                         <div className="mb-4">
                           <button
                             type="button"
@@ -119,11 +104,9 @@ export default function LoginForm() {
                           </button>
                         </div>
 
-                        {/*  Divider  */}
                         <div className="d-flex align-items-center mb-4">
                           <hr className="flex-grow-1" /><span className="px-3 text-muted">OR</span><hr className="flex-grow-1" />
                         </div>
-                        
 
                         {/* Login Form */}
                         <form onSubmit={handleSubmit}>

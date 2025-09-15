@@ -18,9 +18,12 @@ router.get("/google/callback",
   (req, res) => {
     console.log("Google OAuth callback successful");
     console.log("User:", req.user);
-    
-    // Successful authentication, redirect to frontend
-    res.redirect("https://khushifinances.com/dashboard?auth=success");
+    // user is now in req.user (existing or brand-new)
+    if (req.user) {
+      req.session.username = req.user.username || req.user.full_name || req.user.email;
+      req.session.userId = req.user.id;
+    }
+    res.redirect('https://khushifinances.com/list');
   }
 );
 

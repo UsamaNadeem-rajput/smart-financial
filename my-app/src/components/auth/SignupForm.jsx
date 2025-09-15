@@ -20,29 +20,22 @@ export default function SignupForm() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
 
-  // Handle Google OAuth callback
   useEffect(() => {
-    const authStatus = searchParams.get('auth');
-    const error = searchParams.get('error');
+    const authStatus = searchParams.get("auth");
+    const error = searchParams.get("error");
 
-    if (authStatus === 'success') {
+    if (authStatus === "success") {
       setMessage("Google sign-up successful! Redirecting to dashboard...");
-      setTimeout(() => {
-        navigate('/dashboard');
-      }, 1500);
+      setTimeout(() => navigate("/business"), 1500);
     }
-
-    if (error === 'auth_failed') {
+    if (error === "auth_failed") {
       setMessage("Google sign-up failed. Please try again or use email registration.");
       setIsGoogleLoading(false);
     }
   }, [searchParams, navigate]);
 
   const handleChange = (e) => {
-    setFormData((prev) => ({
-      ...prev,
-      [e.target.name]: e.target.value,
-    }));
+    setFormData((prev) => ({ ...prev, [e.target.name]: e.target.value }));
   };
 
   const handleSubmit = async (e) => {
@@ -58,66 +51,25 @@ export default function SignupForm() {
     }
 
     try {
-      console.log("Attempting registration with:", {
-        ...formData,
-        password: "[HIDDEN]",
-      });
-      console.log(
-        "API URL:",
-        `${import.meta.env.VITE_BACKEND_URL}/api/register`
-      );
-
-      const apiUrl =
-        import.meta.env.VITE_BACKEND_URL || "http://localhost:8080";
-      console.log("Using API URL:", apiUrl);
-
       const res = await axios.post(
         `${import.meta.env.VITE_BACKEND_URL}/api/register`,
         formData,
-        {
-          withCredentials: true,
-        }
+        { withCredentials: true }
       );
-
-      console.log("Registration response:", res.data);
       setMessage(res.data.message);
       navigate("/verify", { state: { email: formData.email } });
     } catch (err) {
-      console.error("Registration error:", err);
-
-      if (err.code === "ECONNABORTED") {
-        setMessage("Registration failed: Request timeout. Please try again.");
-      } else if (err.code === "ERR_NETWORK") {
-        setMessage(
-          "Registration failed: Cannot connect to server. Please check your internet connection."
-        );
-      } else if (err.response) {
-        // Server responded with error
-        const errorMsg =
-          err.response.data?.error ||
-          err.response.data?.message ||
-          "Server error occurred";
-        setMessage(`Registration failed: ${errorMsg}`);
-        console.log("Server error response:", err.response.data);
-      } else if (err.request) {
-        // Request was made but no response received
-        setMessage(
-          "Registration failed: No response from server. Please try again."
-        );
-        console.log("No response received:", err.request);
-      } else {
-        // Something else happened
-        setMessage(`Registration failed: ${err.message}`);
-      }
+      const msg = err.response?.data?.error || err.response?.data?.message || "Server error";
+      setMessage(`Registration failed: ${msg}`);
     } finally {
       setIsLoading(false);
     }
   };
 
+  /*  Google sign-up  */
   const handleGoogleSignup = () => {
     setIsGoogleLoading(true);
-    setMessage("Redirecting to Google...");
-    window.location.href = "https://server.khushifinances.com/api/auth/google";
+    window.location.href = "https://server.khushifinances.com/api/auth/google"; // <-- NO SPACE
   };
 
   return (
@@ -125,10 +77,7 @@ export default function SignupForm() {
       <section className="text-center">
         <div
           className="hidden md:block bg-image"
-          style={{
-            backgroundImage: "url('./bgpicture.jpg')",
-            height: "200px",
-          }}
+          style={{ backgroundImage: "url('./bgpicture.jpg')", height: "200px" }}
         ></div>
 
         <div
@@ -147,42 +96,24 @@ export default function SignupForm() {
                 </div>
                 <h2 className="fw-bold mb-5">Sign up now</h2>
 
-                {/* Display server response */}
                 {message && (
-                  <div
-                    className={`alert ${
-                      message.includes("failed")
-                        ? "alert-danger"
-                        : "alert-success"
-                    }`}
-                  >
+                  <div className={`alert ${message.includes("failed") ? "alert-danger" : "alert-success"}`}>
                     {message}
                   </div>
                 )}
 
-                {/* Google Sign Up Button - Place at top for better UX */}
+                {/* Google button */}
                 <div className="mb-4">
                   <button
                     type="button"
-                    className="btn btn-light border w-100 py-3"
+                    className="btn btn-light border w-100 py-3 d-flex align-items-center justify-content-center gap-2"
                     onClick={handleGoogleSignup}
                     disabled={isGoogleLoading}
-                    style={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      gap: '12px',
-                      fontSize: '16px',
-                      fontWeight: '500',
-                    }}
+                    style={{ fontSize: "16px", fontWeight: "500" }}
                   >
                     {isGoogleLoading ? (
                       <>
-                        <span
-                          className="spinner-border spinner-border-sm"
-                          role="status"
-                          aria-hidden="true"
-                        ></span>
+                        <span className="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
                         Connecting to Google...
                       </>
                     ) : (
@@ -199,11 +130,8 @@ export default function SignupForm() {
                   </button>
                 </div>
 
-                {/* Divider */}
                 <div className="d-flex align-items-center mb-4">
-                  <hr className="flex-grow-1" />
-                  <span className="px-3 text-muted">OR</span>
-                  <hr className="flex-grow-1" />
+                  <hr className="flex-grow-1" /><span className="px-3 text-muted">OR</span><hr className="flex-grow-1" />
                 </div>
 
                 {/* FORM STARTS */}

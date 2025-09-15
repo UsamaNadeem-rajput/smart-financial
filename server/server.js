@@ -1,11 +1,30 @@
+#!/usr/bin/env node
+/* --------------------------------------------------
+   0.  Passenger-proof CA injection
+-------------------------------------------------- */
+const fs = require('fs');
+const caPath = '/etc/pki/tls/certs/ca-bundle.crt';
+
+try {
+  const caBundle = fs.readFileSync(caPath, 'utf8');
+  const https = require('https');
+  https.globalAgent.options.ca = caBundle.split('-----END CERTIFICATE-----')
+                                        .filter(Boolean)
+                                        .map(cert => cert + '-----END CERTIFICATE-----\n');
+  console.log('✅ CA bundle loaded, certs:', https.globalAgent.options.ca.length);
+} catch (e) {
+  console.error('❌ Could not load CA bundle:', e.message);
+  process.exit(1);          // refuse to start
+}
+
 require('dotenv').config();
-const express = require('express');
-const cors = require('cors');
-const session = require('express-session');
-const MySQLStore = require('express-mysql-session')(session);
-const pool = require('./db');
-const passport = require("passport");
-require("./auth");
+require('./auth');               // passport Google strategy
+const express   = require('express');
+const cors      = require('cors');
+const session   = require('express-session');
+const MySQLStore= require('express-mysql-session')(session);
+const pool      = require('./db');
+const passport  = require('passport');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -53,6 +72,7 @@ app.use(
     },
   })
 );
+
 app.use(passport.initialize());
 app.use(passport.session());
 

@@ -47,10 +47,12 @@ router.post('/', async (req, res) => {
 
 router.get('/session', (req, res) => {
   if (req.session?.username) {
-    res.json({ username: req.session.username });
-  } else {
-    res.status(401).json({ error: 'Not logged in' });
+    return res.json({ username: req.session.username });
   }
+  if (req.user) {
+    return res.json({ username: req.user.username || req.user.full_name || req.user.email });
+  }
+  res.status(401).json({ error: 'Not logged in' });
 });
 
 module.exports = router;

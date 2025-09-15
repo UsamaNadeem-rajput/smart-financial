@@ -1,88 +1,100 @@
-const passport = require("passport");
-const GoogleStrategy = require("passport-google-oauth20").Strategy;
-const pool = require("./db");
+/****************************************************
+ *  0.  Raw Google OAuth logger
+ ****************************************************/
+process.on('uncaughtException', err => {
+  console.error('UNCAUGHT EXCEPTION →', err);
+});
+process.on('unhandledRejection', err => {
+  console.error('UNHANDLED REJECTION →', err);
+});
+const OAuth2 = require('oauth').OAuth2;
+const originalExecute = OAuth2.prototype._executeRequest;
+OAuth2.prototype._executeRequest = function (httpMethod, options, postBody, callback) {
+  console.log('>>> OAuth2 request:', options.host + options.path);
+  if (postBody) console.log('>>> postBody:', postBody);
 
+  const originalCb = callback;
+  callback = function (err, body, res) {
+    console.log('<<< Google response status:', res?.statusCode);
+    console.log('<<< Google response body:', body || err?.data || err);
+    originalCb(err, body, res);
+  };
+  originalExecute.call(this, httpMethod, options, postBody, callback);
+};
+
+/****************************************************
+ *  1.  Imports
+ ****************************************************/
+require('dotenv').config();
+const passport = require('passport');
+const GoogleStrategy = require('passport-google-oauth20').Strategy;
+const pool = require('./db');
+
+/****************************************************
+ *  2.  Google Strategy (space removed)
+ ****************************************************/
 passport.use(
   new GoogleStrategy(
     {
       clientID: process.env.GOOGLE_CLIENT_ID,
       clientSecret: process.env.GOOGLE_CLIENT_SECRET,
-      callbackURL: process.env.GOOGLE_CALLBACK_URL || "https://server.khushifinances.com/api/auth/google/callback",
+      callbackURL: process.env.GOOGLE_CALLBACK_URL || "https://server.khushifinances.com/api/auth/google/callback", // <-- NO SPACE
     },
     async (accessToken, refreshToken, profile, done) => {
       try {
         console.log("Google Profile:", profile);
-        
-        // Check if user already exists
-        const [existingUser] = await pool.query(
-          "SELECT * FROM users WHERE email = ? OR (provider = 'google' AND email = ?)",
-          [profile.emails[0].value, profile.emails[0].value]
+
+        // look-up user
+        const [rows] = await pool.query(
+          "SELECT * FROM users WHERE email = ?",
+          [profile.emails[0].value]
         );
 
-        if (existingUser.length > 0) {
-          // User exists, update provider if needed
-          const user = existingUser[0];
-          
-          if (user.provider === 'local') {
-            // Update to allow both local and google login
-            await pool.query(
-              "UPDATE users SET provider = 'google' WHERE id = ?",
-              [user.id]
-            );
-          }
-          
-          console.log("Existing user found:", user);
-          return done(null, user);
+        if (rows.length) {
+          console.log("Existing user:", rows[0]);
+          return done(null, rows[0]);
         }
 
-        // Create new user
-        const username = profile.emails[0].value.split('@')[0]; // Use email prefix as username
+        // create user
+        const username = profile.emails[0].value.split('@')[0];
         const fullName = profile.displayName || `${profile.name.givenName} ${profile.name.familyName}`;
-        
-        const [result] = await pool.query(
-          `INSERT INTO users (username, full_name, email, provider, is_verified, created_at, updated_at) 
+
+        const [res] = await pool.query(
+          `INSERT INTO users (username, full_name, email, provider, is_verified, created_at, updated_at)
            VALUES (?, ?, ?, 'google', 1, NOW(), NOW())`,
           [username, fullName, profile.emails[0].value]
         );
 
         const newUser = {
-          id: result.insertId,
-          username: username,
+          id: res.insertId,
+          username,
           full_name: fullName,
           email: profile.emails[0].value,
           provider: 'google',
           is_verified: 1
         };
-
-        console.log("New user created:", newUser);
+        console.log("New user:", newUser);
         return done(null, newUser);
 
-      } catch (error) {
-        console.error("Google OAuth error:", error);
-        return done(error, null);
+      } catch (err) {
+        console.error("Google OAuth error:", err);
+        return done(err, null);
       }
     }
   )
 );
 
-// Serialize user for the session
-passport.serializeUser((user, done) => {
-  console.log("Serializing user:", user.id);
-  done(null, user.id);
-});
+/****************************************************
+ *  3.  Session serialisation (unchanged)
+ ****************************************************/
+passport.serializeUser((user, done) => done(null, user.id));
 
-// Deserialize user from the session
 passport.deserializeUser(async (id, done) => {
   try {
-    const [user] = await pool.query("SELECT * FROM users WHERE id = ?", [id]);
-    if (user.length > 0) {
-      console.log("Deserializing user:", user[0]);
-      done(null, user[0]);
-    } else {
-      done(new Error("User not found"), null);
-    }
-  } catch (error) {
-    console.error("Deserialize error:", error);
-    done(error, null);
+    const [rows] = await pool.query("SELECT * FROM users WHERE id = ?", [id]);
+    if (!rows.length) return done(null, false); // silently kill ghost session
+    done(null, rows[0]);
+  } catch (e) {
+    done(e);
   }
 });
