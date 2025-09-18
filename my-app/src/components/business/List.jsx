@@ -20,7 +20,7 @@ const List = () => {
       const res = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/login/session`, { withCredentials: true });
       setUser(res.data);
       fetchBusinesses(); // ✅ Only fetch if session is valid
-      console.log('User is authenticated:', res.data.username);
+      // user authenticated
     } catch (err) {
       console.error('Not authenticated:', err);
       navigate('/login',{ replace: true }); // 🔐 Redirect to login if session expired
@@ -57,6 +57,8 @@ const List = () => {
           withCredentials: true
         });
         setBusinesses(prev => prev.filter(b => b.business_id !== businessId));
+        selectBusiness(null);
+        alert('Business deleted successfully.');
       } catch (error) {
         console.error('Failed to delete business:', error);
         alert('Failed to delete business. Please try again.');

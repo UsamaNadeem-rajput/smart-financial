@@ -1069,7 +1069,7 @@ const LandingPage = () => {
         <div
           className="absolute inset-0 opacity-20"
           style={{
-            backgroundImage: "url('/CTA_banner.jpg')",
+            backgroundImage: "url('/CTA_banner.png')",
             backgroundSize: "cover",
             backgroundPosition: "center",
           }}
@@ -1333,8 +1333,7 @@ const LandingPage = () => {
           <div className="border-t border-gray-700 pt-8">
             <div className="flex flex-col md:flex-row justify-between items-center">
               <p className="text-gray-400 mb-4 md:mb-0">
-                © 2025 FinanceFlow. All rights reserved. Built with ❤️ for
-                modern businesses.
+                © 2025 Smart Financial by Khushi Vijay. All rights reserved. Developed by Usama Nadeem
               </p>
               <div className="flex items-center space-x-4 text-sm text-gray-400">
                 <span>🌍 English</span>

@@ -13,6 +13,8 @@ import ContactForm from './components/conatct_us/ContactForm';
 import PrivateRoute from './components/contexts/PrivateRoute';
 import VerifyPage from './components/auth/VerifyPage';
 import { BusinessProvider } from './context/BusinessContext';
+import ForgotPassword from './components/auth/ForgotPassword';
+import TransactionEdit from './components/transactions/TransactionEdit';
 
 import './index.css';
 import 'bootstrap/dist/css/bootstrap.min.css';
@@ -29,6 +31,7 @@ function App() {
             <Route path="/register" element={<SignupForm />} />
             <Route path="/login" element={<LoginForm />} />
             <Route path="/verify" element={<VerifyPage />} />
+            <Route path="/forgot-password" element={<ForgotPassword />} />
 
             {/* Protected Routes */}
             <Route path="/business" element={<PrivateRoute><BusinessForm /></PrivateRoute>} />
@@ -39,6 +42,7 @@ function App() {
             <Route path="/transectionForm" element={<PrivateRoute><TransactionForm /></PrivateRoute>} />
             <Route path="/showtransections" element={<PrivateRoute><ShowTransactions /></PrivateRoute>} />
             <Route path="/contact" element={<PrivateRoute><ContactForm /></PrivateRoute>} />
+            <Route path="/transaction-edit/:transactionId" element={<PrivateRoute><TransactionEdit /></PrivateRoute>} />
           </Routes>
         </div>
       </Router>

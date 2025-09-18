@@ -80,9 +80,6 @@ app.use(passport.session());
 /* ---------- Logging ---------- */
 app.use((req, res, next) => {
   console.log(`${new Date().toISOString()} - ${req.method} ${req.path}`);
-  if (req.body && Object.keys(req.body).length > 0) {
-    console.log('Request body:', req.body);
-  }
   next();
 });
 
@@ -114,7 +111,7 @@ serverRouter.use('/api/search-accounts', require('./routers/searchAccounts'));
 serverRouter.use('/api', require('./routers/transactionApi'));
 serverRouter.use('/api', require('./routers/showtransactions'));
 serverRouter.use('/api/auth', require('./routers/auth'));
-serverRouter.use('/api/contact', require('./routers/contact'));
+// serverRouter.use('/api/contact', require('./routers/contact')); // removed, Google Form used instead
 serverRouter.use('/api/verify', require('./routers/verify'));
 // ✅ Google Auth Router
 serverRouter.use("/api/auth", require("./routers/googleAuth"));
@@ -135,5 +132,4 @@ app.get('/', (req, res) => {
 app.listen(PORT, '0.0.0.0', () => {
   console.log(`✅ Server running on port ${PORT}`);
   console.log(`✅ Available at: https://server.khushifinances.com`);
-  console.log('GOOGLE_CALLBACK_URL:', process.env.GOOGLE_CALLBACK_URL);
 });

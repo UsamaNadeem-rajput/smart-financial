@@ -122,7 +122,6 @@ export default function TransectionForm() {
       );
       const data = await res.json();
       if (data.success) {
-        console.log("Transaction posted successfully. Account balances have been updated.");
         onSuccess();
       } else alert("Error: " + (data.error || "Failed to save transaction."));
     } catch (err) {
@@ -503,18 +502,6 @@ export default function TransectionForm() {
           {/* Buttons */}
           <div className="d-flex flex-wrap justify-content-between align-items-center mt-5 gap-3">
             <div>
-              <button
-                className="btn btn-success me-2"
-                disabled={isSubmitDisabled || !allAccountNamesFilled || isLoading}
-              >
-                Edit
-              </button>
-              <button
-                className="btn btn-danger"
-                disabled={isSubmitDisabled || !allAccountNamesFilled || isLoading}
-              >
-                Delete
-              </button>
               <button
                 type="button"
                 className="btn btn-warning ms-2"

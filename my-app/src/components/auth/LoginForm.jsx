@@ -15,12 +15,7 @@ export default function LoginForm() {
   const [searchParams] = useSearchParams();
 
   useEffect(() => {
-    const authStatus = searchParams.get('auth');
     const error = searchParams.get('error');
-    if (authStatus === 'success') {
-      setMessage('Google login successful! Redirecting…');
-      setTimeout(() => navigate('/list'), 1500);
-    }
     if (error === 'auth_failed') {
       setMessage('Google login failed. Please try again.');
       setIsGoogleLoading(false);
@@ -69,7 +64,7 @@ export default function LoginForm() {
                         </div>
                         <div className="w-full h-1 bg-gray-300 mb-4"></div>
                         <TrueFocus
-                          sentence="Smart_Financial by Vijay_Kumar"
+                          sentence="Smart_Financial by Khushi-Vijay"
                           manualMode={false}
                           blurAmount={5}
                           borderColor="red"
@@ -164,7 +159,7 @@ export default function LoginForm() {
                           </div>
 
                           <div className="text-center mt-2">
-                            <a className="text-muted d-block text-black" href="#!">Forgot password?</a>
+                            <a className="text-muted d-block text-black" href="/forgot-password">Forgot password?</a>
                           </div>
 
                           {/* Link to register */}

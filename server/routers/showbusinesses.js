@@ -14,7 +14,7 @@ router.get("/", async (req, res) => {
     const conn = await pool.getConnection();
     console.log("User we : "+username)
     const [rows] = await conn.query(
-      "SELECT * FROM businesses WHERE username = ?",
+      "SELECT * FROM businesses WHERE username = ? AND is_deleted = 0",
       [username]
     );
     conn.release();

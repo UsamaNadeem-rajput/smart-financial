@@ -3,6 +3,7 @@ import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 import Navbar from "../layout/Navbar";
 import { useBusiness } from "../../context/BusinessContext";
+import { useNavigate } from "react-router-dom";
 
 // Helper to get local date string in YYYY-MM-DD
 function getLocalDateString() {
@@ -33,12 +34,17 @@ export default function TransactionEntryTable() {
     if (!fromDate || !toDate || !selectedBusiness?.business_id) return;
     try {
       const res = await fetch(
-        `${import.meta.env.VITE_BACKEND_URL}/api/showtransactions?from=${fromDate}&to=${toDate}&business_id=${selectedBusiness.business_id}`
+        `${
+          import.meta.env.VITE_BACKEND_URL
+        }/api/showtransactions?from=${fromDate}&to=${toDate}&business_id=${
+          selectedBusiness.business_id
+        }`
       );
       const data = await res.json();
 
       const flat = data.entries.flatMap((tx) => {
         const entries = tx.entries.map((entry) => ({
+          transaction_id: tx.transaction_id, // ✅ real unique id
           frontend_transaction_id: tx.frontend_transaction_id,
           transaction_date: tx.date,
           account_name: entry.account_name,
@@ -46,6 +52,7 @@ export default function TransactionEntryTable() {
           credit: entry.type === "credit" ? formatAmount(entry.amount) : "",
         }));
         entries.push({
+          transaction_id: tx.transaction_id, // ✅ total row ke liye bhi
           frontend_transaction_id: tx.frontend_transaction_id,
           transaction_date: tx.date,
           account_name: `Total for Transaction ${tx.frontend_transaction_id}`,
@@ -56,7 +63,9 @@ export default function TransactionEntryTable() {
         return entries;
       });
 
-      flat.sort((a, b) => a.frontend_transaction_id - b.frontend_transaction_id);
+      flat.sort(
+        (a, b) => a.frontend_transaction_id - b.frontend_transaction_id
+      );
       setEntries(flat);
       setTotals({
         debit: data.totals.debit || 0,
@@ -76,7 +85,8 @@ export default function TransactionEntryTable() {
   const handlePrint = () => {
     const printWindow = window.open("", "", "height=600,width=800");
     const grouped = entries.reduce((acc, entry) => {
-      if (!acc[entry.frontend_transaction_id]) acc[entry.frontend_transaction_id] = [];
+      if (!acc[entry.frontend_transaction_id])
+        acc[entry.frontend_transaction_id] = [];
       acc[entry.frontend_transaction_id].push(entry);
       return acc;
     }, {});
@@ -108,7 +118,9 @@ export default function TransactionEntryTable() {
           <div class="print-header">
             <h2>FinanceFlow</h2>
             <div class="business-name">
-              <h4>${selectedBusiness?.business_name || "Your Business Name"}</h4>
+              <h4>${
+                selectedBusiness?.business_name || "Your Business Name"
+              }</h4>
               <div class="text-center">General Journal</div>
             </div>
             <div class="date">${new Date().toLocaleDateString()}</div>
@@ -127,13 +139,16 @@ export default function TransactionEntryTable() {
             <tbody>
     `);
 
-    Object.entries(grouped).forEach(([frontend_transaction_id, group], groupIndex) => {
-      group.forEach((entry, idx) => {
-        printWindow.document.write(`
+    Object.entries(grouped).forEach(
+      ([frontend_transaction_id, group], groupIndex) => {
+        group.forEach((entry, idx) => {
+          printWindow.document.write(`
           <tr class="${entry.isTotal ? "transaction-total-row" : ""}">
             ${
               idx === 0 && !entry.isTotal
-                ? `<td rowspan="${group.length}">${frontend_transaction_id}<br><span style="font-size: 0.8em; color: #888;">${
+                ? `<td rowspan="${
+                    group.length
+                  }">${frontend_transaction_id}<br><span style="font-size: 0.8em; color: #888;">${
                     entry.transaction_date || "No Date"
                   }</span></td>`
                 : ""
@@ -143,14 +158,15 @@ export default function TransactionEntryTable() {
             <td>${formatAmount(entry.credit)}</td>
           </tr>
         `);
-      });
-      if (groupIndex < Object.keys(grouped).length - 1) {
-        printWindow.document.write(`
+        });
+        if (groupIndex < Object.keys(grouped).length - 1) {
+          printWindow.document.write(`
           <tr class="separator-row"><td colspan="4"></td></tr>
 
         `);
+        }
       }
-    });
+    );
 
     printWindow.document.write(`
           <tr class="total-row">
@@ -199,31 +215,42 @@ export default function TransactionEntryTable() {
 
     const buildTable = () => {
       const grouped = entries.reduce((acc, entry) => {
-        if (!acc[entry.frontend_transaction_id]) acc[entry.frontend_transaction_id] = [];
+        if (!acc[entry.frontend_transaction_id])
+          acc[entry.frontend_transaction_id] = [];
         acc[entry.frontend_transaction_id].push(entry);
         return acc;
       }, {});
 
       const tableRows = [];
 
-      Object.entries(grouped).forEach(([frontend_transaction_id, group], groupIndex) => {
-        group.forEach((entry, idx) => {
-          tableRows.push([
-            idx === 0 && !entry.isTotal
-              ? `${frontend_transaction_id}\n(${entry.transaction_date || "No Date"})`
-              : "",
-            entry.account_name,
-            formatAmount(entry.debit),
-            formatAmount(entry.credit),
-            entry.isTotal ? "transaction-total-row" : "",
-          ]);
-        });
-        if (groupIndex < Object.keys(grouped).length - 1) {
-          tableRows.push(["", "", "", "", ""]);
+      Object.entries(grouped).forEach(
+        ([frontend_transaction_id, group], groupIndex) => {
+          group.forEach((entry, idx) => {
+            tableRows.push([
+              idx === 0 && !entry.isTotal
+                ? `${frontend_transaction_id}\n(${
+                    entry.transaction_date || "No Date"
+                  })`
+                : "",
+              entry.account_name,
+              formatAmount(entry.debit),
+              formatAmount(entry.credit),
+              entry.isTotal ? "transaction-total-row" : "",
+            ]);
+          });
+          if (groupIndex < Object.keys(grouped).length - 1) {
+            tableRows.push(["", "", "", "", ""]);
+          }
         }
-      });
+      );
 
-      tableRows.push(["", "Total", formatAmount(totals.debit), formatAmount(totals.credit), ""]);
+      tableRows.push([
+        "",
+        "Total",
+        formatAmount(totals.debit),
+        formatAmount(totals.credit),
+        "",
+      ]);
 
       let totalRowIndex = tableRows.length - 1;
 
@@ -233,7 +260,7 @@ export default function TransactionEntryTable() {
         body: tableRows,
         columnStyles: {
           0: { cellWidth: 35 }, // Transaction ID/Date column - reduced width
-          1: { cellWidth: 'auto' }, // Ledger Name column - auto width
+          1: { cellWidth: "auto" }, // Ledger Name column - auto width
           2: { cellWidth: 25 }, // Debit column
           3: { cellWidth: 25 }, // Credit column
         },
@@ -247,16 +274,20 @@ export default function TransactionEntryTable() {
         },
         didDrawCell: (data) => {
           // Check if this is a "Total for Transaction" row by checking the account name
-          if (data.section === "body" && data.row.raw[1] && data.row.raw[1].includes("Total for Transaction")) {
+          if (
+            data.section === "body" &&
+            data.row.raw[1] &&
+            data.row.raw[1].includes("Total for Transaction")
+          ) {
             // Make the text bold for transaction total rows
-            doc.setFont(undefined, 'bold');
+            doc.setFont(undefined, "bold");
             doc.setFontSize(12);
           } else {
             // Reset to normal font for other rows
-            doc.setFont(undefined, 'normal');
+            doc.setFont(undefined, "normal");
             doc.setFontSize(12);
           }
-          
+
           if (
             data.section === "body" &&
             data.row.raw.every((cell) => cell === "")
@@ -282,8 +313,14 @@ export default function TransactionEntryTable() {
     addHeader(buildTable);
   };
 
+  const navigate = useNavigate();
+
+  const handleEdit = (transactionId) => {
+  navigate(`/transaction-edit/${transactionId}`);
+};
+
   return (
-    <div 
+    <div
       className="min-h-screen relative overflow-hidden"
       style={{
         minHeight: "100vh",
@@ -294,64 +331,100 @@ export default function TransactionEntryTable() {
       <div className="absolute inset-0">
         {/* Primary gradient background - different from List.js and TransactionForm.js */}
         <div className="absolute inset-0 bg-gradient-to-br from-slate-900 via-purple-900 to-violet-900"></div>
-        
+
         {/* Overlay gradients for depth */}
         <div className="absolute inset-0 bg-gradient-to-t from-indigo-900/30 via-transparent to-purple-800/20"></div>
         <div className="absolute inset-0 bg-gradient-to-r from-violet-800/20 via-transparent to-purple-800/20"></div>
-        
+
         {/* Professional grid pattern */}
         <div className="absolute inset-0 opacity-10">
-          <div className="absolute inset-0" style={{
-            backgroundImage: `
+          <div
+            className="absolute inset-0"
+            style={{
+              backgroundImage: `
               linear-gradient(90deg, rgba(255,255,255,0.1) 1px, transparent 1px),
               linear-gradient(0deg, rgba(255,255,255,0.1) 1px, transparent 1px)
             `,
-            backgroundSize: '50px 50px'
-          }}></div>
+              backgroundSize: "50px 50px",
+            }}
+          ></div>
         </div>
-        
+
         {/* Animated transaction display elements */}
         <div className="absolute inset-0 overflow-hidden">
           {/* Floating transaction display icons */}
-          <div className="absolute top-20 left-10 text-4xl text-purple-400/20 animate-pulse">📊</div>
-          <div className="absolute top-40 right-20 text-3xl text-violet-400/20 animate-bounce">📋</div>
-          <div className="absolute bottom-40 left-32 text-5xl text-indigo-400/20 animate-pulse">📈</div>
-          <div className="absolute bottom-20 right-40 text-3xl text-purple-400/20 animate-bounce">📑</div>
-          <div className="absolute top-1/2 left-1/4 text-2xl text-violet-400/20 animate-pulse">📊</div>
-          <div className="absolute top-1/3 right-1/3 text-4xl text-purple-400/20 animate-bounce">📊</div>
-          
+          <div className="absolute top-20 left-10 text-4xl text-purple-400/20 animate-pulse">
+            📊
+          </div>
+          <div className="absolute top-40 right-20 text-3xl text-violet-400/20 animate-bounce">
+            📋
+          </div>
+          <div className="absolute bottom-40 left-32 text-5xl text-indigo-400/20 animate-pulse">
+            📈
+          </div>
+          <div className="absolute bottom-20 right-40 text-3xl text-purple-400/20 animate-bounce">
+            📑
+          </div>
+          <div className="absolute top-1/2 left-1/4 text-2xl text-violet-400/20 animate-pulse">
+            📊
+          </div>
+          <div className="absolute top-1/3 right-1/3 text-4xl text-purple-400/20 animate-bounce">
+            📊
+          </div>
+
           {/* Subtle geometric shapes */}
           <div className="absolute top-1/4 right-10 w-32 h-32 border border-white/10 rounded-full animate-pulse"></div>
-          <div className="absolute bottom-1/4 left-10 w-24 h-24 border border-purple-400/20 rounded-lg rotate-45 animate-spin" style={{animationDuration: '20s'}}></div>
+          <div
+            className="absolute bottom-1/4 left-10 w-24 h-24 border border-purple-400/20 rounded-lg rotate-45 animate-spin"
+            style={{ animationDuration: "20s" }}
+          ></div>
           <div className="absolute top-1/2 right-1/4 w-20 h-20 bg-gradient-to-r from-violet-500/10 to-purple-500/10 rounded-full animate-pulse"></div>
-          
+
           {/* Network connection lines */}
-          <svg className="absolute inset-0 w-full h-full" style={{ filter: 'blur(0.5px)' }}>
+          <svg
+            className="absolute inset-0 w-full h-full"
+            style={{ filter: "blur(0.5px)" }}
+          >
             <defs>
-              <linearGradient id="transactionsGradient" x1="0%" y1="0%" x2="100%" y2="100%">
-                <stop offset="0%" style={{ stopColor: '#8b5cf6', stopOpacity: 0.1 }} />
-                <stop offset="50%" style={{ stopColor: '#7c3aed', stopOpacity: 0.2 }} />
-                <stop offset="100%" style={{ stopColor: '#6366f1', stopOpacity: 0.1 }} />
+              <linearGradient
+                id="transactionsGradient"
+                x1="0%"
+                y1="0%"
+                x2="100%"
+                y2="100%"
+              >
+                <stop
+                  offset="0%"
+                  style={{ stopColor: "#8b5cf6", stopOpacity: 0.1 }}
+                />
+                <stop
+                  offset="50%"
+                  style={{ stopColor: "#7c3aed", stopOpacity: 0.2 }}
+                />
+                <stop
+                  offset="100%"
+                  style={{ stopColor: "#6366f1", stopOpacity: 0.1 }}
+                />
               </linearGradient>
             </defs>
-            <path 
-              d="M100,100 L300,200 L600,150 L900,300 L1200,200" 
-              stroke="url(#transactionsGradient)" 
-              strokeWidth="2" 
+            <path
+              d="M100,100 L300,200 L600,150 L900,300 L1200,200"
+              stroke="url(#transactionsGradient)"
+              strokeWidth="2"
               fill="none"
               className="animate-pulse"
             />
-            <path 
-              d="M200,400 L500,300 L800,450 L1100,350" 
-              stroke="rgba(139, 92, 246, 0.2)" 
-              strokeWidth="1" 
+            <path
+              d="M200,400 L500,300 L800,450 L1100,350"
+              stroke="rgba(139, 92, 246, 0.2)"
+              strokeWidth="1"
               fill="none"
               className="animate-pulse"
-              style={{animationDelay: '1s'}}
+              style={{ animationDelay: "1s" }}
             />
           </svg>
         </div>
-        
+
         {/* Subtle overlay for content readability */}
         <div className="absolute inset-0 bg-black/20"></div>
       </div>
@@ -360,112 +433,137 @@ export default function TransactionEntryTable() {
       <div className="relative z-10">
         <Navbar />
         <div className="container mt-4">
-        <h2>General Journal</h2>
+          <h2>General Journal</h2>
 
-        <div className="mb-3 row">
-          <div className="col-md-3">
-            <label>From Date:</label>
-            <input
-              type="date"
-              value={fromDate}
-              onChange={(e) => setFromDate(e.target.value)}
-              className="form-control"
-              max={toDate}
-            />
-          </div>
-          <div className="col-md-3">
-            <label>To Date:</label>
-            <input
-              type="date"
-              value={toDate}
-              onChange={(e) => setToDate(e.target.value)}
-              className="form-control"
-              min={fromDate}
-            />
-          </div>
-        </div>
-
-        <div className="mb-3 d-flex gap-2">
-          <button className="btn btn-secondary" onClick={handlePrint}>
-            Print
-          </button>
-          <button className="btn btn-success" onClick={handleSavePDF}>
-            Save as PDF
-          </button>
-        </div>
-
-        <div id="transaction-table">
-          <div className="print-header d-none d-print-flex justify-content-between align-items-center mb-3">
-            <div>
-              <h2 className="text-2xl font-bold text-primary-600">
-                FinanceFlow
-              </h2>
+          <div className="mb-3 row">
+            <div className="col-md-3">
+              <label>From Date:</label>
+              <input
+                type="date"
+                value={fromDate}
+                onChange={(e) => setFromDate(e.target.value)}
+                className="form-control"
+                max={toDate}
+              />
             </div>
-            <div className="text-center flex-grow-1">
-              <h4 className="mb-0">
-                {selectedBusiness?.business_name || "Your Business Name"}
-              </h4>
-              <small>{new Date().toLocaleDateString()}</small>
+            <div className="col-md-3">
+              <label>To Date:</label>
+              <input
+                type="date"
+                value={toDate}
+                onChange={(e) => setToDate(e.target.value)}
+                className="form-control"
+                min={fromDate}
+              />
             </div>
-            <div style={{ width: "50px" }}></div>
           </div>
 
-          {entries.length > 0 ? (
-            <table className="table table-bordered">
-              <thead className="table-dark">
-                <tr>
-                  <th style={{ width: "150px", maxWidth: "150px" }}>Transaction ID / Date</th>
-                  <th>Ledger Name</th>
-                  <th>Debit</th>
-                  <th>Credit</th>
-                </tr>
-              </thead>
-              <tbody>
-                {(() => {
-                  const grouped = entries.reduce((acc, entry) => {
-                    if (!acc[entry.frontend_transaction_id])
-                      acc[entry.frontend_transaction_id] = [];
-                    acc[entry.frontend_transaction_id].push(entry);
-                    return acc;
-                  }, {});
-                  return Object.entries(grouped).flatMap(
-                    ([frontend_transaction_id, group]) =>
-                      group.map((entry, idx) => (
-                        <tr
-                          key={`${frontend_transaction_id}-${idx}`}
-                          className={entry.isTotal ? "font-bold transaction-total-row" : ""}
-                        >
-                          {idx === 0 && !entry.isTotal && (
-                            <td rowSpan={group.length} style={{ width: "150px", maxWidth: "150px" }}>
-                              {frontend_transaction_id}
-                              <br />
-                              <span
-                                style={{ fontSize: "0.8em", color: "#888" }}
+          <div className="mb-3 d-flex gap-2">
+            <button className="btn btn-secondary" onClick={handlePrint}>
+              Print
+            </button>
+            <button className="btn btn-success" onClick={handleSavePDF}>
+              Save as PDF
+            </button>
+          </div>
+
+          <div id="transaction-table">
+            <div className="print-header d-none d-print-flex justify-content-between align-items-center mb-3">
+              <div>
+                <h2 className="text-2xl font-bold text-primary-600">
+                  FinanceFlow
+                </h2>
+              </div>
+              <div className="text-center flex-grow-1">
+                <h4 className="mb-0">
+                  {selectedBusiness?.business_name || "Your Business Name"}
+                </h4>
+                <small>{new Date().toLocaleDateString()}</small>
+              </div>
+              <div style={{ width: "50px" }}></div>
+            </div>
+
+            {entries.length > 0 ? (
+              <table className="table table-bordered">
+                <thead className="table-dark">
+                  <tr>
+                    <th style={{ width: "150px", maxWidth: "150px" }}>
+                      Transaction ID / Date
+                    </th>
+                    <th>Ledger Name</th>
+                    <th>Debit</th>
+                    <th>Credit</th>
+                    <th>Edit</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {(() => {
+                    const grouped = entries.reduce((acc, entry) => {
+                      if (!acc[entry.frontend_transaction_id])
+                        acc[entry.frontend_transaction_id] = [];
+                      acc[entry.frontend_transaction_id].push(entry);
+
+                      return acc;
+                    }, {});
+                    return Object.entries(grouped).flatMap(
+                      ([frontend_transaction_id, group]) =>
+                        group.map((entry, idx) => (
+                          <tr
+                            key={`${frontend_transaction_id}-${idx}`}
+                            className={
+                              entry.isTotal
+                                ? "font-bold transaction-total-row"
+                                : ""
+                            }
+                          >
+                            {idx === 0 && !entry.isTotal && (
+                              <td
+                                rowSpan={group.length}
+                                style={{ width: "150px", maxWidth: "150px" }}
                               >
-                                {group[0].transaction_date || "No Date"}
-                              </span>
-                            </td>
-                          )}
-                          <td>{entry.account_name}</td>
-                          <td>{formatAmount(entry.debit)}</td>
-                          <td>{formatAmount(entry.credit)}</td>
-                        </tr>
-                      ))
-                  );
-                })()}
-                <tr className="font-bold total-row">
-                  <td colSpan={2} className="text-right">
-                    Total
-                  </td>
-                  <td>{formatAmount(totals.debit)}</td>
-                  <td>{formatAmount(totals.credit)}</td>
-                </tr>
-              </tbody>
-            </table>
-          ) : (
-            fromDate && toDate && <p>No transactions found for selected date range.</p>
-          )}
-        </div>
+                                {frontend_transaction_id}
+                                <br />
+                                <span
+                                  style={{ fontSize: "0.8em", color: "#888" }}
+                                >
+                                  {group[0].transaction_date || "No Date"}
+                                </span>
+                              </td>
+                            )}
+                            <td>{entry.account_name}</td>
+                            <td>{formatAmount(entry.debit)}</td>
+                            <td>{formatAmount(entry.credit)}</td>
+                            {idx === 0 && !entry.isTotal && (
+                              <td rowSpan={group.length}>
+                                <button
+                                  className="btn btn-sm btn-primary ms-2"
+                                  onClick={() =>
+                                    handleEdit(entry.transaction_id)
+                                  } 
+                                >
+                                  Edit
+                                </button>
+                              </td>
+                            )}
+                          </tr>
+                        ))
+                    );
+                  })()}
+                  <tr className="font-bold total-row">
+                    <td colSpan={2} className="text-right">
+                      Total
+                    </td>
+                    <td>{formatAmount(totals.debit)}</td>
+                    <td>{formatAmount(totals.credit)}</td>
+                    <td></td>
+                  </tr>
+                </tbody>
+              </table>
+            ) : (
+              fromDate &&
+              toDate && <p>No transactions found for selected date range.</p>
+            )}
+          </div>
         </div>
       </div>
     </div>

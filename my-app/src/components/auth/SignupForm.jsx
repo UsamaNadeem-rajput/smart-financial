@@ -21,13 +21,8 @@ export default function SignupForm() {
   const [searchParams] = useSearchParams();
 
   useEffect(() => {
-    const authStatus = searchParams.get("auth");
     const error = searchParams.get("error");
 
-    if (authStatus === "success") {
-      setMessage("Google sign-up successful! Redirecting to dashboard...");
-      setTimeout(() => navigate("/business"), 1500);
-    }
     if (error === "auth_failed") {
       setMessage("Google sign-up failed. Please try again or use email registration.");
       setIsGoogleLoading(false);

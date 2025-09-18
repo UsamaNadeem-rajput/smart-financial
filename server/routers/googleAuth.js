@@ -17,7 +17,6 @@ router.get("/google/callback",
   }),
   (req, res) => {
     console.log("Google OAuth callback successful");
-    console.log("User:", req.user);
     // user is now in req.user (existing or brand-new)
     if (req.user) {
       req.session.username = req.user.username || req.user.full_name || req.user.email;
@@ -29,8 +28,7 @@ router.get("/google/callback",
 
 // Route to check authentication status
 router.get("/status", (req, res) => {
-  console.log("Auth status check - User:", req.user);
-  console.log("Session:", req.session);
+  console.log("Auth status check");
   
   if (req.user) {
     res.json({

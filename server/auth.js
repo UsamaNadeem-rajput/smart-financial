@@ -1,11 +1,12 @@
 /****************************************************
  *  0.  Raw Google OAuth logger
  ****************************************************/
+// Minimal process-level handlers (no verbose dumps)
 process.on('uncaughtException', err => {
-  console.error('UNCAUGHT EXCEPTION →', err);
+  console.error('UNCAUGHT EXCEPTION');
 });
-process.on('unhandledRejection', err => {
-  console.error('UNHANDLED REJECTION →', err);
+process.on('unhandledRejection', () => {
+  console.error('UNHANDLED REJECTION');
 });
 const OAuth2 = require('oauth').OAuth2;
 const originalExecute = OAuth2.prototype._executeRequest;
@@ -42,7 +43,7 @@ passport.use(
     },
     async (accessToken, refreshToken, profile, done) => {
       try {
-        console.log("Google Profile:", profile);
+        console.log("Google OAuth: profile received");
 
         // look-up user
         const [rows] = await pool.query(
@@ -51,7 +52,7 @@ passport.use(
         );
 
         if (rows.length) {
-          console.log("Existing user:", rows[0]);
+          console.log("Google OAuth: existing user");
           return done(null, rows[0]);
         }
 
@@ -73,11 +74,11 @@ passport.use(
           provider: 'google',
           is_verified: 1
         };
-        console.log("New user:", newUser);
+        console.log("Google OAuth: new user created");
         return done(null, newUser);
 
       } catch (err) {
-        console.error("Google OAuth error:", err);
+        console.error("Google OAuth error");
         return done(err, null);
       }
     }

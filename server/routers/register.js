@@ -60,7 +60,7 @@ router.post('/', async (req, res) => {
     req.session.username = username;
     req.session.userId = result.insertId;
 
-    console.log('✅ Registered:', username);
+    console.log('✅ Registered');
 
     // 🔹 Send email (new addition)
     await transporter.sendMail({
@@ -73,7 +73,7 @@ router.post('/', async (req, res) => {
     res.status(201).json({ message: 'User registered successfully. Please check your email for verification code.', username });
 
   } catch (error) {
-    console.error('❌ Registration Error:', error);
+    console.error('❌ Registration Error');
     res.status(500).json({ error: 'Internal Server Error' });
   }
 });

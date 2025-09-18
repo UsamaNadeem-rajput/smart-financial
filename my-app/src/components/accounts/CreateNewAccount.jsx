@@ -201,215 +201,244 @@ const CreateNewAccount = () => {
   };
 
   return (
-    <div>
-      <Navbar />
-      <div className="max-w-4xl mx-auto py-6 sm:px-6 lg:px-8">
-        <div className="px-4 py-6 sm:px-0">
-          {/* Header */}
-          <div className="flex items-center mb-8">
-            <button
-              onClick={() => navigate('/showbusinessaccount')}
-              className="mr-4 p-2 text-gray-400 hover:text-gray-600 transition-colors"
-            >
-              <ArrowLeft className="w-5 h-5" />
-            </button>
-            <div>
-              <h1 className="text-3xl font-bold text-gray-900">Create New Ledger</h1>
-              <p className="mt-2 text-gray-600">
-                Add a new Ledger to {selectedBusiness?.business_name}
-              </p>
+    <div 
+      className="min-h-screen relative overflow-hidden"
+      style={{ minHeight: '100vh', width: '100vw' }}
+    >
+      {/* Background (matched to /list) */}
+      <div className="absolute inset-0">
+        <div className="absolute inset-0 bg-gradient-to-br from-slate-900 via-blue-900 to-indigo-900"></div>
+        <div className="absolute inset-0 bg-gradient-to-t from-purple-900/30 via-transparent to-blue-800/20"></div>
+        <div className="absolute inset-0 bg-gradient-to-r from-indigo-800/20 via-transparent to-cyan-800/20"></div>
+        <div className="absolute inset-0 opacity-10">
+          <div
+            className="absolute inset-0"
+            style={{
+              backgroundImage:
+                'linear-gradient(90deg, rgba(255,255,255,0.1) 1px, transparent 1px),\n              linear-gradient(0deg, rgba(255,255,255,0.1) 1px, transparent 1px)',
+              backgroundSize: '50px 50px',
+            }}
+          ></div>
+        </div>
+        {/* Soft glowing orbs */}
+        <div className="pointer-events-none absolute -top-32 -left-20 w-96 h-96 rounded-full blur-3xl opacity-25" style={{ background: 'radial-gradient(circle at center, rgba(59,130,246,0.6), transparent 60%)' }}></div>
+        <div className="pointer-events-none absolute top-1/3 -right-24 w-[28rem] h-[28rem] rounded-full blur-3xl opacity-20" style={{ background: 'radial-gradient(circle at center, rgba(147,51,234,0.5), transparent 60%)' }}></div>
+        <div className="pointer-events-none absolute bottom-0 left-1/4 w-80 h-80 rounded-full blur-2xl opacity-20" style={{ background: 'radial-gradient(circle at center, rgba(6,182,212,0.5), transparent 60%)' }}></div>
+        <div className="absolute inset-0 bg-black/20"></div>
+      </div>
+
+      {/* Content */}
+      <div className="relative z-10">
+        <Navbar />
+        <div className="max-w-4xl mx-auto py-6 sm:px-6 lg:px-8">
+          <div className="px-4 py-6 sm:px-0">
+            {/* Header */}
+            <div className="flex items-center mb-8">
+              <button
+                onClick={() => navigate('/showbusinessaccount')}
+                className="mr-4 p-2 text-gray-300 hover:text-white transition-colors duration-200 rounded-lg hover:bg-white/10"
+                title="Back to accounts"
+              >
+                <ArrowLeft className="w-5 h-5" />
+              </button>
+              <div>
+                <h1 className="text-3xl font-bold text-white">Create New Ledger</h1>
+                <p className="mt-2 text-gray-300">
+                  Add a new Ledger to {selectedBusiness?.business_name}
+                </p>
+              </div>
             </div>
-          </div>
-
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-            {/* Form */}
-            <div className="lg:col-span-2">
-              <div className="card">
-                <form onSubmit={handleSubmit} className="space-y-6">
-                  {errors.general && (
-                    <div className="bg-error-50 border border-error-200 text-error-700 px-4 py-3 rounded-lg">
-                      {errors.general}
-                    </div>
-                  )}
-
-                  {/* Account Type */}
-                  <div>
-                    <label htmlFor="type_id" className="block text-sm font-medium text-gray-700 mb-1">
-                      Ledger Type <span className="text-error-500">*</span>
-                    </label>
-                    <select
-                      id="type_id"
-                      name="type_id"
-                      value={formData.type_id}
-                      onChange={handleChange}
-                      className={`input-field ${errors.type_id ? 'border-error-300 focus:border-error-500 focus:ring-error-500' : ''}`}
-                    >
-                      <option value="">Select Ledger type</option>
-                      {/* Income */}
-                      <optgroup label="Income">
-                        <option value="1">Income</option>
-                      </optgroup>
-                      
-                      {/* Assets */}
-                      <optgroup label="Assets">
-                        <option value="4">Fixed Assets</option>
-                        <option value="5">Current Assets</option>
-                      </optgroup>
-                      
-                      {/* Liability */}
-                      <optgroup label="Liability">
-                        <option value="7">Current Liability</option>
-                        <option value="8">Non-Current Liabilities</option>
-                      </optgroup>
-                      
-                      {/* Equity */}
-                      <optgroup label="Equity">
-                        <option value="9">Equity</option>
-                      </optgroup>
-                      
-                      {/* Expense */}
-                      <optgroup label="Expense">
-                        <option value="2">Expense</option>
-                      </optgroup>
-                      
-                      {/* Others */}
-                      <optgroup label="Others">
-                        <option value="11">Other Assets</option>
-                        <option value="12">Other Incomes</option>
-                        <option value="13">Other Expenses</option>
-                        <option value="14">Cost Of Goods Sold</option>
-                      </optgroup>
-                    </select>
-                    {errors.type_id && (
-                      <p className="mt-1 text-sm text-error-600">{errors.type_id}</p>
+ 
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+              {/* Form */}
+              <div className="lg:col-span-2">
+                <div className="card transition-shadow duration-200 hover:shadow-xl">
+                  <form onSubmit={handleSubmit} className="space-y-6">
+                    {errors.general && (
+                      <div className="bg-error-50 border border-error-200 text-error-700 px-4 py-3 rounded-lg">
+                        {errors.general}
+                      </div>
                     )}
-                  </div>
-
-                  {/* Account Name */}
-                  <div>
-                    <label htmlFor="account_name" className="block text-sm font-medium text-gray-700 mb-1">
-                      Ledger Name <span className="text-error-500">*</span>
-                    </label>
-                    <input
-                      id="account_name"
-                      name="account_name"
-                      type="text"
-                      value={formData.account_name}
-                      onChange={handleChange}
-                      className={`input-field ${errors.account_name ? 'border-error-300 focus:border-error-500 focus:ring-error-500' : ''}`}
-                      placeholder="Enter Ledger name"
-                    />
-                    {errors.account_name && (
-                      <p className="mt-1 text-sm text-error-600">{errors.account_name}</p>
-                    )}
-                  </div>
-
-                  {/* Sub Account Option */}
-                  <div>
-                    <div className="flex items-center">
-                      <input
-                        id="is_sub_account"
-                        name="is_sub_account"
-                        type="checkbox"
-                        checked={formData.is_sub_account}
-                        onChange={handleChange}
-                        className="h-4 w-4 text-primary-600 focus:ring-primary-500 border-gray-300 rounded"
-                      />
-                      <label htmlFor="is_sub_account" className="ml-2 block text-sm text-gray-900">
-                        Make this a sub-account
-                      </label>
-                      <HelpCircle className="ml-2 w-4 h-4 text-gray-400" title="Sub-accounts are grouped under parent accounts for better organization" />
-                    </div>
-                  </div>
-
-                  {/* Parent Account Selection */}
-                  {formData.is_sub_account && (
+                    
+                    {/* Account Type */}
                     <div>
-                      <label htmlFor="parent_account_id" className="block text-sm font-medium text-gray-700 mb-1">
-                        Parent Account
+                      <label htmlFor="type_id" className="block text-sm font-medium text-gray-700 mb-1">
+                        Ledger Type <span className="text-error-500">*</span>
                       </label>
                       <select
-                        id="parent_account_id"
-                        name="parent_account_id"
-                        value={formData.parent_account_id}
+                        id="type_id"
+                        name="type_id"
+                        value={formData.type_id}
                         onChange={handleChange}
-                        className="input-field"
+                        className={`input-field transition-colors duration-200 ${errors.type_id ? 'border-error-300 focus:border-error-500 focus:ring-error-500' : 'focus:border-primary-500 focus:ring-primary-500'}`}
                       >
-                        <option value="">Select parent account</option>
-                        {getFilteredSubAccountOptions().map(account => (
-                          <option key={account.account_id} value={account.account_id}>
-                            {account.account_name}
-                          </option>
-                        ))}
+                        <option value="">Select Ledger type</option>
+                        {/* Income */}
+                        <optgroup label="Income">
+                          <option value="1">Income</option>
+                        </optgroup>
+                        
+                        {/* Assets */}
+                        <optgroup label="Assets">
+                          <option value="4">Fixed Assets</option>
+                          <option value="5">Current Assets</option>
+                        </optgroup>
+                        
+                        {/* Liability */}
+                        <optgroup label="Liability">
+                          <option value="7">Current Liability</option>
+                          <option value="8">Non-Current Liabilities</option>
+                        </optgroup>
+                        
+                        {/* Equity */}
+                        <optgroup label="Equity">
+                          <option value="9">Equity</option>
+                        </optgroup>
+                        
+                        {/* Expense */}
+                        <optgroup label="Expense">
+                          <option value="2">Expense</option>
+                        </optgroup>
+                        
+                        {/* Others */}
+                        <optgroup label="Others">
+                          <option value="11">Other Assets</option>
+                          <option value="12">Other Incomes</option>
+                          <option value="13">Other Expenses</option>
+                          <option value="14">Cost Of Goods Sold</option>
+                        </optgroup>
                       </select>
-                    </div>
-                  )}
-
-                  {/* Description */}
-                  <div>
-                    <label htmlFor="description" className="block text-sm font-medium text-gray-700 mb-1">
-                      Description
-                    </label>
-                    <textarea
-                      id="description"
-                      name="description"
-                      rows={3}
-                      value={formData.description}
-                      onChange={handleChange}
-                      className="input-field"
-                      placeholder="Enter Ledger description (optional)"
-                    />
-                  </div>
-
-                  {/* Submit Button */}
-                  <div className="flex justify-end space-x-4 pt-6">
-                    <button
-                      type="button"
-                      onClick={() => navigate('/showbusinessaccount')}
-                      className="btn-secondary"
-                    >
-                      Cancel
-                    </button>
-                    <button
-                      type="submit"
-                      disabled={isLoading}
-                      className="btn-primary flex items-center"
-                    >
-                      {isLoading ? (
-                        <div className="flex items-center">
-                          <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-                          Creating...
-                        </div>
-                      ) : (
-                        <>
-                          <Save className="w-4 h-4 mr-2" />
-                          Create Ledger
-                        </>
+                      {errors.type_id && (
+                        <p className="mt-1 text-sm text-error-600">{errors.type_id}</p>
                       )}
-                    </button>
-                  </div>
-                </form>
-              </div>
-            </div>
-
-            {/* Suggestions Sidebar */}
-            {accountSuggestions.length > 0 && (
-              <div className="lg:col-span-1">
-                <div className="card">
-                  <h3 className="text-lg font-medium text-gray-900 mb-4">Suggested Ledger Names</h3>
-                  <select
-                    className="w-full px-3 py-2 text-sm text-gray-700 rounded-md border border-gray-300"
-                    onChange={e => handleSuggestionClick(e.target.value)}
-                    defaultValue=""
-                  >
-                    <option value="" disabled>Select a suggestion</option>
-                    {accountSuggestions.map((suggestion, index) => (
-                      <option key={index} value={suggestion}>{suggestion}</option>
-                    ))}
-                  </select>
+                    </div>
+ 
+                    {/* Account Name */}
+                    <div>
+                      <label htmlFor="account_name" className="block text-sm font-medium text-gray-700 mb-1">
+                        Ledger Name <span className="text-error-500">*</span>
+                      </label>
+                      <input
+                        id="account_name"
+                        name="account_name"
+                        type="text"
+                        value={formData.account_name}
+                        onChange={handleChange}
+                        className={`input-field transition-colors duration-200 ${errors.account_name ? 'border-error-300 focus:border-error-500 focus:ring-error-500' : 'focus:border-primary-500 focus:ring-primary-500'}`}
+                        placeholder="Enter Ledger name"
+                      />
+                      {errors.account_name && (
+                        <p className="mt-1 text-sm text-error-600">{errors.account_name}</p>
+                      )}
+                    </div>
+ 
+                    {/* Sub Account Option */}
+                    <div>
+                      <div className="flex items-center">
+                        <input
+                          id="is_sub_account"
+                          name="is_sub_account"
+                          type="checkbox"
+                          checked={formData.is_sub_account}
+                          onChange={handleChange}
+                          className="h-4 w-4 text-primary-600 focus:ring-primary-500 border-gray-300 rounded"
+                        />
+                        <label htmlFor="is_sub_account" className="ml-2 block text-sm text-gray-900">
+                          Make this a sub-account
+                        </label>
+                        <HelpCircle className="ml-2 w-4 h-4 text-gray-400" title="Sub-accounts are grouped under parent accounts for better organization" />
+                      </div>
+                    </div>
+ 
+                    {/* Parent Account Selection */}
+                    {formData.is_sub_account && (
+                      <div>
+                        <label htmlFor="parent_account_id" className="block text-sm font-medium text-gray-700 mb-1">
+                          Parent Account
+                        </label>
+                        <select
+                          id="parent_account_id"
+                          name="parent_account_id"
+                          value={formData.parent_account_id}
+                          onChange={handleChange}
+                          className="input-field focus:border-primary-500 focus:ring-primary-500 transition-colors duration-200"
+                        >
+                          <option value="">Select parent account</option>
+                          {getFilteredSubAccountOptions().map(account => (
+                            <option key={account.account_id} value={account.account_id}>
+                              {account.account_name}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+                    )}
+ 
+                    {/* Description */}
+                    <div>
+                      <label htmlFor="description" className="block text-sm font-medium text-gray-700 mb-1">
+                        Description
+                      </label>
+                      <textarea
+                        id="description"
+                        name="description"
+                        rows={3}
+                        value={formData.description}
+                        onChange={handleChange}
+                        className="input-field focus:border-primary-500 focus:ring-primary-500 transition-colors duration-200"
+                        placeholder="Enter Ledger description (optional)"
+                      />
+                    </div>
+ 
+                    {/* Submit Button */}
+                    <div className="flex justify-end space-x-4 pt-6">
+                      <button
+                        type="button"
+                        onClick={() => navigate('/showbusinessaccount')}
+                        className="btn-secondary transition-transform duration-200 hover:scale-[1.02]"
+                      >
+                        Cancel
+                      </button>
+                      <button
+                        type="submit"
+                        disabled={isLoading}
+                        className="btn-primary flex items-center transition-transform duration-200 hover:scale-[1.02]"
+                      >
+                        {isLoading ? (
+                          <div className="flex items-center">
+                            <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                            Creating...
+                          </div>
+                        ) : (
+                          <>
+                            <Save className="w-4 h-4 mr-2" />
+                            Create Ledger
+                          </>
+                        )}
+                      </button>
+                    </div>
+                  </form>
                 </div>
               </div>
-            )}
+ 
+              {/* Suggestions Sidebar */}
+              {accountSuggestions.length > 0 && (
+                <div className="lg:col-span-1">
+                  <div className="card transition-shadow duration-200 hover:shadow-xl">
+                    <h3 className="text-lg font-medium text-gray-900 mb-4">Suggested Ledger Names</h3>
+                    <select
+                      className="w-full px-3 py-2 text-sm text-gray-700 rounded-md border border-gray-300 focus:border-primary-500 focus:ring-primary-500 transition-colors duration-200"
+                      onChange={e => handleSuggestionClick(e.target.value)}
+                      defaultValue=""
+                    >
+                      <option value="" disabled>Select a suggestion</option>
+                      {accountSuggestions.map((suggestion, index) => (
+                        <option key={index} value={suggestion}>{suggestion}</option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
+              )}
+            </div>
           </div>
         </div>
       </div>
