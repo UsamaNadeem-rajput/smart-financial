@@ -15,6 +15,7 @@ import VerifyPage from './components/auth/VerifyPage';
 import { BusinessProvider } from './context/BusinessContext';
 import ForgotPassword from './components/auth/ForgotPassword';
 import TransactionEdit from './components/transactions/TransactionEdit';
+import LedgerBalancing from './components/reports/LedgerBalancing';
 
 import './index.css';
 import 'bootstrap/dist/css/bootstrap.min.css';
@@ -42,6 +43,7 @@ function App() {
             <Route path="/transectionForm" element={<PrivateRoute><TransactionForm /></PrivateRoute>} />
             <Route path="/showtransections" element={<PrivateRoute><ShowTransactions /></PrivateRoute>} />
             <Route path="/contact" element={<PrivateRoute><ContactForm /></PrivateRoute>} />
+            <Route path="/ledger-balancing" element={<PrivateRoute><LedgerBalancing /></PrivateRoute>} />
             <Route path="/transaction-edit/:transactionId" element={<PrivateRoute><TransactionEdit /></PrivateRoute>} />
           </Routes>
         </div>

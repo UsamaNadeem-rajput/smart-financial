@@ -109,6 +109,7 @@ serverRouter.use('/api/createnewaccount', require('./routers/createnewaccount'))
 serverRouter.use('/api/accounts-list', require('./routers/list'));
 serverRouter.use('/api/search-accounts', require('./routers/searchAccounts'));
 serverRouter.use('/api', require('./routers/transactionApi'));
+serverRouter.use('/api/ledger-balancing', require('./routers/ledgerBalancing'));
 serverRouter.use('/api', require('./routers/showtransactions'));
 serverRouter.use('/api/auth', require('./routers/auth'));
 // serverRouter.use('/api/contact', require('./routers/contact')); // removed, Google Form used instead

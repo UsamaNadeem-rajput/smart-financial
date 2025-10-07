@@ -3,10 +3,6 @@ const express = require('express');
 const mysql = require('mysql2/promise');
 const pool = require('../db');
 const router = express.Router();
-const cors = require('cors');
-
-// Enable CORS
-router.use(cors());
 
 // GET /api/next-transaction-id/:business_id
 router.get('/next-transaction-id/:business_id', async (req, res) => {
