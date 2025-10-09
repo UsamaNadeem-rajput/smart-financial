@@ -118,6 +118,9 @@ const LedgerBalancing = () => {
                       <div>Debits: <span className="font-semibold">{currency(ledgerDetails.totals.total_debits)}</span></div>
                       <div>Credits: <span className="font-semibold">{currency(ledgerDetails.totals.total_credits)}</span></div>
                       <div>Closing: <span className="font-semibold">{currency(ledgerDetails.totals.closing_balance)}</span></div>
+                      <div className={`mt-2 px-3 py-1 rounded-full text-xs ${Math.abs(ledgerDetails.totals.total_debits - ledgerDetails.totals.total_credits) < 0.005 ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
+                        {Math.abs(ledgerDetails.totals.total_debits - ledgerDetails.totals.total_credits) < 0.005 ? 'Balanced' : 'Unbalanced'}
+                      </div>
                     </div>
                   )}
                 </div>
@@ -127,29 +130,139 @@ const LedgerBalancing = () => {
                 ) : error ? (
                   <div className="py-4 text-red-600">{error}</div>
                 ) : (
-                  <div className="overflow-x-auto">
-                    <table className="min-w-full divide-y divide-gray-200">
-                      <thead className="bg-gray-50">
-                        <tr>
-                          <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
-                          <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Description</th>
-                          <th className="px-4 py-2 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Debit</th>
-                          <th className="px-4 py-2 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Credit</th>
-                          <th className="px-4 py-2 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Running Balance</th>
-                        </tr>
-                      </thead>
-                      <tbody className="bg-white divide-y divide-gray-200">
-                        {ledgerDetails.entries.map((e, idx) => (
-                          <tr key={`${e.transaction_id}-${idx}`} className="hover:bg-gray-50">
-                            <td className="px-4 py-2 text-sm text-gray-700">{new Date(e.date).toLocaleDateString()}</td>
-                            <td className="px-4 py-2 text-sm text-gray-700">{e.description || '-'}</td>
-                            <td className="px-4 py-2 text-sm text-right">{e.type === 'debit' ? currency(e.amount) : '-'}</td>
-                            <td className="px-4 py-2 text-sm text-right">{e.type === 'credit' ? currency(e.amount) : '-'}</td>
-                            <td className="px-4 py-2 text-sm text-right font-medium">{currency(e.running_balance)}</td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
+                  <div className="bg-white border-2 border-gray-800">
+                    {/* Ledger Header */}
+                    <div className="border-b-2 border-gray-800 p-4 text-center">
+                      <h2 className="text-xl font-bold text-gray-900">LEDGER</h2>
+                      <h3 className="text-lg font-semibold text-gray-700 mt-1">{selection?.name}</h3>
+                      <p className="text-sm text-gray-600">Account ID: {selection?.id}</p>
+                    </div>
+
+                    {/* T-Account Format */}
+                    <div className="flex">
+                      {/* Debit Side */}
+                      <div className="flex-1 border-r border-gray-300">
+                        <div className="bg-gray-100 border-b border-gray-300 p-2 text-center">
+                          <h4 className="font-bold text-gray-800">Dr.</h4>
+                        </div>
+                        <table className="w-full">
+                          <thead className="bg-gray-50">
+                            <tr className="border-b border-gray-200">
+                              <th className="px-2 py-1 text-xs font-medium text-gray-600 text-left w-16">Date</th>
+                              <th className="px-2 py-1 text-xs font-medium text-gray-600 text-left">Particulars</th>
+                              <th className="px-2 py-1 text-xs font-medium text-gray-600 text-center w-12">L.F.</th>
+                              <th className="px-2 py-1 text-xs font-medium text-gray-600 text-right w-24">₹</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {ledgerDetails.entries
+                              .filter(e => e.type === 'debit')
+                              .map((e, idx) => (
+                                <tr key={`dr-${e.transaction_id}-${idx}`} className="border-b border-gray-100 hover:bg-gray-50">
+                                  <td className="px-2 py-1 text-xs text-gray-700">{new Date(e.date).toLocaleDateString('en-GB')}</td>
+                                  <td className="px-2 py-1 text-xs text-gray-700">
+                                    {e.opposite_account_name ? `To ${e.opposite_account_name}` : 'To Various'}
+                                    {e.description && <div className="text-xs text-gray-500 italic">{e.description}</div>}
+                                  </td>
+                                  <td className="px-2 py-1 text-xs text-gray-500 text-center">{e.opposite_account_id || '-'}</td>
+                                  <td className="px-2 py-1 text-xs text-gray-700 text-right">{Number(e.amount).toFixed(2)}</td>
+                                </tr>
+                              ))}
+                            
+                            {/* Balance c/d if credit side has more */}
+                            {ledgerDetails.totals && ledgerDetails.totals.total_credits > ledgerDetails.totals.total_debits && (
+                              <tr className="border-b border-gray-100 hover:bg-gray-50">
+                                <td className="px-2 py-1 text-xs text-gray-700"></td>
+                                <td className="px-2 py-1 text-xs text-gray-700 font-medium">Balance c/d</td>
+                                <td className="px-2 py-1 text-xs text-gray-500 text-center">-</td>
+                                <td className="px-2 py-1 text-xs text-gray-700 text-right font-medium">
+                                  {(ledgerDetails.totals.total_credits - ledgerDetails.totals.total_debits).toFixed(2)}
+                                </td>
+                              </tr>
+                            )}
+
+                            {/* Total */}
+                            <tr className="bg-gray-100 border-t-2 border-gray-300">
+                              <td className="px-2 py-1 text-xs font-bold text-gray-800"></td>
+                              <td className="px-2 py-1 text-xs font-bold text-gray-800">Total</td>
+                              <td className="px-2 py-1 text-xs font-bold text-gray-800 text-center">-</td>
+                              <td className="px-2 py-1 text-xs font-bold text-gray-800 text-right">
+                                {Math.max(ledgerDetails.totals.total_debits, ledgerDetails.totals.total_credits).toFixed(2)}
+                              </td>
+                            </tr>
+                          </tbody>
+                        </table>
+                      </div>
+
+                      {/* Credit Side */}
+                      <div className="flex-1">
+                        <div className="bg-gray-100 border-b border-gray-300 p-2 text-center">
+                          <h4 className="font-bold text-gray-800">Cr.</h4>
+                        </div>
+                        <table className="w-full">
+                          <thead className="bg-gray-50">
+                            <tr className="border-b border-gray-200">
+                              <th className="px-2 py-1 text-xs font-medium text-gray-600 text-left w-16">Date</th>
+                              <th className="px-2 py-1 text-xs font-medium text-gray-600 text-left">Particulars</th>
+                              <th className="px-2 py-1 text-xs font-medium text-gray-600 text-center w-12">L.F.</th>
+                              <th className="px-2 py-1 text-xs font-medium text-gray-600 text-right w-24">₹</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {ledgerDetails.entries
+                              .filter(e => e.type === 'credit')
+                              .map((e, idx) => (
+                                <tr key={`cr-${e.transaction_id}-${idx}`} className="border-b border-gray-100 hover:bg-gray-50">
+                                  <td className="px-2 py-1 text-xs text-gray-700">{new Date(e.date).toLocaleDateString('en-GB')}</td>
+                                  <td className="px-2 py-1 text-xs text-gray-700">
+                                    {e.opposite_account_name ? `By ${e.opposite_account_name}` : 'By Various'}
+                                    {e.description && <div className="text-xs text-gray-500 italic">{e.description}</div>}
+                                  </td>
+                                  <td className="px-2 py-1 text-xs text-gray-500 text-center">{e.opposite_account_id || '-'}</td>
+                                  <td className="px-2 py-1 text-xs text-gray-700 text-right">{Number(e.amount).toFixed(2)}</td>
+                                </tr>
+                              ))}
+                            
+                            {/* Balance b/d if debit side has more */}
+                            {ledgerDetails.totals && ledgerDetails.totals.total_debits > ledgerDetails.totals.total_credits && (
+                              <tr className="border-b border-gray-100 hover:bg-gray-50">
+                                <td className="px-2 py-1 text-xs text-gray-700"></td>
+                                <td className="px-2 py-1 text-xs text-gray-700 font-medium">Balance b/d</td>
+                                <td className="px-2 py-1 text-xs text-gray-500 text-center">-</td>
+                                <td className="px-2 py-1 text-xs text-gray-700 text-right font-medium">
+                                  {(ledgerDetails.totals.total_debits - ledgerDetails.totals.total_credits).toFixed(2)}
+                                </td>
+                              </tr>
+                            )}
+
+                            {/* Total */}
+                            <tr className="bg-gray-100 border-t-2 border-gray-300">
+                              <td className="px-2 py-1 text-xs font-bold text-gray-800"></td>
+                              <td className="px-2 py-1 text-xs font-bold text-gray-800">Total</td>
+                              <td className="px-2 py-1 text-xs font-bold text-gray-800 text-center">-</td>
+                              <td className="px-2 py-1 text-xs font-bold text-gray-800 text-right">
+                                {Math.max(ledgerDetails.totals.total_debits, ledgerDetails.totals.total_credits).toFixed(2)}
+                              </td>
+                            </tr>
+                          </tbody>
+                        </table>
+                      </div>
+                    </div>
+
+                    {/* Closing Balance Summary */}
+                    <div className="border-t-2 border-gray-800 p-4 bg-gray-50">
+                      <div className="flex justify-between items-center">
+                        <div>
+                          <span className="text-sm font-medium text-gray-700">Closing Balance: </span>
+                          <span className={`text-sm font-bold ${ledgerDetails.totals.closing_balance >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                            ₹{ledgerDetails.totals.closing_balance.toFixed(2)}
+                          </span>
+                        </div>
+                        <div className={`px-3 py-1 rounded-full text-xs font-medium ${Math.abs(ledgerDetails.totals.total_debits - ledgerDetails.totals.total_credits) < 0.005 ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
+                          {Math.abs(ledgerDetails.totals.total_debits - ledgerDetails.totals.total_credits) < 0.005 ? '✓ Balanced' : '⚠ Unbalanced'}
+                        </div>
+                      </div>
+                    </div>
                   </div>
                 )}
               </div>

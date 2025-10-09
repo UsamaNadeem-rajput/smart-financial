@@ -103,9 +103,14 @@ router.get('/:business_id/:account_id', async (req, res) => {
 
         const [entries] = await conn.execute(
             `SELECT tr.transaction_id, tr.date, tr.description,
-                    te.amount, te.type
+                    te.amount, te.type,
+                    opp_account.account_name as opposite_account_name,
+                    opp_account.account_id as opposite_account_id
              FROM transaction_entries te
              JOIN transactions tr ON tr.transaction_id = te.transaction_id
+             LEFT JOIN transaction_entries opp_te ON opp_te.transaction_id = tr.transaction_id 
+                 AND opp_te.entry_id != te.entry_id
+             LEFT JOIN accounts opp_account ON opp_account.account_id = opp_te.account_id
              WHERE tr.business_id = ? AND te.account_id = ?
              ORDER BY tr.date, tr.transaction_id, te.entry_id`,
             [business_id, account_id]
