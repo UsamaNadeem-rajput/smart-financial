@@ -759,9 +759,8 @@ const LandingPage = () => {
                 <motion.div
                   className="bg-white rounded-3xl shadow-2xl p-8 transform hover:scale-105 transition-transform duration-500"
                   style={{
-                    transform: `perspective(1000px) rotateX(${
-                      scrollY * 0.01
-                    }deg) rotateY(${scrollY * 0.005}deg)`,
+                    transform: `perspective(1000px) rotateX(${scrollY * 0.01
+                      }deg) rotateY(${scrollY * 0.005}deg)`,
                   }}
                 >
                   <div className="space-y-6">
@@ -989,11 +988,10 @@ const LandingPage = () => {
                 viewport={{ once: true }}
                 transition={{ delay: index * 0.2, duration: 0.6 }}
                 whileHover={{ y: -10, scale: 1.02 }}
-                className={`relative bg-white/80 backdrop-blur-sm rounded-3xl shadow-xl p-8 transition-all duration-300 hover:shadow-2xl border ${
-                  plan.popular
+                className={`relative bg-white/80 backdrop-blur-sm rounded-3xl shadow-xl p-8 transition-all duration-300 hover:shadow-2xl border ${plan.popular
                     ? "ring-2 ring-primary-500 lg:scale-105 border-primary-200"
                     : "border-gray-200"
-                }`}
+                  }`}
               >
                 {plan.popular && (
                   <div className="absolute -top-4 left-1/2 transform -translate-x-1/2">
@@ -1045,11 +1043,10 @@ const LandingPage = () => {
                 >
                   <Link
                     to="/register"
-                    className={`w-full py-4 px-6 rounded-xl font-semibold text-center block transition-all duration-300 shadow-lg hover:shadow-xl ${
-                      plan.popular
+                    className={`w-full py-4 px-6 rounded-xl font-semibold text-center block transition-all duration-300 shadow-lg hover:shadow-xl ${plan.popular
                         ? "bg-gradient-to-r from-primary-600 to-purple-600 hover:from-primary-700 hover:to-purple-700 text-white"
                         : "bg-gradient-to-r from-gray-100 to-gray-200 hover:from-gray-200 hover:to-gray-300 text-gray-900"
-                    }`}
+                      }`}
                   >
                     {plan.cta}
                   </Link>
@@ -1178,11 +1175,17 @@ const LandingPage = () => {
           <div className="grid grid-cols-1 md:grid-cols-4 gap-8 mb-12">
             <div>
               <div className="flex items-center mb-6">
-                <div className="w-10 h-10 bg-gradient-to-r from-primary-500 to-purple-600 rounded-lg flex items-center justify-center mr-3">
-                  <Building2 className="w-6 h-6 text-white" />
+                <div className="w-24 h-10 t-to-r flex items-center justify-center">
+                  {/* <Building2 className="w-6 h-6 text-white" /> */}
+                  <img
+                    src="/final.png"
+                    alt="Logo"
+                    className="h-12 w-full"
+                    style={{ marginTop: "18px" }}
+                  />
                 </div>
                 <span className="text-2xl font-bold text-white">
-                  FinanceFlow
+                  Smart Financial
                 </span>
               </div>
               <p className="text-gray-400 mb-6">
@@ -1337,7 +1340,7 @@ const LandingPage = () => {
               </p>
               <div className="flex items-center space-x-4 text-sm text-gray-400">
                 <span>🌍 English</span>
-                <span>💱 USD</span>
+                <span>💱 PKR/USD</span>
                 <span className="flex items-center">
                   <div className="w-2 h-2 bg-green-400 rounded-full mr-2 animate-pulse"></div>
                   All systems operational

@@ -4,7 +4,22 @@ import axios from 'axios';
 import Navbar from '../layout/Navbar';
 import { useBusiness } from '../../context/BusinessContext';
 
-const currency = (n) => new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(Number(n || 0));
+const currency = (n) => new Intl.NumberFormat('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(Number(n || 0));
+
+const formatClosing = (balance) => {
+  if (!balance) return currency(0);
+  return `${currency(balance.amount)} ${balance.type}`;
+};
+
+const normalizeOppositeAccounts = (entry) => {
+  if (!entry?.opposite_accounts) return [];
+  if (Array.isArray(entry.opposite_accounts)) return entry.opposite_accounts.filter(Boolean);
+  try {
+    return JSON.parse(entry.opposite_accounts).filter(Boolean);
+  } catch {
+    return [];
+  }
+};
 
 const LedgerBalancing = () => {
   const location = useLocation();
@@ -17,7 +32,7 @@ const LedgerBalancing = () => {
   const [error, setError] = useState('');
   const [allLedgers, setAllLedgers] = useState([]);
   const [totals, setTotals] = useState({ total_debits: 0, total_credits: 0, balanced: true });
-  const [ledgerDetails, setLedgerDetails] = useState({ account: null, totals: null, entries: [] });
+  const [ledgerDetails, setLedgerDetails] = useState(null);
 
   const isAll = selection === 'all';
 
@@ -33,7 +48,7 @@ const LedgerBalancing = () => {
           setTotals(data.totals || { total_debits: 0, total_credits: 0, balanced: true });
         } else if (selection?.id) {
           const { data } = await axios.get(`${apiUrl}/api/ledger-balancing/${selectedBusiness.business_id}/${selection.id}`, { withCredentials: true });
-          setLedgerDetails({ account: data.account, totals: data.totals, entries: data.entries || [] });
+          setLedgerDetails(data.ledger || null);
         }
       } catch (e) {
         setError(e?.response?.data?.error || e.message || 'Failed to load ledger balancing data');
@@ -67,9 +82,6 @@ const LedgerBalancing = () => {
                     <div className="text-sm">Total Debits: <span className="font-semibold">{currency(totals.total_debits)}</span></div>
                     <div className="text-sm">Total Credits: <span className="font-semibold">{currency(totals.total_credits)}</span></div>
                   </div>
-                  <div className={`px-3 py-1 rounded-full text-sm ${totals.balanced ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
-                    {totals.balanced ? 'Balanced' : 'Unbalanced'}
-                  </div>
                 </div>
 
                 {loading ? (
@@ -95,7 +107,7 @@ const LedgerBalancing = () => {
                             <td className="px-4 py-2 text-sm text-gray-700">{l.type_name}</td>
                             <td className="px-4 py-2 text-sm text-right">{currency(l.total_debits)}</td>
                             <td className="px-4 py-2 text-sm text-right">{currency(l.total_credits)}</td>
-                            <td className="px-4 py-2 text-sm text-right font-medium">{currency(l.closing_balance)}</td>
+                            <td className="px-4 py-2 text-sm text-right font-medium">{formatClosing(l.closing_balance)}</td>
                           </tr>
                         ))}
                       </tbody>
@@ -113,14 +125,11 @@ const LedgerBalancing = () => {
                       <span className="ml-2 text-xs text-gray-500">ID: {selection?.id}</span>
                     </div>
                   </div>
-                  {ledgerDetails?.totals && (
+                  {ledgerDetails && (
                     <div className="text-right text-sm text-gray-700">
-                      <div>Debits: <span className="font-semibold">{currency(ledgerDetails.totals.total_debits)}</span></div>
-                      <div>Credits: <span className="font-semibold">{currency(ledgerDetails.totals.total_credits)}</span></div>
-                      <div>Closing: <span className="font-semibold">{currency(ledgerDetails.totals.closing_balance)}</span></div>
-                      <div className={`mt-2 px-3 py-1 rounded-full text-xs ${Math.abs(ledgerDetails.totals.total_debits - ledgerDetails.totals.total_credits) < 0.005 ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
-                        {Math.abs(ledgerDetails.totals.total_debits - ledgerDetails.totals.total_credits) < 0.005 ? 'Balanced' : 'Unbalanced'}
-                      </div>
+                      <div>Debits: <span className="font-semibold">{currency(ledgerDetails.total_debits)}</span></div>
+                      <div>Credits: <span className="font-semibold">{currency(ledgerDetails.total_credits)}</span></div>
+                      <div>Closing: <span className="font-semibold">{formatClosing(ledgerDetails.closing_balance)}</span></div>
                     </div>
                   )}
                 </div>
@@ -150,33 +159,36 @@ const LedgerBalancing = () => {
                             <tr className="border-b border-gray-200">
                               <th className="px-2 py-1 text-xs font-medium text-gray-600 text-left w-16">Date</th>
                               <th className="px-2 py-1 text-xs font-medium text-gray-600 text-left">Particulars</th>
-                              <th className="px-2 py-1 text-xs font-medium text-gray-600 text-center w-12">L.F.</th>
-                              <th className="px-2 py-1 text-xs font-medium text-gray-600 text-right w-24">₹</th>
+                              <th className="px-2 py-1 text-xs font-medium text-gray-600 text-right w-24">Amount</th>
                             </tr>
                           </thead>
                           <tbody>
-                            {ledgerDetails.entries
+                            {(ledgerDetails?.entries || [])
                               .filter(e => e.type === 'debit')
                               .map((e, idx) => (
                                 <tr key={`dr-${e.transaction_id}-${idx}`} className="border-b border-gray-100 hover:bg-gray-50">
                                   <td className="px-2 py-1 text-xs text-gray-700">{new Date(e.date).toLocaleDateString('en-GB')}</td>
                                   <td className="px-2 py-1 text-xs text-gray-700">
-                                    {e.opposite_account_name ? `To ${e.opposite_account_name}` : 'To Various'}
+                                    {(() => {
+                                      const accounts = normalizeOppositeAccounts(e);
+                                      if (accounts.length) {
+                                        return `To ${accounts.map(acc => acc.account_name).join(', ')}`;
+                                      }
+                                      return 'To Various';
+                                    })()}
                                     {e.description && <div className="text-xs text-gray-500 italic">{e.description}</div>}
                                   </td>
-                                  <td className="px-2 py-1 text-xs text-gray-500 text-center">{e.opposite_account_id || '-'}</td>
                                   <td className="px-2 py-1 text-xs text-gray-700 text-right">{Number(e.amount).toFixed(2)}</td>
                                 </tr>
                               ))}
                             
-                            {/* Balance c/d if credit side has more */}
-                            {ledgerDetails.totals && ledgerDetails.totals.total_credits > ledgerDetails.totals.total_debits && (
+                            {/* Balancing figure (always labeled c/d) */}
+                            {ledgerDetails && ledgerDetails.total_credits > ledgerDetails.total_debits && (
                               <tr className="border-b border-gray-100 hover:bg-gray-50">
                                 <td className="px-2 py-1 text-xs text-gray-700"></td>
-                                <td className="px-2 py-1 text-xs text-gray-700 font-medium">Balance c/d</td>
-                                <td className="px-2 py-1 text-xs text-gray-500 text-center">-</td>
+                                <td className="px-2 py-1 text-xs text-gray-700 font-medium">c/d</td>
                                 <td className="px-2 py-1 text-xs text-gray-700 text-right font-medium">
-                                  {(ledgerDetails.totals.total_credits - ledgerDetails.totals.total_debits).toFixed(2)}
+                                  {(ledgerDetails.total_credits - ledgerDetails.total_debits).toFixed(2)}
                                 </td>
                               </tr>
                             )}
@@ -185,9 +197,8 @@ const LedgerBalancing = () => {
                             <tr className="bg-gray-100 border-t-2 border-gray-300">
                               <td className="px-2 py-1 text-xs font-bold text-gray-800"></td>
                               <td className="px-2 py-1 text-xs font-bold text-gray-800">Total</td>
-                              <td className="px-2 py-1 text-xs font-bold text-gray-800 text-center">-</td>
                               <td className="px-2 py-1 text-xs font-bold text-gray-800 text-right">
-                                {Math.max(ledgerDetails.totals.total_debits, ledgerDetails.totals.total_credits).toFixed(2)}
+                                {ledgerDetails ? Math.max(ledgerDetails.total_debits, ledgerDetails.total_credits).toFixed(2) : '0.00'}
                               </td>
                             </tr>
                           </tbody>
@@ -204,33 +215,36 @@ const LedgerBalancing = () => {
                             <tr className="border-b border-gray-200">
                               <th className="px-2 py-1 text-xs font-medium text-gray-600 text-left w-16">Date</th>
                               <th className="px-2 py-1 text-xs font-medium text-gray-600 text-left">Particulars</th>
-                              <th className="px-2 py-1 text-xs font-medium text-gray-600 text-center w-12">L.F.</th>
-                              <th className="px-2 py-1 text-xs font-medium text-gray-600 text-right w-24">₹</th>
+                              <th className="px-2 py-1 text-xs font-medium text-gray-600 text-right w-24">Amount</th>
                             </tr>
                           </thead>
                           <tbody>
-                            {ledgerDetails.entries
+                            {(ledgerDetails?.entries || [])
                               .filter(e => e.type === 'credit')
                               .map((e, idx) => (
                                 <tr key={`cr-${e.transaction_id}-${idx}`} className="border-b border-gray-100 hover:bg-gray-50">
                                   <td className="px-2 py-1 text-xs text-gray-700">{new Date(e.date).toLocaleDateString('en-GB')}</td>
                                   <td className="px-2 py-1 text-xs text-gray-700">
-                                    {e.opposite_account_name ? `By ${e.opposite_account_name}` : 'By Various'}
+                                    {(() => {
+                                      const accounts = normalizeOppositeAccounts(e);
+                                      if (accounts.length) {
+                                        return `By ${accounts.map(acc => acc.account_name).join(', ')}`;
+                                      }
+                                      return 'By Various';
+                                    })()}
                                     {e.description && <div className="text-xs text-gray-500 italic">{e.description}</div>}
                                   </td>
-                                  <td className="px-2 py-1 text-xs text-gray-500 text-center">{e.opposite_account_id || '-'}</td>
                                   <td className="px-2 py-1 text-xs text-gray-700 text-right">{Number(e.amount).toFixed(2)}</td>
                                 </tr>
                               ))}
                             
-                            {/* Balance b/d if debit side has more */}
-                            {ledgerDetails.totals && ledgerDetails.totals.total_debits > ledgerDetails.totals.total_credits && (
+                            {/* Balancing figure (always labeled c/d) */}
+                            {ledgerDetails && ledgerDetails.total_debits > ledgerDetails.total_credits && (
                               <tr className="border-b border-gray-100 hover:bg-gray-50">
                                 <td className="px-2 py-1 text-xs text-gray-700"></td>
-                                <td className="px-2 py-1 text-xs text-gray-700 font-medium">Balance b/d</td>
-                                <td className="px-2 py-1 text-xs text-gray-500 text-center">-</td>
+                                <td className="px-2 py-1 text-xs text-gray-700 font-medium">c/d</td>
                                 <td className="px-2 py-1 text-xs text-gray-700 text-right font-medium">
-                                  {(ledgerDetails.totals.total_debits - ledgerDetails.totals.total_credits).toFixed(2)}
+                                  {(ledgerDetails.total_debits - ledgerDetails.total_credits).toFixed(2)}
                                 </td>
                               </tr>
                             )}
@@ -239,9 +253,8 @@ const LedgerBalancing = () => {
                             <tr className="bg-gray-100 border-t-2 border-gray-300">
                               <td className="px-2 py-1 text-xs font-bold text-gray-800"></td>
                               <td className="px-2 py-1 text-xs font-bold text-gray-800">Total</td>
-                              <td className="px-2 py-1 text-xs font-bold text-gray-800 text-center">-</td>
                               <td className="px-2 py-1 text-xs font-bold text-gray-800 text-right">
-                                {Math.max(ledgerDetails.totals.total_debits, ledgerDetails.totals.total_credits).toFixed(2)}
+                                {ledgerDetails ? Math.max(ledgerDetails.total_debits, ledgerDetails.total_credits).toFixed(2) : '0.00'}
                               </td>
                             </tr>
                           </tbody>
@@ -254,12 +267,9 @@ const LedgerBalancing = () => {
                       <div className="flex justify-between items-center">
                         <div>
                           <span className="text-sm font-medium text-gray-700">Closing Balance: </span>
-                          <span className={`text-sm font-bold ${ledgerDetails.totals.closing_balance >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-                            ₹{ledgerDetails.totals.closing_balance.toFixed(2)}
+                          <span className="text-sm font-bold text-gray-900">
+                            {formatClosing(ledgerDetails?.closing_balance)}
                           </span>
-                        </div>
-                        <div className={`px-3 py-1 rounded-full text-xs font-medium ${Math.abs(ledgerDetails.totals.total_debits - ledgerDetails.totals.total_credits) < 0.005 ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
-                          {Math.abs(ledgerDetails.totals.total_debits - ledgerDetails.totals.total_credits) < 0.005 ? '✓ Balanced' : '⚠ Unbalanced'}
                         </div>
                       </div>
                     </div>
@@ -275,5 +285,4 @@ const LedgerBalancing = () => {
 };
 
 export default LedgerBalancing;
-
 

@@ -432,7 +432,7 @@ export default function TransactionEntryTable() {
       {/* Content */}
       <div className="relative z-10">
         <Navbar />
-        <div className="container mt-4">
+        <div className="container mt-4 text-white">
           <h2>General Journal</h2>
 
           <div className="mb-3 row">

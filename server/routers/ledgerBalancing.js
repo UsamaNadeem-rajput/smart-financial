@@ -38,8 +38,8 @@ router.get('/:business_id', async (req, res) => {
             `SELECT 
                 a.account_id,
                 a.account_name,
-                t.type_id,
-                t.type_name,
+                COALESCE(t.type_id, a.type_id) as type_id,
+                COALESCE(t.type_name, 'Unknown') as type_name,
                 COALESCE(SUM(CASE WHEN te.type = 'debit'  THEN te.amount ELSE 0 END), 0) AS total_debits,
                 COALESCE(SUM(CASE WHEN te.type = 'credit' THEN te.amount ELSE 0 END), 0) AS total_credits
              FROM accounts a
@@ -55,8 +55,9 @@ router.get('/:business_id', async (req, res) => {
 
         // Compute closing balance based on normal balance by type
         const result = rows.map(r => {
-            const isAssets = [3,4,5,11].includes(r.type_id) || ['Assets','Fixed Assets','Current Assets','Other Assets'].includes(r.type_name);
-            const isExpense = [2,13,14].includes(r.type_id) || ['Expense','Other Expenses','Cost Of Goods Sold'].includes(r.type_name);
+            const typeId = Number(r.type_id);
+            const isAssets = [3,4,5,11].includes(typeId) || ['Assets','Fixed Assets','Current Assets','Other Assets'].includes(r.type_name);
+            const isExpense = [2,13,14].includes(typeId) || ['Expense','Other Expenses','Cost Of Goods Sold'].includes(r.type_name);
             let closing_balance;
             if (isAssets || isExpense) {
                 closing_balance = Number(r.total_debits) - Number(r.total_credits);
@@ -94,7 +95,7 @@ router.get('/:business_id/:account_id', async (req, res) => {
 
         // fetch account type for balance direction
         const [[acct]] = await conn.execute(
-            `SELECT a.account_id, a.account_name, t.type_id, t.type_name
+            `SELECT a.account_id, a.account_name, COALESCE(t.type_id, a.type_id) as type_id, COALESCE(t.type_name, 'Unknown') as type_name
              FROM accounts a LEFT JOIN account_types t ON a.type_id = t.type_id
              WHERE a.account_id = ? AND a.business_id = ?`,
             [account_id, business_id]
@@ -116,8 +117,9 @@ router.get('/:business_id/:account_id', async (req, res) => {
             [business_id, account_id]
         );
 
-        const isAssets = [3,4,5,11].includes(acct.type_id) || ['Assets','Fixed Assets','Current Assets','Other Assets'].includes(acct.type_name);
-        const isExpense = [2,13,14].includes(acct.type_id) || ['Expense','Other Expenses','Cost Of Goods Sold'].includes(acct.type_name);
+        const typeId = Number(acct.type_id);
+        const isAssets = [3,4,5,11].includes(typeId) || ['Assets','Fixed Assets','Current Assets','Other Assets'].includes(acct.type_name);
+        const isExpense = [2,13,14].includes(typeId) || ['Expense','Other Expenses','Cost Of Goods Sold'].includes(acct.type_name);
 
         let running_balance = 0;
         let total_debits = 0;

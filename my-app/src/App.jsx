@@ -16,6 +16,8 @@ import { BusinessProvider } from './context/BusinessContext';
 import ForgotPassword from './components/auth/ForgotPassword';
 import TransactionEdit from './components/transactions/TransactionEdit';
 import LedgerBalancing from './components/reports/LedgerBalancing';
+import IncomeReport from './components/reports/IncomeReport';
+import TrialBalance from './components/reports/TrialBalance';
 
 import './index.css';
 import 'bootstrap/dist/css/bootstrap.min.css';
@@ -44,6 +46,8 @@ function App() {
             <Route path="/showtransections" element={<PrivateRoute><ShowTransactions /></PrivateRoute>} />
             <Route path="/contact" element={<PrivateRoute><ContactForm /></PrivateRoute>} />
             <Route path="/ledger-balancing" element={<PrivateRoute><LedgerBalancing /></PrivateRoute>} />
+            <Route path="/income-report" element={<PrivateRoute><IncomeReport /></PrivateRoute>} />
+            <Route path="/trial-balance" element={<PrivateRoute><TrialBalance /></PrivateRoute>} />
             <Route path="/transaction-edit/:transactionId" element={<PrivateRoute><TransactionEdit /></PrivateRoute>} />
           </Routes>
         </div>

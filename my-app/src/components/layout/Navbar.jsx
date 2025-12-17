@@ -23,10 +23,6 @@ const Navbar = () => {
   const [user, setUser] = useState(null);
   const [openDropdown, setOpenDropdown] = useState(null); // Track which dropdown is open
 
-  const [accounts, setAccounts] = useState([]);
-  const apiUrl = import.meta.env.VITE_BACKEND_URL;
-
-
   useEffect(() => {
     // Fetch session username from API or localStorage
     const fetchUser = async () => {
@@ -60,28 +56,6 @@ const Navbar = () => {
     }
   };
 
-  const fetchAccounts = async () => {
-    if (!selectedBusiness?.business_id) return;
-    try {
-      const response = await axios.get(
-        `${apiUrl}/api/accounts-list/${selectedBusiness.business_id}`,
-        { withCredentials: true }
-      );
-      setAccounts(response.data.accounts || []);
-    } catch (error) {
-      console.error('Failed to fetch accounts:', error);
-      if (error?.response?.status === 401) {
-        navigate('/login');
-      }
-      setAccounts([]);
-    }
-  };
-
-  useEffect(() => {
-    fetchAccounts();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [selectedBusiness?.business_id]);
-
   const navigation = [
     { name: "Home", href: "/", icon: HomeIcon },
     { name: "Businesses", href: "/list", icon: Building2 },
@@ -91,6 +65,25 @@ const Navbar = () => {
       name: "Reports",
       icon: FileText,
       children: [
+        {
+          name: "Ledger Balance",
+          href: "/ledger-balancing",
+          onClick: (e) => {
+            e.preventDefault();
+            navigate('/ledger-balancing', { state: { selectedLedger: 'all' } });
+          },
+          icon: FileText,
+        },
+        {
+          name: "Trial Balance",
+          href: "/trial-balance",
+          icon: FileText,
+        },
+        {
+          name: "Income Report",
+          href: "/income-report",
+          icon: FileText,
+        },
         {
           name: "Show Transactions",
           href: "/showtransections",
@@ -158,17 +151,34 @@ const Navbar = () => {
                             openDropdown === item.name ? "block" : "hidden"
                           } bg-white border shadow-lg mt-2 rounded-md z-50 min-w-[200px]`}
                         >
-                          {item.children.map((child) => (
-                            <Link
-                              key={child.name}
-                              to={child.href}
-                              className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
-                              onClick={() => setOpenDropdown(null)}
-                            >
-                              <child.icon className="w-4 h-4 mr-2 inline-block" />
-                              {child.name}
-                            </Link>
-                          ))}
+                          {item.children.map((child) => {
+                            if (child.onClick) {
+                              return (
+                                <button
+                                  key={child.name}
+                                  onClick={(e) => {
+                                    setOpenDropdown(null);
+                                    child.onClick(e);
+                                  }}
+                                  className="w-full text-left block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                                >
+                                  <child.icon className="w-4 h-4 mr-2 inline-block" />
+                                  {child.name}
+                                </button>
+                              );
+                            }
+                            return (
+                              <Link
+                                key={child.name}
+                                to={child.href}
+                                className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                                onClick={() => setOpenDropdown(null)}
+                              >
+                                <child.icon className="w-4 h-4 mr-2 inline-block" />
+                                {child.name}
+                              </Link>
+                            );
+                          })}
                         </div>
                       </div>
                     );
@@ -190,42 +200,6 @@ const Navbar = () => {
                   );
                 })}
 
-                {/* Ledger Balancing Dropdown */}
-                <div
-                  className="relative group"
-                  onMouseEnter={() => { if (!isMobile()) setOpenDropdown('Ledger Balancing'); }}
-                  onMouseLeave={() => { if (!isMobile()) setOpenDropdown(null); }}
-                >
-                  <button
-                    type="button"
-                    className=" inline-flex items-center px-1 pt-4 text-[14px] underline font-medium text-gray-500 hover:text-gray-700 cursor-pointer border-b-2 border-transparent hover:border-gray-300 transition-colors duration-200 bg-transparent"
-                    onClick={() => handleDropdownToggle('Ledger Balancing')}
-                    aria-haspopup="true"
-                    aria-expanded={openDropdown === 'Ledger Balancing'}
-                  >
-                    <FileText className="w-4 h-4 mr-2" />
-                    Ledger Balancing
-                  </button>
-                  <div
-                    className={`absolute ${openDropdown === 'Ledger Balancing' ? 'block' : 'hidden'} bg-white border shadow-lg rounded-md z-50 min-w-[220px] max-h-80 overflow-auto`}
-                  >
-                    <button
-                      className="w-full text-left block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
-                      onClick={() => { setOpenDropdown(null); navigate('/ledger-balancing', { state: { selectedLedger: 'all' } }); }}
-                    >
-                      All Ledgers
-                    </button>
-                    {accounts.map((acc) => (
-                      <button
-                        key={acc.account_id}
-                        className="w-full text-left block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
-                        onClick={() => { setOpenDropdown(null); navigate('/ledger-balancing', { state: { selectedLedger: { id: acc.account_id, name: acc.account_name } } }); }}
-                      >
-                        {acc.account_name}
-                      </button>
-                    ))}
-                  </div>
-                </div>
               </div>
             )}
           </div>
@@ -295,20 +269,38 @@ const Navbar = () => {
                           openDropdown === item.name ? "block" : "hidden"
                         } bg-white border shadow-lg rounded-md z-50`}
                       >
-                        {item.children.map((child) => (
-                          <Link
-                            key={child.name}
-                            to={child.href}
-                            className="block px-6 py-2 text-sm text-gray-700 hover:bg-gray-100"
-                            onClick={() => {
-                              setOpenDropdown(null);
-                              setIsMobileMenuOpen(false);
-                            }}
-                          >
-                            <child.icon className="w-4 h-4 mr-2 inline-block" />
-                            {child.name}
-                          </Link>
-                        ))}
+                        {item.children.map((child) => {
+                          if (child.onClick) {
+                            return (
+                              <button
+                                key={child.name}
+                                onClick={(e) => {
+                                  setOpenDropdown(null);
+                                  setIsMobileMenuOpen(false);
+                                  child.onClick(e);
+                                }}
+                                className="w-full text-left block px-6 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                              >
+                                <child.icon className="w-4 h-4 mr-2 inline-block" />
+                                {child.name}
+                              </button>
+                            );
+                          }
+                          return (
+                            <Link
+                              key={child.name}
+                              to={child.href}
+                              className="block px-6 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                              onClick={() => {
+                                setOpenDropdown(null);
+                                setIsMobileMenuOpen(false);
+                              }}
+                            >
+                              <child.icon className="w-4 h-4 mr-2 inline-block" />
+                              {child.name}
+                            </Link>
+                          );
+                        })}
                       </div>
                     </div>
                   );
@@ -332,48 +324,6 @@ const Navbar = () => {
                 );
               })}
 
-            {/* Mobile: Ledger Balancing dropdown */}
-            {selectedBusiness && (
-              <div className="relative">
-                <button
-                  className="flex items-center w-full pl-3 pr-4 py-2 text-base font-medium text-gray-600 hover:text-gray-900 hover:bg-gray-50"
-                  onClick={() => handleDropdownToggle('Ledger Balancing')}
-                >
-                  <FileText className="w-5 h-5 mr-3" />
-                  Ledger Balancing
-                  <span className="ml-auto">
-                    <ArrowDownIcon className="w-4 h-4" />
-                  </span>
-                </button>
-                <div
-                  className={`${openDropdown === 'Ledger Balancing' ? 'block' : 'hidden'} bg-white border shadow-lg rounded-md z-50`}
-                >
-                  <button
-                    className="w-full text-left block px-6 py-2 text-sm text-gray-700 hover:bg-gray-100"
-                    onClick={() => {
-                      setOpenDropdown(null);
-                      setIsMobileMenuOpen(false);
-                      navigate('/ledger-balancing', { state: { selectedLedger: 'all' } });
-                    }}
-                  >
-                    All Ledgers
-                  </button>
-                  {accounts.map((acc) => (
-                    <button
-                      key={acc.account_id}
-                      className="w-full text-left block px-6 py-2 text-sm text-gray-700 hover:bg-gray-100"
-                      onClick={() => {
-                        setOpenDropdown(null);
-                        setIsMobileMenuOpen(false);
-                        navigate('/ledger-balancing', { state: { selectedLedger: { id: acc.account_id, name: acc.account_name } } });
-                      }}
-                    >
-                      {acc.account_name}
-                    </button>
-                  ))}
-                </div>
-              </div>
-            )}
           </div>
           <div className="pt-4 pb-3 border-t border-gray-200">
             {selectedBusiness && (
