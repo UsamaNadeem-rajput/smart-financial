@@ -326,7 +326,7 @@ const IncomeReport = () => {
                     </table>
                   </div>
                 ) : (
-                  <p className="text-gray-500 text-center py-4">No expense data available for the selected period.</p>
+                  <p className="text-gray-500 text-center py-4">No expense data available for the selected period .</p>
                 )}
               </div>
 
