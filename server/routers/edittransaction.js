@@ -46,7 +46,7 @@ router.get("/:transactionId/:businessId", async (req, res) => {
 });
 
 
-// ✅ Update a transaction (only debit/credit)
+// ✅ Update a transaction (preserve transaction_id and existing entry_id where possible)
 router.put("/:transactionId/:businessId", async (req, res) => {
   const { transactionId, businessId } = req.params;
   const { entries } = req.body;
@@ -58,38 +58,97 @@ router.put("/:transactionId/:businessId", async (req, res) => {
   }
 
   try {
-    // ✅ 1. Calculate totals
-    const debitTotal = entries
-      .filter(e => e.type === "debit")
-      .reduce((sum, e) => sum + parseFloat(e.amount || 0), 0);
+    const conn = await pool.getConnection();
+    try {
+      await conn.beginTransaction();
 
-    const creditTotal = entries
-      .filter(e => e.type === "credit")
-      .reduce((sum, e) => sum + parseFloat(e.amount || 0), 0);
+      // ✅ 1. Calculate totals
+      const debitTotal = entries
+        .filter((e) => e.type === "debit")
+        .reduce((sum, e) => sum + parseFloat(e.amount || 0), 0);
 
-    // ✅ 2. Update main transactions table (ONLY debit/credit columns)
-    await pool.query(
-      `UPDATE transactions 
-       SET debit = ?, credit = ?, updated_at = NOW() 
-       WHERE transaction_id = ? AND business_id = ?`,
-      [debitTotal, creditTotal, transactionId, businessId]
-    );
+      const creditTotal = entries
+        .filter((e) => e.type === "credit")
+        .reduce((sum, e) => sum + parseFloat(e.amount || 0), 0);
 
-    // ✅ 3. Update entries (delete + insert fresh)
-    await pool.query(
-      `DELETE FROM transaction_entries WHERE transaction_id = ?`,
-      [transactionId]
-    );
-
-    for (const entry of entries) {
-      await pool.query(
-        `INSERT INTO transaction_entries (transaction_id, account_id, amount, type)
-         VALUES (?, ?, ?, ?)`,
-        [transactionId, entry.account_id, entry.amount, entry.type]
+      // ✅ 2. Update main transactions table (ONLY debit/credit columns)
+      await conn.query(
+        `UPDATE transactions 
+         SET debit = ?, credit = ?, updated_at = NOW() 
+         WHERE transaction_id = ? AND business_id = ?`,
+        [debitTotal, creditTotal, transactionId, businessId]
       );
-    }
 
-    res.json({ success: true, message: "✅ Debit/Credit updated successfully" });
+      // ✅ 3. Validate that all accounts exist under the same business (ledger must be available)
+      for (const entry of entries) {
+        const [acctRows] = await conn.query(
+          `SELECT account_id FROM accounts WHERE account_id = ? AND business_id = ?`,
+          [entry.account_id, businessId]
+        );
+        if (!acctRows.length) {
+          await conn.rollback();
+          return res.status(400).json({
+            success: false,
+            message: `Invalid ledger: account_id ${entry.account_id} not found for business ${businessId}`,
+          });
+        }
+      }
+
+      // ✅ 4. Preserve existing entry_ids: update existing, insert new, delete removed
+      const [existing] = await conn.query(
+        `SELECT entry_id FROM transaction_entries WHERE transaction_id = ?`,
+        [transactionId]
+      );
+      const existingIds = new Set(existing.map((r) => r.entry_id));
+      const payloadIds = new Set(
+        entries.filter((e) => e.entry_id).map((e) => e.entry_id)
+      );
+
+      // Update or insert
+      for (const entry of entries) {
+        if (entry.entry_id && existingIds.has(entry.entry_id)) {
+          // Update existing entry in place
+          await conn.query(
+            `UPDATE transaction_entries
+             SET account_id = ?, amount = ?, type = ?
+             WHERE entry_id = ? AND transaction_id = ?`,
+            [
+              entry.account_id,
+              entry.amount,
+              entry.type,
+              entry.entry_id,
+              transactionId,
+            ]
+          );
+        } else {
+          // Insert new entry (new entry_id)
+          await conn.query(
+            `INSERT INTO transaction_entries (transaction_id, account_id, amount, type)
+             VALUES (?, ?, ?, ?)`,
+            [transactionId, entry.account_id, entry.amount, entry.type]
+          );
+        }
+      }
+
+      // Delete entries removed in payload
+      for (const id of existingIds) {
+        if (!payloadIds.has(id)) {
+          await conn.query(
+            `DELETE FROM transaction_entries WHERE entry_id = ? AND transaction_id = ?`,
+            [id, transactionId]
+          );
+        }
+      }
+
+      await conn.commit();
+      res.json({ success: true, message: "✅ Transaction updated successfully" });
+    } catch (err) {
+      if (conn) await conn.rollback();
+      console.error("Error updating transaction:", err);
+      res.status(500).json({ success: false, message: "Server error" });
+    } finally {
+      if (conn) conn.release();
+    }
   } catch (err) {
     console.error("Error updating transaction:", err);
     res.status(500).json({ success: false, message: "Server error" });

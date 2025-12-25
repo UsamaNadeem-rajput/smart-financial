@@ -10,7 +10,7 @@ const List = () => {
   const { businesses, setBusinesses, selectBusiness } = useBusiness();
   const [isLoading, setIsLoading] = useState(true);
   const [user, setUser] = useState(null);
-  
+
   useEffect(() => {
     checkAuth();
   }, []);
@@ -23,7 +23,7 @@ const List = () => {
       // user authenticated
     } catch (err) {
       console.error('Not authenticated:', err);
-      navigate('/login',{ replace: true }); // 🔐 Redirect to login if session expired
+      navigate('/login', { replace: true }); // 🔐 Redirect to login if session expired
     }
   };
 
@@ -45,7 +45,13 @@ const List = () => {
     }
   };
 
-  const handleSelectBusiness = (business) => {
+  const handleSelectBusiness = async (business) => {
+    try {
+      // Fire-and-forget stats tracking
+      axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/public/stats/click`).catch(console.error);
+    } catch (e) {
+      console.error(e);
+    }
     selectBusiness(business);
     navigate('/showbusinessaccount');
   };
@@ -97,7 +103,7 @@ const List = () => {
   }
 
   return (
-    <div 
+    <div
       className="min-h-screen relative overflow-hidden"
       style={{
         minHeight: "100vh",
@@ -108,11 +114,11 @@ const List = () => {
       <div className="absolute inset-0">
         {/* Primary gradient background */}
         <div className="absolute inset-0 bg-gradient-to-br from-slate-900 via-blue-900 to-indigo-900"></div>
-        
+
         {/* Overlay gradients for depth */}
         <div className="absolute inset-0 bg-gradient-to-t from-purple-900/30 via-transparent to-blue-800/20"></div>
         <div className="absolute inset-0 bg-gradient-to-r from-indigo-800/20 via-transparent to-cyan-800/20"></div>
-        
+
         {/* Professional grid pattern */}
         <div className="absolute inset-0 opacity-10">
           <div className="absolute inset-0" style={{
@@ -123,7 +129,7 @@ const List = () => {
             backgroundSize: '50px 50px'
           }}></div>
         </div>
-        
+
         {/* Animated business elements */}
         <div className="absolute inset-0 overflow-hidden">
           {/* Floating building icons */}
@@ -133,12 +139,12 @@ const List = () => {
           <div className="absolute bottom-20 right-40 text-3xl text-indigo-400/20 animate-bounce">📈</div>
           <div className="absolute top-1/2 left-1/4 text-2xl text-teal-400/20 animate-pulse">🏪</div>
           <div className="absolute top-1/3 right-1/3 text-4xl text-violet-400/20 animate-bounce">🏭</div>
-          
+
           {/* Subtle geometric shapes */}
           <div className="absolute top-1/4 right-10 w-32 h-32 border border-white/10 rounded-full animate-pulse"></div>
-          <div className="absolute bottom-1/4 left-10 w-24 h-24 border border-cyan-400/20 rounded-lg rotate-45 animate-spin" style={{animationDuration: '20s'}}></div>
+          <div className="absolute bottom-1/4 left-10 w-24 h-24 border border-cyan-400/20 rounded-lg rotate-45 animate-spin" style={{ animationDuration: '20s' }}></div>
           <div className="absolute top-1/2 right-1/4 w-20 h-20 bg-gradient-to-r from-purple-500/10 to-blue-500/10 rounded-full animate-pulse"></div>
-          
+
           {/* Network connection lines */}
           <svg className="absolute inset-0 w-full h-full" style={{ filter: 'blur(0.5px)' }}>
             <defs>
@@ -148,24 +154,24 @@ const List = () => {
                 <stop offset="100%" style={{ stopColor: '#06b6d4', stopOpacity: 0.1 }} />
               </linearGradient>
             </defs>
-            <path 
-              d="M100,100 L300,200 L600,150 L900,300 L1200,200" 
-              stroke="url(#networkGradient)" 
-              strokeWidth="2" 
+            <path
+              d="M100,100 L300,200 L600,150 L900,300 L1200,200"
+              stroke="url(#networkGradient)"
+              strokeWidth="2"
               fill="none"
               className="animate-pulse"
             />
-            <path 
-              d="M200,400 L500,300 L800,450 L1100,350" 
-              stroke="rgba(59, 130, 246, 0.2)" 
-              strokeWidth="1" 
+            <path
+              d="M200,400 L500,300 L800,450 L1100,350"
+              stroke="rgba(59, 130, 246, 0.2)"
+              strokeWidth="1"
               fill="none"
               className="animate-pulse"
-              style={{animationDelay: '1s'}}
+              style={{ animationDelay: '1s' }}
             />
           </svg>
         </div>
-        
+
         {/* Subtle overlay for content readability */}
         <div className="absolute inset-0 bg-black/20"></div>
       </div>
@@ -245,11 +251,10 @@ const List = () => {
                           )}
                           <p>
                             <span className="font-medium">Plan:</span>{' '}
-                            <span className={`capitalize font-semibold px-2 py-1 rounded-full text-xs ${
-                              business.plan === 'premium' 
-                                ? 'bg-gradient-to-r from-yellow-100 to-orange-100 text-orange-700' 
+                            <span className={`capitalize font-semibold px-2 py-1 rounded-full text-xs ${business.plan === 'premium'
+                                ? 'bg-gradient-to-r from-yellow-100 to-orange-100 text-orange-700'
                                 : 'bg-gray-100 text-gray-600'
-                            }`}>
+                              }`}>
                               {business.plan}
                             </span>
                           </p>
@@ -285,7 +290,7 @@ const List = () => {
 
                     <div className="mt-4 pt-4 border-t border-gray-200">
                       <button className="w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white font-medium text-sm py-2 px-4 rounded-lg transition-all duration-300 flex items-center justify-center group">
-                        Select & Continue 
+                        Select & Continue
                         <span className="ml-2 group-hover:translate-x-1 transition-transform duration-300">→</span>
                       </button>
                     </div>

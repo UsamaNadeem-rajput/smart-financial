@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import Navbar from "../layout/Navbar";
 import { useBusiness } from "../../context/BusinessContext";
@@ -18,8 +18,10 @@ export default function TransactionEdit() {
   const [rows, setRows] = useState([]);
   const [date, setDate] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [suggestions, setSuggestions] = useState([]);
+  const [showSuggestionsIdx, setShowSuggestionsIdx] = useState(null);
+  const [highlightedSuggestion, setHighlightedSuggestion] = useState(-1);
 
-  // 🔹 Fetch transaction details
   useEffect(() => {
     if (!transactionId || !selectedBusiness?.business_id) return;
 
@@ -29,12 +31,12 @@ export default function TransactionEdit() {
           `${import.meta.env.VITE_BACKEND_URL}/api/edit-transaction/${transactionId}/${selectedBusiness.business_id}`
         );
         const data = await res.json();
-        console.log("📌 Transaction API Response:", data);
 
         if (data.success && data.transaction) {
           setDate(data.transaction.date);
           setRows(
             data.transaction.entries.map((e) => ({
+              entryId: e.entry_id,
               accountName: e.account_name,
               accountId: e.account_id,
               debit: e.type === "debit" ? e.amount : "",
@@ -50,16 +52,18 @@ export default function TransactionEdit() {
     fetchData();
   }, [transactionId, selectedBusiness?.business_id]);
 
-  // 🔹 Totals check
   const debitTotal = rows.reduce((a, b) => a + (Number(b.debit) || 0), 0);
   const creditTotal = rows.reduce((a, b) => a + (Number(b.credit) || 0), 0);
+  const hasInvalidLedger = rows.some(
+    (r) => (r.debit || r.credit) && (!r.accountId || !r.accountName)
+  );
   const isSubmitDisabled =
     rows.length === 0 ||
     debitTotal === 0 ||
     creditTotal === 0 ||
-    debitTotal !== creditTotal;
+    debitTotal !== creditTotal ||
+    hasInvalidLedger;
 
-  // 🔹 Debit & Credit changes
   const handleDebitChange = (idx, value) => {
     const raw = value.replace(/,/g, "");
     if (!/^\d*(\.\d*)?$/.test(raw) && raw !== "") return;
@@ -78,16 +82,85 @@ export default function TransactionEdit() {
     setRows(newRows);
   };
 
-  // 🔹 Save transaction
+  const fetchLedgerSuggestions = async (query) => {
+    try {
+      const res = await fetch(
+        `${import.meta.env.VITE_BACKEND_URL}/api/search-accounts?query=${encodeURIComponent(
+          query
+        )}&business_id=${selectedBusiness?.business_id || ""}`
+      );
+      const data = await res.json();
+      return Array.isArray(data) ? data : [];
+    } catch {
+      return [];
+    }
+  };
+
+  const handleLedgerNameChange = async (idx, value) => {
+    const newRows = [...rows];
+    newRows[idx].accountName = value;
+    newRows[idx].accountId = undefined;
+    setRows(newRows);
+    setHighlightedSuggestion(-1);
+
+    if (value.length > 0) {
+      const list = await fetchLedgerSuggestions(value);
+      setSuggestions(list);
+      setShowSuggestionsIdx(idx);
+    } else {
+      setSuggestions([]);
+      setShowSuggestionsIdx(null);
+    }
+  };
+
+  const chooseSuggestion = (idx, acc) => {
+    const newRows = [...rows];
+    newRows[idx].accountId = acc.account_id;
+    newRows[idx].accountName = acc.account_name;
+    setRows(newRows);
+    setSuggestions([]);
+    setShowSuggestionsIdx(null);
+    setHighlightedSuggestion(-1);
+  };
+
+  const handleLedgerKeyDown = (idx, e) => {
+    if (showSuggestionsIdx !== idx || suggestions.length === 0) return;
+    if (e.key === "ArrowDown") {
+      e.preventDefault();
+      setHighlightedSuggestion((prev) => (prev + 1) % suggestions.length);
+    } else if (e.key === "ArrowUp") {
+      e.preventDefault();
+      setHighlightedSuggestion((prev) => (prev - 1 + suggestions.length) % suggestions.length);
+    } else if (e.key === "Enter") {
+      if (highlightedSuggestion >= 0 && highlightedSuggestion < suggestions.length) {
+        const s = suggestions[highlightedSuggestion];
+        chooseSuggestion(idx, s);
+      }
+    } else if (e.key === "Escape") {
+      setShowSuggestionsIdx(null);
+      setHighlightedSuggestion(-1);
+      setSuggestions([]);
+    }
+  };
+
+  const addRow = () => {
+    setRows((prev) => [
+      ...prev,
+      { entryId: null, accountName: "", accountId: null, debit: "", credit: "" },
+    ]);
+  };
+
   const handleSave = async () => {
     setIsLoading(true);
     try {
       const payload = {
-        entries: rows.map((r) =>
-          r.debit
-            ? { account_id: r.accountId, amount: r.debit, type: "debit" }
-            : { account_id: r.accountId, amount: r.credit, type: "credit" }
-        ),
+        entries: rows
+          .filter((r) => (r.debit || r.credit) && r.accountId)
+          .map((r) =>
+            r.debit
+              ? { entry_id: r.entryId, account_id: r.accountId, amount: r.debit, type: "debit" }
+              : { entry_id: r.entryId, account_id: r.accountId, amount: r.credit, type: "credit" }
+          ),
       };
 
       const res = await fetch(
@@ -119,19 +192,8 @@ export default function TransactionEdit() {
       <div className="container mt-4">
         <h2>Edit Transaction</h2>
 
-        {/* Date */}
-        <div className="mb-3">
-          <label>Date:</label>
-          <input
-            type="date"
-            value={date}
-            onChange={(e) => setDate(e.target.value)}
-            className="form-control"
-          />
-        </div>
 
-        {/* Ledger Rows */}
-        <table className="table table-bordered">
+        <table className="table table-bordered mt-8">
           <thead className="table-dark">
             <tr>
               <th>Ledger Name</th>
@@ -141,14 +203,32 @@ export default function TransactionEdit() {
           </thead>
           <tbody>
             {rows.map((row, idx) => (
-              <tr key={idx}>
+             <tr key={idx}>
                 <td>
                   <input
                     type="text"
                     className="form-control"
                     value={row.accountName}
-                    readOnly
+                    onChange={(e) => handleLedgerNameChange(idx, e.target.value)}
+                    onKeyDown={(e) => handleLedgerKeyDown(idx, e)}
                   />
+                  {showSuggestionsIdx === idx && suggestions.length > 0 && (
+                    <div className="list-group mt-1">
+                      {suggestions.map((acc) => (
+                        <button
+                          key={acc.account_id}
+                          type="button"
+                          className="list-group-item list-group-item-action"
+                          onClick={() => chooseSuggestion(idx, acc)}
+                        >
+                          {acc.account_name}
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                  {row.accountName && !row.accountId && (
+                    <div className="text-danger mt-1">Choose a valid ledger</div>
+                  )}
                 </td>
                 <td>
                   <input
@@ -170,8 +250,12 @@ export default function TransactionEdit() {
             ))}
           </tbody>
         </table>
+        <div className="mt-2">
+          <button className="btn btn-outline-secondary" onClick={addRow}>
+            Add Row
+          </button>
+        </div>
 
-        {/* Totals */}
         <div className="d-flex justify-content-end gap-3 mt-3">
           <div>
             <label className="me-2">Debit Total:</label>
@@ -193,7 +277,6 @@ export default function TransactionEdit() {
           </div>
         </div>
 
-        {/* Actions */}
         <div className="mt-4">
           <button
             className="btn btn-primary"

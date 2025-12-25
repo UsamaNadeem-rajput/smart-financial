@@ -28,10 +28,11 @@ export default function TransactionEntryTable() {
   const [toDate, setToDate] = useState(getLocalDateString());
   const [entries, setEntries] = useState([]);
   const [totals, setTotals] = useState({ debit: 0, credit: 0 });
+  const [hasViewed, setHasViewed] = useState(false);
   const { selectedBusiness } = useBusiness();
 
   const fetchData = async () => {
-    if (!fromDate || !toDate || !selectedBusiness?.business_id) return;
+    if (!fromDate || !toDate || !selectedBusiness?.business_id) return 0;
     try {
       const res = await fetch(
         `${
@@ -71,15 +72,19 @@ export default function TransactionEntryTable() {
         debit: data.totals.debit || 0,
         credit: data.totals.credit || 0,
       });
+      return flat.length;
     } catch (err) {
       console.error("Error fetching data:", err);
       setEntries([]);
       setTotals({ debit: 0, credit: 0 });
+      return 0;
     }
   };
 
   useEffect(() => {
-    if (fromDate && toDate && selectedBusiness?.business_id) fetchData();
+    setHasViewed(false);
+    setEntries([]);
+    setTotals({ debit: 0, credit: 0 });
   }, [fromDate, toDate, selectedBusiness]);
 
   const handlePrint = () => {
@@ -319,6 +324,14 @@ export default function TransactionEntryTable() {
   navigate(`/transaction-edit/${transactionId}`);
 };
 
+  const handleView = async () => {
+    setHasViewed(true);
+    const count = await fetchData();
+    if (!count) {
+      window.alert("There is no any Transaction on Select Date");
+    }
+  };
+
   return (
     <div
       className="min-h-screen relative overflow-hidden"
@@ -456,6 +469,15 @@ export default function TransactionEntryTable() {
                 min={fromDate}
               />
             </div>
+            <div className="col-md-3 d-flex align-items-end">
+              <button
+                className="btn btn-primary w-100"
+                onClick={handleView}
+                disabled={!fromDate || !toDate || !selectedBusiness?.business_id}
+              >
+                View
+              </button>
+            </div>
           </div>
 
           <div className="mb-3 d-flex gap-2">
@@ -560,8 +582,7 @@ export default function TransactionEntryTable() {
                 </tbody>
               </table>
             ) : (
-              fromDate &&
-              toDate && <p>No transactions found for selected date range.</p>
+              hasViewed ? null : null
             )}
           </div>
         </div>

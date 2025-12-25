@@ -66,7 +66,7 @@ const Navbar = () => {
       icon: FileText,
       children: [
         {
-          name: "Ledger Balance",
+          name: "Ledger Balances",
           href: "/ledger-balancing",
           onClick: (e) => {
             e.preventDefault();
@@ -85,7 +85,7 @@ const Navbar = () => {
           icon: FileText,
         },
         {
-          name: "Show Transactions",
+          name: "General Journal",
           href: "/showtransections",
           icon: FileText,
         },

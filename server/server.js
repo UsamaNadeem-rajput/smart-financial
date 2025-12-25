@@ -9,8 +9,8 @@ try {
   const caBundle = fs.readFileSync(caPath, 'utf8');
   const https = require('https');
   https.globalAgent.options.ca = caBundle.split('-----END CERTIFICATE-----')
-                                        .filter(Boolean)
-                                        .map(cert => cert + '-----END CERTIFICATE-----\n');
+    .filter(Boolean)
+    .map(cert => cert + '-----END CERTIFICATE-----\n');
   console.log('✅ CA bundle loaded, certs:', https.globalAgent.options.ca.length);
 } catch (e) {
   console.error('❌ Could not load CA bundle:', e.message);
@@ -19,12 +19,12 @@ try {
 
 require('dotenv').config();
 require('./auth');               // passport Google strategy
-const express   = require('express');
-const cors      = require('cors');
-const session   = require('express-session');
-const MySQLStore= require('express-mysql-session')(session);
-const pool      = require('./db');
-const passport  = require('passport');
+const express = require('express');
+const cors = require('cors');
+const session = require('express-session');
+const MySQLStore = require('express-mysql-session')(session);
+const pool = require('./db');
+const passport = require('passport');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -112,9 +112,12 @@ serverRouter.use('/api', require('./routers/transactionApi'));
 serverRouter.use('/api/ledger-balancing', require('./routers/ledgerBalancing'));
 serverRouter.use('/api/income-report', require('./routers/incomeReport'));
 serverRouter.use('/api', require('./routers/showtransactions'));
+serverRouter.use('/api/edit-transaction', require('./routers/edittransaction'));
 serverRouter.use('/api/auth', require('./routers/auth'));
 // serverRouter.use('/api/contact', require('./routers/contact')); // removed, Google Form used instead
 serverRouter.use('/api/verify', require('./routers/verify'));
+// ✅ Public Stats Router
+serverRouter.use('/api/public/stats', require('./routers/publicStats'));
 // ✅ Google Auth Router
 serverRouter.use("/api/auth", require("./routers/googleAuth"));
 

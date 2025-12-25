@@ -27,31 +27,56 @@ router.use((req, res, next) => {
 // Returns month-wise income and expense ledger balances
 router.get('/:business_id', async (req, res) => {
   const { business_id } = req.params;
-  const { fromMonth, toMonth } = req.query;
+  const { fromMonth, toMonth, onDate, fromDate: fromDateQuery, toDate: toDateQuery } = req.query;
 
   if (!business_id) {
     return res.status(400).json({ error: 'Business ID is required' });
   }
 
-  if (!fromMonth || !toMonth) {
-    return res.status(400).json({ error: 'fromMonth and toMonth (YYYY-MM format) are required' });
+  if (!onDate && !(fromDateQuery && toDateQuery) && !(fromMonth && toMonth)) {
+    return res.status(400).json({ error: 'Provide either onDate (YYYY-MM-DD), fromDate/toDate (YYYY-MM-DD), or fromMonth/toMonth (YYYY-MM)' });
   }
 
   // Validate date format
-  if (!/^\d{4}-\d{2}$/.test(fromMonth) || !/^\d{4}-\d{2}$/.test(toMonth)) {
-    return res.status(400).json({ error: 'fromMonth and toMonth must be in YYYY-MM format' });
+  if (onDate) {
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(onDate)) {
+      return res.status(400).json({ error: 'onDate must be in YYYY-MM-DD format' });
+    }
+  }
+  if (fromDateQuery || toDateQuery) {
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(fromDateQuery || '') || !/^\d{4}-\d{2}-\d{2}$/.test(toDateQuery || '')) {
+      return res.status(400).json({ error: 'fromDate and toDate must be in YYYY-MM-DD format' });
+    }
+    if (fromDateQuery > toDateQuery) {
+      return res.status(400).json({ error: 'fromDate must be before or equal to toDate' });
+    }
+  }
+  if (!onDate && !(fromDateQuery && toDateQuery)) {
+    if (!/^\d{4}-\d{2}$/.test(fromMonth || '') || !/^\d{4}-\d{2}$/.test(toMonth || '')) {
+      return res.status(400).json({ error: 'fromMonth and toMonth must be in YYYY-MM format' });
+    }
   }
 
   let conn;
   try {
     conn = await pool.getConnection();
 
-    // Calculate start and end dates for the month range
-    const fromDate = `${fromMonth}-01`;
-    const toDate = new Date(`${toMonth}-01`);
-    toDate.setMonth(toDate.getMonth() + 1);
-    toDate.setDate(0); // Last day of the month
-    const toDateStr = `${toMonth}-${String(toDate.getDate()).padStart(2, '0')}`;
+    let fromDate;
+    let toDateStr;
+    if (onDate) {
+      fromDate = onDate;
+      toDateStr = onDate;
+    } else if (fromDateQuery && toDateQuery) {
+      fromDate = fromDateQuery;
+      toDateStr = toDateQuery;
+    } else {
+      const f = `${fromMonth}-01`;
+      const t = new Date(`${toMonth}-01`);
+      t.setMonth(t.getMonth() + 1);
+      t.setDate(0);
+      fromDate = f;
+      toDateStr = `${toMonth}-${String(t.getDate()).padStart(2, '0')}`;
+    }
 
     // Get all income and expense ledgers for this business
     const [ledgers] = await conn.execute(
@@ -97,64 +122,34 @@ router.get('/:business_id', async (req, res) => {
     // The filtering happens naturally in the ledger loop below where we only iterate over income/expense ledgers
     const transactions = allEntries;
 
-    // Group transactions by account and month
-    const accountMonthData = {};
+    // Aggregate totals per account across the selected date range
+    const accountTotals = {};
 
     transactions.forEach(trans => {
       const accountId = trans.account_id;
       const accountName = trans.account_name;
       const typeId = trans.type_id;
       const typeName = trans.type_name;
-      const date = new Date(trans.date);
-      // Use UTC to avoid timezone shifts pushing dates to previous month
-      const monthKey = `${date.getUTCFullYear()}-${String(date.getUTCMonth() + 1).padStart(2, '0')}`;
-      
-      if (!accountMonthData[accountId]) {
-        accountMonthData[accountId] = {
+      if (!accountTotals[accountId]) {
+        accountTotals[accountId] = {
           account_id: accountId,
           account_name: accountName,
           type_id: typeId,
           type_name: typeName,
-          months: {}
-        };
-      }
-
-      if (!accountMonthData[accountId].months[monthKey]) {
-        accountMonthData[accountId].months[monthKey] = {
-          month: monthKey,
           debits: 0,
           credits: 0
         };
       }
-
       if (trans.type === 'debit') {
-        accountMonthData[accountId].months[monthKey].debits += Number(trans.amount);
+        accountTotals[accountId].debits += Number(trans.amount);
       } else {
-        accountMonthData[accountId].months[monthKey].credits += Number(trans.amount);
+        accountTotals[accountId].credits += Number(trans.amount);
       }
     });
 
-    // Calculate balances for each ledger-month combination
+    // Calculate balances per ledger across selected date(s)
     const incomeData = [];
     const expenseData = [];
-
-    // Generate all months in range
-    const months = [];
-    const [fromYear, fromMonthNum] = fromMonth.split('-').map(Number);
-    const [toYear, toMonthNum] = toMonth.split('-').map(Number);
-    
-    let year = fromYear;
-    let month = fromMonthNum;
-    
-    while (year < toYear || (year === toYear && month <= toMonthNum)) {
-      const monthKey = `${year}-${String(month).padStart(2, '0')}`;
-      months.push(monthKey);
-      month++;
-      if (month > 12) {
-        month = 1;
-        year++;
-      }
-    }
 
     // Process each ledger
     ledgers.forEach(ledger => {
@@ -180,42 +175,25 @@ router.get('/:business_id', async (req, res) => {
 
       if (!isIncome && !isExpense) return; // Should theoretically never happen given the SQL query
 
-      // For each month in range, calculate balance
-      months.forEach(month => {
-        // Ensure strictly string comparison for keys if needed, though JS handles number keys as strings
-        const monthData = accountMonthData[ledger.account_id]?.months[month] || {
-          month,
-          debits: 0,
-          credits: 0
-        };
-
-        // Calculate balance based on account type
+      const totals = accountTotals[ledger.account_id] || { debits: 0, credits: 0 };
+      if (Math.abs(totals.debits) > 0 || Math.abs(totals.credits) > 0) {
         let balance = 0;
         if (isIncome) {
-          // Income: credit-normal (credits - debits)
-          balance = monthData.credits - monthData.debits;
+          balance = totals.credits - totals.debits;
         } else if (isExpense) {
-          // Expense: debit-normal (debits - credits)
-          balance = monthData.debits - monthData.credits;
+          balance = totals.debits - totals.credits;
         }
-
-        // Only include if there are transactions in this month OR if the user wants to see zero balances (implied by "not showing data")
-        // For now, we keep the non-zero check but lower the threshold or debug
-        if (Math.abs(monthData.debits) > 0 || Math.abs(monthData.credits) > 0) {
-          const entry = {
-            ledger_id: ledger.account_id,
-            ledger_name: ledger.account_name,
-            month: month,
-            balance: balance
-          };
-
-          if (isIncome) {
-            incomeData.push(entry);
-          } else if (isExpense) {
-            expenseData.push(entry);
-          }
+        const entry = {
+          ledger_id: ledger.account_id,
+          ledger_name: ledger.account_name,
+          balance: balance
+        };
+        if (isIncome) {
+          incomeData.push(entry);
+        } else if (isExpense) {
+          expenseData.push(entry);
         }
-      });
+      }
     });
 
     // Calculate totals
@@ -234,7 +212,10 @@ router.get('/:business_id', async (req, res) => {
       },
       dateRange: {
         fromMonth,
-        toMonth
+        toMonth,
+        onDate: onDate || null,
+        fromDate: fromDate,
+        toDate: toDateStr
       }
     });
   } catch (err) {
