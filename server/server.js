@@ -107,6 +107,7 @@ serverRouter.use('/api/business', require('./routers/business'));
 serverRouter.use('/api/showbusinesses', require('./routers/showbusinesses'));
 serverRouter.use('/api/createnewaccount', require('./routers/createnewaccount'));
 serverRouter.use('/api/accounts-list', require('./routers/list'));
+serverRouter.use('/api/account-types', require('./routers/accountTypes'));
 serverRouter.use('/api/search-accounts', require('./routers/searchAccounts'));
 serverRouter.use('/api', require('./routers/transactionApi'));
 serverRouter.use('/api/ledger-balancing', require('./routers/ledgerBalancing'));
