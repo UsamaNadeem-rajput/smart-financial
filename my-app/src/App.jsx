@@ -19,6 +19,7 @@ import LedgerBalancing from './components/reports/LedgerBalancing';
 import IncomeReport from './components/reports/IncomeReport';
 import TrialBalance from './components/reports/TrialBalance';
 
+
 import './index.css';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import '@fortawesome/fontawesome-free/css/all.min.css';
@@ -50,9 +51,9 @@ function App() {
             <Route path="/trial-balance" element={<PrivateRoute><TrialBalance /></PrivateRoute>} />
             <Route path="/transaction-edit/:transactionId" element={<PrivateRoute><TransactionEdit /></PrivateRoute>} />
           </Routes>
-        </div>
-      </Router>
-    </BusinessProvider>
+        </div >
+      </Router >
+    </BusinessProvider >
   );
 }
 

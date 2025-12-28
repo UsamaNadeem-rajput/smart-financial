@@ -46,12 +46,7 @@ const List = () => {
   };
 
   const handleSelectBusiness = async (business) => {
-    try {
-      // Fire-and-forget stats tracking
-      axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/public/stats/click`).catch(console.error);
-    } catch (e) {
-      console.error(e);
-    }
+
     selectBusiness(business);
     navigate('/showbusinessaccount');
   };
@@ -252,8 +247,8 @@ const List = () => {
                           <p>
                             <span className="font-medium">Plan:</span>{' '}
                             <span className={`capitalize font-semibold px-2 py-1 rounded-full text-xs ${business.plan === 'premium'
-                                ? 'bg-gradient-to-r from-yellow-100 to-orange-100 text-orange-700'
-                                : 'bg-gray-100 text-gray-600'
+                              ? 'bg-gradient-to-r from-yellow-100 to-orange-100 text-orange-700'
+                              : 'bg-gray-100 text-gray-600'
                               }`}>
                               {business.plan}
                             </span>

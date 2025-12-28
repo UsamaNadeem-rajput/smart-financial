@@ -23,6 +23,8 @@ import {
   ChevronDown,
 } from "lucide-react";
 import { motion } from "framer-motion";
+import { ref, runTransaction, onValue } from "firebase/database";
+import { db } from "../Visister/firebase";
 
 // --- Floating Elements Component ---
 const FloatingElements = () => {
@@ -92,33 +94,31 @@ const StatsSection = () => {
     { number: "24/7", label: "Customer Support", icon: Clock },
   ];
 
-  const [visitorStats, setVisitorStats] = useState({ visits: 0, clicks: 0 });
+  const [visitorStats, setVisitorStats] = useState({ visitors: 0, clicks: 0 });
 
   useEffect(() => {
-    // Fetch current stats
-    const fetchStats = async () => {
-      try {
-        const res = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/public/stats`);
-        setVisitorStats(res.data);
-      } catch (err) {
-        console.error("Failed to fetch public stats", err);
+    const statsRef = ref(db, 'site_stats');
+    const unsubscribe = onValue(statsRef, (snapshot) => {
+      const data = snapshot.val();
+      if (data) {
+        setVisitorStats({
+          visitors: data.visitors || 0,
+          clicks: data.clicks || 0
+        });
       }
-    };
-    fetchStats();
+    });
+    return () => unsubscribe();
   }, []);
 
-  // Use the real stats if available, otherwise fallback (or just show 0/loading)
-  // For design continuity, we can override the first two items or append specific stat cards.
-  // Let's override the first two for demonstration as requested.
   const dynamicStats = [
-    { number: visitorStats.visits.toLocaleString(), label: "Total Visitors", icon: Users },
-    { number: visitorStats.clicks.toLocaleString(), label: "Total Clicks", icon: Play }, // Using Play as click icon or similar
+    { number: visitorStats.visitors.toLocaleString(), label: "Total Visitor", icon: Users },
+    { number: visitorStats.clicks.toLocaleString(), label: "Total Click", icon: Play },
     { number: "99.9%", label: "Uptime Guarantee", icon: Shield },
     { number: "24/7", label: "Customer Support", icon: Clock },
   ];
 
   return (
-    <section className="py-16 bg-gradient-to-r from-gray-900 via-blue-900 to-purple-900 relative overflow-hidden">
+    <section className="VisitorCounter py-16 bg-gradient-to-r from-gray-900 via-blue-900 to-purple-900 relative overflow-hidden">
       <div className="absolute inset-0 bg-black opacity-50"></div>
       <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="text-center mb-12">
@@ -507,27 +507,39 @@ const LandingPage = () => {
   const [scrollY, setScrollY] = useState(0);
 
   // Track visit on mount
+  // Visitor & Click Tracking Logic
   useEffect(() => {
-    const trackVisit = async () => {
-      try {
-        await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/public/stats/visit`);
-        // We don't need to do anything with the response here as the StatsSection handles its own fetching
-        // but ideally we should update a global context or trigger a refetch if they were coupled.
-        // For now, StatsSection fetches on its own mount, which is fine.
-      } catch (err) {
-        console.error("Failed to track visit", err);
-      }
-    };
-    trackVisit();
-  }, []);
+    // --- Visitor Counting ---
+    const userKey = 'has_visited_sim_session';
+    const hasVisited = sessionStorage.getItem(userKey);
 
-  const handleTrackClick = async () => {
-    try {
-      await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/public/stats/click`);
-    } catch (err) {
-      console.error("Failed to track click", err);
+    if (!hasVisited) {
+      const visitorsRef = ref(db, 'site_stats/visitors');
+      runTransaction(visitorsRef, (currentCount) => {
+        return (currentCount || 0) + 1;
+      }).then(() => {
+        sessionStorage.setItem(userKey, 'true');
+      }).catch((error) => {
+        console.error("Error updating visitor count:", error);
+      });
     }
-  };
+
+    // --- Click Counting ---
+    const handleGlobalClick = () => {
+      const clicksRef = ref(db, 'site_stats/clicks');
+      runTransaction(clicksRef, (currentCount) => {
+        return (currentCount || 0) + 1;
+      }).catch((error) => {
+        console.error("Error updating click count:", error);
+      });
+    };
+
+    window.addEventListener('click', handleGlobalClick);
+
+    return () => {
+      window.removeEventListener('click', handleGlobalClick);
+    };
+  }, []);
 
   useEffect(() => {
     const fetchUser = async () => {
@@ -604,7 +616,7 @@ const LandingPage = () => {
                   </button>
                   <button
                     onClick={() => {
-                      handleTrackClick();
+
                       navigate("/list");
                     }}
                     className="text-gray-600 hover:text-gray-900 font-medium max-sm:text-xs transition-all duration-300 border border-gray-300 rounded-lg px-4 py-2 hover:bg-gray-50 hover:shadow-md"
@@ -623,7 +635,7 @@ const LandingPage = () => {
                   </Link>
                   <Link
                     to="/register"
-                    onClick={handleTrackClick}
+
                     className="btn-primary shadow-lg hover:shadow-xl transition-shadow duration-300"
                   >
                     Get Started
@@ -758,7 +770,7 @@ const LandingPage = () => {
                 {user ? (
                   <motion.button
                     onClick={() => {
-                      handleTrackClick();
+
                       navigate("/list");
                     }}
                     className="btn-primary text-lg px-8 py-4 flex items-center justify-center group shadow-2xl hover:shadow-3xl transition-all duration-300"
@@ -775,7 +787,7 @@ const LandingPage = () => {
                   >
                     <Link
                       to="/register"
-                      onClick={handleTrackClick}
+
                       className="btn-primary text-lg px-8 py-4 flex items-center justify-center group shadow-2xl hover:shadow-3xl transition-all duration-300"
                     >
                       Start Free Today

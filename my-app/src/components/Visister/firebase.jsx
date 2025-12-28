@@ -1,0 +1,23 @@
+// Import the functions you need from the SDKs you need
+import { initializeApp } from "firebase/app";
+import { getDatabase } from "firebase/database";
+// TODO: Add SDKs for Firebase products that you want to use
+// https://firebase.google.com/docs/web/setup#available-libraries
+
+const firebaseConfig = {
+    apiKey: "AIzaSyAhIsb4VheEipjImQMoy5_ooicApo2IUhU",
+    authDomain: "smartfinancial-91500.firebaseapp.com",
+    databaseURL: "https://smartfinancial-91500-default-rtdb.firebaseio.com",
+    projectId: "smartfinancial-91500",
+    storageBucket: "smartfinancial-91500.firebasestorage.app",
+    messagingSenderId: "660088899590",
+    appId: "1:660088899590:web:7efa79c3c317f81c9ddb87",
+    measurementId: "G-JNEDK33M3P"
+};
+
+
+// Initialize Firebase
+const app = initializeApp(firebaseConfig);
+const db = getDatabase(app);
+
+export { db };

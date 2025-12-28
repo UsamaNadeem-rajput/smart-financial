@@ -9,13 +9,13 @@ const currency = (n) => new Intl.NumberFormat('en-US', { minimumFractionDigits: 
 // Map account types to categories for ordering
 const getCategoryOrder = (type_id, type_name) => {
   // Assets: type_id 3, 4, 5, 11
-  if ([3, 4, 5, 11].includes(Number(type_id)) || 
-      ['Assets', 'Fixed Assets', 'Current Assets', 'Other Assets'].includes(type_name)) {
+  if ([3, 4, 5, 11].includes(Number(type_id)) ||
+    ['Assets', 'Fixed Assets', 'Current Assets', 'Other Assets'].includes(type_name)) {
     return 1; // Assets
   }
   // Liabilities: type_id 6, 7, 8
-  if ([6, 7, 8].includes(Number(type_id)) || 
-      ['Liability', 'Current Liability', 'Non-Current Liabilities'].includes(type_name)) {
+  if ([6, 7, 8].includes(Number(type_id)) ||
+    ['Liability', 'Current Liability', 'Non-Current Liabilities'].includes(type_name)) {
     return 2; // Liabilities
   }
   // Equity: type_id 9
@@ -23,13 +23,13 @@ const getCategoryOrder = (type_id, type_name) => {
     return 3; // Equity
   }
   // Income: type_id 1, 12
-  if ([1, 12].includes(Number(type_id)) || 
-      ['Income', 'Other Incomes'].includes(type_name)) {
+  if ([1, 12].includes(Number(type_id)) ||
+    ['Income', 'Other Incomes'].includes(type_name)) {
     return 4; // Income
   }
   // Expenses: type_id 2, 13, 14
-  if ([2, 13, 14].includes(Number(type_id)) || 
-      ['Expense', 'Other Expenses', 'Cost Of Goods Sold'].includes(type_name)) {
+  if ([2, 13, 14].includes(Number(type_id)) ||
+    ['Expense', 'Other Expenses', 'Cost Of Goods Sold'].includes(type_name)) {
     return 5; // Expenses
   }
   return 6; // Others (fallback)
@@ -83,7 +83,7 @@ const TrialBalance = () => {
         // Process ledgers for trial balance - use total_debits and total_credits directly
         const processed = (data.ledgers || []).map(ledger => {
           const categoryOrder = getCategoryOrder(ledger.type_id, ledger.type_name);
-          
+
           return {
             ...ledger,
             categoryOrder,
@@ -162,7 +162,7 @@ const TrialBalance = () => {
           <div className="absolute top-1/2 left-1/4 text-2xl text-teal-400/20 animate-pulse">🏪</div>
           <div className="absolute top-1/3 right-1/3 text-4xl text-violet-400/20 animate-bounce">🏭</div>
           <div className="absolute top-1/4 right-10 w-32 h-32 border border-white/10 rounded-full animate-pulse"></div>
-          <div className="absolute bottom-1/4 left-10 w-24 h-24 border border-cyan-400/20 rounded-lg rotate-45 animate-spin" style={{animationDuration: '20s'}}></div>
+          <div className="absolute bottom-1/4 left-10 w-24 h-24 border border-cyan-400/20 rounded-lg rotate-45 animate-spin" style={{ animationDuration: '20s' }}></div>
           <div className="absolute top-1/2 right-1/4 w-20 h-20 bg-gradient-to-r from-purple-500/10 to-blue-500/10 rounded-full animate-pulse"></div>
           <svg className="absolute inset-0 w-full h-full" style={{ filter: 'blur(0.5px)' }}>
             <defs>
@@ -173,7 +173,7 @@ const TrialBalance = () => {
               </linearGradient>
             </defs>
             <path d="M100,100 L300,200 L600,150 L900,300 L1200,200" stroke="url(#networkGradientTrial)" strokeWidth="2" fill="none" className="animate-pulse" />
-            <path d="M200,400 L500,300 L800,450 L1100,350" stroke="rgba(59, 130, 246, 0.2)" strokeWidth="1" fill="none" className="animate-pulse" style={{animationDelay: '1s'}} />
+            <path d="M200,400 L500,300 L800,450 L1100,350" stroke="rgba(59, 130, 246, 0.2)" strokeWidth="1" fill="none" className="animate-pulse" style={{ animationDelay: '1s' }} />
           </svg>
         </div>
         <div className="absolute inset-0 bg-black/20"></div>
@@ -236,11 +236,11 @@ const TrialBalance = () => {
                         ))}
                       </React.Fragment>
                     ))}
-                    
+
                     {/* Grand Total Row */}
                     <tr className="bg-gray-100 border-t-2 border-gray-400 font-bold">
                       <td className="px-4 py-3 text-sm text-gray-900 border-r border-gray-300">
-                        GRAND TOTAL
+                        TOTAL
                       </td>
                       <td className="px-4 py-3 text-sm text-right text-gray-900">
                         {currency(grandTotal.debit)}

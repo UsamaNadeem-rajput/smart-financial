@@ -13,7 +13,7 @@ const CreateNewAccount = () => {
   const [subAccountOptions, setSubAccountOptions] = useState([]);
   const [accountSuggestions, setAccountSuggestions] = useState([]);
   const [user, setUser] = useState(null);
-  
+
   const [formData, setFormData] = useState({
     account_name: '',
     type_id: '',
@@ -39,15 +39,31 @@ const CreateNewAccount = () => {
     //   const authResponse = await axios.get('http://localhost:5000/api/check-auth', {
     //     withCredentials: true
     //   });
-      
+
     //   if (authResponse.data.user) {
     //     setUser(authResponse.data.user);
-        if (!selectedBusiness) {
-          navigate('/list');
-          return;
-        }
-        fetchAccountTypes();
-        fetchExistingAccounts();
+    if (!selectedBusiness) {
+      navigate('/list');
+      return;
+    }
+    // Using static types since API might fail on production
+    setAccountTypes([
+      { type_id: 1, type_name: 'Income', parent_type_id: null, is_subtype: false },
+      { type_id: 2, type_name: 'Expense', parent_type_id: null, is_subtype: false },
+      { type_id: 3, type_name: 'Assets', parent_type_id: null, is_subtype: false, is_heading: true },
+      { type_id: 4, type_name: 'Fixed Assets', parent_type_id: 3, is_subtype: true },
+      { type_id: 5, type_name: 'Current Assets', parent_type_id: 3, is_subtype: true },
+      { type_id: 6, type_name: 'Liability', parent_type_id: null, is_subtype: false, is_heading: true },
+      { type_id: 7, type_name: 'Current Liability', parent_type_id: 6, is_subtype: true },
+      { type_id: 8, type_name: 'Non-Current Liabilities', parent_type_id: 6, is_subtype: true },
+      { type_id: 9, type_name: 'Equity', parent_type_id: null, is_subtype: false },
+      { type_id: 10, type_name: 'Others', parent_type_id: null, is_subtype: false, is_heading: true },
+      { type_id: 11, type_name: 'Other Assets', parent_type_id: 10, is_subtype: true },
+      { type_id: 12, type_name: 'Other Incomes', parent_type_id: 10, is_subtype: true },
+      { type_id: 13, type_name: 'Other Expenses', parent_type_id: 10, is_subtype: true },
+      { type_id: 14, type_name: 'Cost Of Goods Sold', parent_type_id: 10, is_subtype: true }
+    ]);
+    fetchExistingAccounts();
     //   } else {
     //     navigate('/login');
     //   }
@@ -57,39 +73,9 @@ const CreateNewAccount = () => {
     // }
   };
 
-  const fetchAccountTypes = async () => {
-    try {
-      const response = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/account-types`, {
-        withCredentials: true
-      });
-      setAccountTypes(response.data.accountTypes || []);
-    } catch (error) {
-      console.error('Failed to fetch account types:', error);
-      // Fallback to mock data if API fails
-      const mockAccountTypes = [
-        { type_id: 1, type_name: 'Income', parent_type_id: null, is_subtype: false },
-        { type_id: 2, type_name: 'Expense', parent_type_id: null, is_subtype: false },
-        { type_id: 3, type_name: 'Assets', parent_type_id: null, is_subtype: false, is_heading: true },
-        { type_id: 4, type_name: 'Fixed Assets', parent_type_id: 3, is_subtype: true },
-        { type_id: 5, type_name: 'Current Assets', parent_type_id: 3, is_subtype: true },
-        { type_id: 6, type_name: 'Liability', parent_type_id: null, is_subtype: false, is_heading: true },
-        { type_id: 7, type_name: 'Current Liability', parent_type_id: 6, is_subtype: true },
-        { type_id: 8, type_name: 'Non-Current Liabilities', parent_type_id: 6, is_subtype: true },
-        { type_id: 9, type_name: 'Equity', parent_type_id: null, is_subtype: false },
-        { type_id: 10, type_name: 'Others', parent_type_id: null, is_subtype: false, is_heading: true },
-        { type_id: 11, type_name: 'Other Assets', parent_type_id: 10, is_subtype: true },
-        { type_id: 12, type_name: 'Other Incomes', parent_type_id: 10, is_subtype: true },
-        { type_id: 13, type_name: 'Other Expenses', parent_type_id: 10, is_subtype: true },
-        { type_id: 14, type_name: 'Cost Of Goods Sold', parent_type_id: 10, is_subtype: true }
-      ];
-      
-      setAccountTypes(mockAccountTypes);
-    }
-  };
-
   const fetchExistingAccounts = async () => {
     try {
-      const response = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/list/}`, {
+      const response = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/accounts-list/${selectedBusiness.business_id}`, {
         withCredentials: true
       });
       setSubAccountOptions(response.data.accounts || []);
@@ -104,17 +90,17 @@ const CreateNewAccount = () => {
     if (!selectedType) return;
 
     const suggestions = {
-      Income: ["Sales Revenue","Service Revenue","Commission Earned","Fees Received","Consulting Income"],
-        Expense: ["Salaries & Wages","Rent Expense","Utilities Expense", "Depreciation Expense","Insurance Expense","Advertising Expense","Office Supplies Expense","Repairs & Maintenance"],
-        "Fixed Assets": ["Land","Building", "Machinery","Furniture & Fixtures","Office Equipment","Vehicle","Computers","Accumulated Depreciation Building"],
-        "Current Assets": ["Cash", "Bank", "Accounts Receivable / Debtors","Inventory","Prepaid Insurance","Short-term Investments","Bills Receivable","Accrued Income"],
-        "Current Liability": ["Accounts Payable/ Creditors", "Accrued Expenses","Bills Payable","Short-term Loans","Unearned Revenue","Bank Overdraft","Interest Payable","Salary Payable","Dividend Payable"],
-        "Non-Current Liabilities": ["Long-term Loan", "Mortgage Payable", "Bonds Payable", "Deferred Tax Liability", "Lease Obligation","Provision for Gratuity","Debentures"],
-        "Other Assets": ["Prepaid Expense", "Deferred Tax Asset"],
-        "Other Incomes": ["Dividend Income","Interest Income","Rent Income (non-core)","Gain on Sale of Asset","Miscellaneous Income","Recovery of Bad Debts"],
-        "Other Expenses": ["Loss on Sale of Assets"],
-        "Cost Of Goods Sold": ["Raw Materials", "Direct Labor"],
-        "Equity": ["Capital (for sole proprietorship)","Drawings","Share Capital","Share Premium","Retained Earnings","Reserves","Revaluation Surplus"],
+      Income: ["Sales Revenue", "Service Revenue", "Commission Earned", "Fees Received", "Consulting Income"],
+      Expense: ["Salaries & Wages", "Rent Expense", "Utilities Expense", "Depreciation Expense", "Insurance Expense", "Advertising Expense", "Office Supplies Expense", "Repairs & Maintenance"],
+      "Fixed Assets": ["Land", "Building", "Machinery", "Furniture & Fixtures", "Office Equipment", "Vehicle", "Computers", "Accumulated Depreciation Building"],
+      "Current Assets": ["Cash", "Bank", "Accounts Receivable / Debtors", "Inventory", "Prepaid Insurance", "Short-term Investments", "Bills Receivable", "Accrued Income"],
+      "Current Liability": ["Accounts Payable/ Creditors", "Accrued Expenses", "Bills Payable", "Short-term Loans", "Unearned Revenue", "Bank Overdraft", "Interest Payable", "Salary Payable", "Dividend Payable"],
+      "Non-Current Liabilities": ["Long-term Loan", "Mortgage Payable", "Bonds Payable", "Deferred Tax Liability", "Lease Obligation", "Provision for Gratuity", "Debentures"],
+      "Other Assets": ["Prepaid Expense", "Deferred Tax Asset"],
+      "Other Incomes": ["Dividend Income", "Interest Income", "Rent Income (non-core)", "Gain on Sale of Asset", "Miscellaneous Income", "Recovery of Bad Debts"],
+      "Other Expenses": ["Loss on Sale of Assets"],
+      "Cost Of Goods Sold": ["Raw Materials", "Direct Labor"],
+      "Equity": ["Capital (for sole proprietorship)", "Drawings", "Share Capital", "Share Premium", "Retained Earnings", "Reserves", "Revaluation Surplus"],
     };
 
     setAccountSuggestions(suggestions[selectedType.type_name] || []);
@@ -144,22 +130,22 @@ const CreateNewAccount = () => {
 
   const validateForm = () => {
     const newErrors = {};
-    
+
     if (!formData.account_name.trim()) {
       newErrors.account_name = 'Account name is required';
     }
-    
+
     if (!formData.type_id) {
       newErrors.type_id = 'Account type is required';
     }
-    
+
     return newErrors;
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setIsLoading(true);
-    
+
     const newErrors = validateForm();
     if (Object.keys(newErrors).length > 0) {
       setErrors(newErrors);
@@ -176,12 +162,12 @@ const CreateNewAccount = () => {
       await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/createnewaccount`, accountData, {
         withCredentials: true
       });
-      
+
       navigate('/showbusinessaccount');
     } catch (error) {
-        console.error('Failed to create account:', error);
-        const errorMsg = error.response?.data?.message || 'Failed to create account. Please try again.';
-        setErrors({ general: errorMsg });
+      console.error('Failed to create account:', error);
+      const errorMsg = error.response?.data?.message || 'Failed to create account. Please try again.';
+      setErrors({ general: errorMsg });
     } finally {
       setIsLoading(false);
     }
@@ -201,7 +187,7 @@ const CreateNewAccount = () => {
   };
 
   return (
-    <div 
+    <div
       className="min-h-screen relative overflow-hidden"
       style={{ minHeight: '100vh', width: '100vw' }}
     >
@@ -248,7 +234,7 @@ const CreateNewAccount = () => {
                 </p>
               </div>
             </div>
- 
+
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
               {/* Form */}
               <div className="lg:col-span-2">
@@ -259,7 +245,7 @@ const CreateNewAccount = () => {
                         {errors.general}
                       </div>
                     )}
-                    
+
                     {/* Account Type */}
                     <div>
                       <label htmlFor="type_id" className="block text-sm font-medium text-gray-700 mb-1">
@@ -277,29 +263,29 @@ const CreateNewAccount = () => {
                         <optgroup label="Income">
                           <option value="1">Income</option>
                         </optgroup>
-                        
+
                         {/* Assets */}
                         <optgroup label="Assets">
                           <option value="4">Fixed Assets</option>
                           <option value="5">Current Assets</option>
                         </optgroup>
-                        
+
                         {/* Liability */}
                         <optgroup label="Liability">
                           <option value="7">Current Liability</option>
                           <option value="8">Non-Current Liabilities</option>
                         </optgroup>
-                        
+
                         {/* Equity */}
                         <optgroup label="Equity">
                           <option value="9">Equity</option>
                         </optgroup>
-                        
+
                         {/* Expense */}
                         <optgroup label="Expense">
                           <option value="2">Expense</option>
                         </optgroup>
-                        
+
                         {/* Others */}
                         <optgroup label="Others">
                           <option value="11">Other Assets</option>
@@ -312,7 +298,7 @@ const CreateNewAccount = () => {
                         <p className="mt-1 text-sm text-error-600">{errors.type_id}</p>
                       )}
                     </div>
- 
+
                     {/* Account Name */}
                     <div>
                       <label htmlFor="account_name" className="block text-sm font-medium text-gray-700 mb-1">
@@ -331,7 +317,7 @@ const CreateNewAccount = () => {
                         <p className="mt-1 text-sm text-error-600">{errors.account_name}</p>
                       )}
                     </div>
- 
+
                     {/* Sub Account Option */}
                     <div>
                       <div className="flex items-center">
@@ -349,7 +335,7 @@ const CreateNewAccount = () => {
                         <HelpCircle className="ml-2 w-4 h-4 text-gray-400" title="Sub-accounts are grouped under parent accounts for better organization" />
                       </div>
                     </div>
- 
+
                     {/* Parent Account Selection */}
                     {formData.is_sub_account && (
                       <div>
@@ -372,7 +358,7 @@ const CreateNewAccount = () => {
                         </select>
                       </div>
                     )}
- 
+
                     {/* Description */}
                     <div>
                       <label htmlFor="description" className="block text-sm font-medium text-gray-700 mb-1">
@@ -388,7 +374,7 @@ const CreateNewAccount = () => {
                         placeholder="Enter Ledger description (optional)"
                       />
                     </div>
- 
+
                     {/* Submit Button */}
                     <div className="flex justify-end space-x-4 pt-6">
                       <button
@@ -419,7 +405,7 @@ const CreateNewAccount = () => {
                   </form>
                 </div>
               </div>
- 
+
               {/* Suggestions Sidebar */}
               {accountSuggestions.length > 0 && (
                 <div className="lg:col-span-1">

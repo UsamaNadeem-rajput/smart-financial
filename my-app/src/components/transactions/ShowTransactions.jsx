@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { AnimatePresence, motion } from "framer-motion";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 import Navbar from "../layout/Navbar";
@@ -29,16 +30,15 @@ export default function TransactionEntryTable() {
   const [entries, setEntries] = useState([]);
   const [totals, setTotals] = useState({ debit: 0, credit: 0 });
   const [hasViewed, setHasViewed] = useState(false);
+  const [showNoTransactionPopup, setShowNoTransactionPopup] = useState(false);
   const { selectedBusiness } = useBusiness();
 
   const fetchData = async () => {
     if (!fromDate || !toDate || !selectedBusiness?.business_id) return 0;
     try {
       const res = await fetch(
-        `${
-          import.meta.env.VITE_BACKEND_URL
-        }/api/showtransactions?from=${fromDate}&to=${toDate}&business_id=${
-          selectedBusiness.business_id
+        `${import.meta.env.VITE_BACKEND_URL
+        }/api/showtransactions?from=${fromDate}&to=${toDate}&business_id=${selectedBusiness.business_id
         }`
       );
       const data = await res.json();
@@ -82,10 +82,11 @@ export default function TransactionEntryTable() {
   };
 
   useEffect(() => {
+    // Only clear data when business changes. Date changes should not trigger clear/fetch until "View" is clicked.
     setHasViewed(false);
     setEntries([]);
     setTotals({ debit: 0, credit: 0 });
-  }, [fromDate, toDate, selectedBusiness]);
+  }, [selectedBusiness]);
 
   const handlePrint = () => {
     const printWindow = window.open("", "", "height=600,width=800");
@@ -123,9 +124,8 @@ export default function TransactionEntryTable() {
           <div class="print-header">
             <h2>FinanceFlow</h2>
             <div class="business-name">
-              <h4>${
-                selectedBusiness?.business_name || "Your Business Name"
-              }</h4>
+              <h4>${selectedBusiness?.business_name || "Your Business Name"
+      }</h4>
               <div class="text-center">General Journal</div>
             </div>
             <div class="date">${new Date().toLocaleDateString()}</div>
@@ -149,14 +149,11 @@ export default function TransactionEntryTable() {
         group.forEach((entry, idx) => {
           printWindow.document.write(`
           <tr class="${entry.isTotal ? "transaction-total-row" : ""}">
-            ${
-              idx === 0 && !entry.isTotal
-                ? `<td rowspan="${
-                    group.length
-                  }">${frontend_transaction_id}<br><span style="font-size: 0.8em; color: #888;">${
-                    entry.transaction_date || "No Date"
-                  }</span></td>`
-                : ""
+            ${idx === 0 && !entry.isTotal
+              ? `<td rowspan="${group.length
+              }">${frontend_transaction_id}<br><span style="font-size: 0.8em; color: #888;">${entry.transaction_date || "No Date"
+              }</span></td>`
+              : ""
             }
             <td>${entry.account_name}</td>
             <td>${formatAmount(entry.debit)}</td>
@@ -233,9 +230,8 @@ export default function TransactionEntryTable() {
           group.forEach((entry, idx) => {
             tableRows.push([
               idx === 0 && !entry.isTotal
-                ? `${frontend_transaction_id}\n(${
-                    entry.transaction_date || "No Date"
-                  })`
+                ? `${frontend_transaction_id}\n(${entry.transaction_date || "No Date"
+                })`
                 : "",
               entry.account_name,
               formatAmount(entry.debit),
@@ -321,14 +317,14 @@ export default function TransactionEntryTable() {
   const navigate = useNavigate();
 
   const handleEdit = (transactionId) => {
-  navigate(`/transaction-edit/${transactionId}`);
-};
+    navigate(`/transaction-edit/${transactionId}`);
+  };
 
   const handleView = async () => {
     setHasViewed(true);
     const count = await fetchData();
     if (!count) {
-      window.alert("There is no any Transaction on Select Date");
+      setShowNoTransactionPopup(true);
     }
   };
 
@@ -561,7 +557,7 @@ export default function TransactionEntryTable() {
                                   className="btn btn-sm btn-primary ms-2"
                                   onClick={() =>
                                     handleEdit(entry.transaction_id)
-                                  } 
+                                  }
                                 >
                                   Edit
                                 </button>
@@ -587,6 +583,95 @@ export default function TransactionEntryTable() {
           </div>
         </div>
       </div>
+      <AnimatePresence>
+        {showNoTransactionPopup && (
+          <motion.div
+            className="fixed inset-0 z-50 flex items-center justify-center p-4"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            style={{
+              position: 'fixed',
+              top: 0,
+              left: 0,
+              right: 0,
+              bottom: 0,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              zIndex: 9999
+            }}
+          >
+            <div
+              className="absolute inset-0 bg-black/60 backdrop-blur-sm"
+              onClick={() => setShowNoTransactionPopup(false)}
+              style={{
+                position: 'absolute',
+                top: 0,
+                left: 0,
+                width: '100%',
+                height: '100%',
+                backgroundColor: 'rgba(0,0,0,0.6)',
+                backdropFilter: 'blur(4px)'
+              }}
+            ></div>
+            <motion.div
+              className="relative z-10 w-full max-w-sm rounded-2xl p-6 shadow-2xl"
+              initial={{ scale: 0.9, y: 20, opacity: 0 }}
+              animate={{ scale: 1, y: 0, opacity: 1 }}
+              exit={{ scale: 0.95, y: 10, opacity: 0 }}
+              transition={{ type: "spring", stiffness: 260, damping: 24 }}
+              style={{
+                background: "linear-gradient(135deg, rgba(30, 30, 30, 0.9), rgba(10, 10, 10, 0.95))",
+                border: "1px solid rgba(255,255,255,0.1)",
+                borderRadius: "16px",
+                padding: "24px",
+                boxShadow: "0 25px 50px -12px rgba(0, 0, 0, 0.5)",
+                color: "white",
+                position: 'relative'
+              }}
+            >
+              <div className="flex flex-col items-center text-center">
+                <div className="w-16 h-16 rounded-full bg-blue-500/20 flex items-center justify-center mb-4" style={{
+                  width: '64px',
+                  height: '64px',
+                  borderRadius: '50%',
+                  backgroundColor: 'rgba(59, 130, 246, 0.2)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  marginBottom: '16px',
+                  margin: '0 auto'
+                }}>
+                  <span style={{ fontSize: '32px' }}>ℹ️</span>
+                </div>
+                <h3 className="text-xl font-bold text-white mb-2" style={{ fontSize: '1.25rem', fontWeight: 'bold', marginBottom: '8px', color: 'white' }}>No Transactions Found</h3>
+                <p className="text-gray-300 mb-6" style={{ color: '#d1d5db', marginBottom: '24px' }}>
+                  There are no transactions recorded for the selected date range. Please try a different date or add new transactions.
+                </p>
+                <button
+                  onClick={() => setShowNoTransactionPopup(false)}
+                  className="px-6 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors font-medium shadow-lg hover:shadow-blue-500/30"
+                  style={{
+                    padding: '8px 24px',
+                    backgroundColor: '#2563eb',
+                    color: 'white',
+                    border: 'none',
+                    borderRadius: '8px',
+                    cursor: 'pointer',
+                    fontWeight: '500',
+                    transition: 'background-color 0.2s'
+                  }}
+                  onMouseOver={(e) => e.target.style.backgroundColor = '#1d4ed8'}
+                  onMouseOut={(e) => e.target.style.backgroundColor = '#2563eb'}
+                >
+                  Okay, Got it
+                </button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }

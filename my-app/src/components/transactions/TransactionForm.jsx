@@ -181,8 +181,7 @@ export default function TransectionForm() {
   };
 
   const handleSaveAndNew = () => {
-    // Track click
-    fetch(`${import.meta.env.VITE_BACKEND_URL}/api/public/stats/click`, { method: 'POST' }).catch(console.error);
+
 
     setIsLoading(true);
     setSubmitMode("new");
@@ -200,8 +199,7 @@ export default function TransectionForm() {
   };
 
   const handleSaveAndClose = () => {
-    // Track click
-    fetch(`${import.meta.env.VITE_BACKEND_URL}/api/public/stats/click`, { method: 'POST' }).catch(console.error);
+
 
     setIsLoading(true);
     setSubmitMode("close");
@@ -610,7 +608,7 @@ export default function TransectionForm() {
                 transition={{ type: "spring", stiffness: 260, damping: 24 }}
                 style={{
                   background:
-                    "linear-gradient(135deg, rgba(0, 0, 0, 0.15), rgba(6, 6, 6, 0.15))",
+                    "linear-gradient(135deg, rgba(0, 0, 0, 0.7), rgba(6, 6, 6, 0.15))",
                   border: "1px solid rgba(255,255,255,0.15)",
                 }}
               >
