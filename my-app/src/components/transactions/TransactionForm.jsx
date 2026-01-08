@@ -179,10 +179,13 @@ export default function TransectionForm() {
       alert("Network error: " + err.message);
     }
   };
+  const playSound = () => {
+    const audio = new Audio("/success.mp3");
+    audio.play();
+  };
 
   const handleSaveAndNew = () => {
-
-
+    playSound();
     setIsLoading(true);
     setSubmitMode("new");
     handleSubmit(async () => {

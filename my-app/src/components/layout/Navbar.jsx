@@ -13,6 +13,7 @@ import {
   HomeIcon,
   Contact,
   ArrowDownIcon,
+  Scale,
 } from "lucide-react";
 
 const Navbar = () => {
@@ -66,6 +67,11 @@ const Navbar = () => {
       icon: FileText,
       children: [
         {
+          name: "General Journal",
+          href: "/showtransections",
+          icon: FileText,
+        },
+        {
           name: "Ledger Balances",
           href: "/ledger-balancing",
           onClick: (e) => {
@@ -80,15 +86,16 @@ const Navbar = () => {
           icon: FileText,
         },
         {
-          name: "Income Report",
+          name: "Income Statement",
           href: "/income-report",
           icon: FileText,
         },
         {
-          name: "General Journal",
-          href: "/showtransections",
-          icon: FileText,
-        },
+          name: "Balance Sheet",
+          href: "/balance-sheet",
+          icon: Scale,
+        }
+
       ],
     },
     { name: "contact", href: "/contact", icon: Contact },
@@ -117,8 +124,9 @@ const Navbar = () => {
                 Smart Financial
               </Link>
             </div> */}
+            {/* Logo and Business Name grouped together */}
             <div>
-             <img src="/final.png" alt="Logo" className="h-16 w-auto mr-2"  />
+              <img src="/final.png" onClick={() => navigate("/")} alt="Logo" className="h-16 w-auto mr-2" />
             </div>
 
             {selectedBusiness && (
@@ -147,9 +155,8 @@ const Navbar = () => {
                           {item.name}
                         </button>
                         <div
-                          className={`absolute ${
-                            openDropdown === item.name ? "block" : "hidden"
-                          } bg-white border shadow-lg mt-2 rounded-md z-50 min-w-[200px]`}
+                          className={`absolute ${openDropdown === item.name ? "block" : "hidden"
+                            } bg-white border shadow-lg mt-2 rounded-md z-50 min-w-[200px]`}
                         >
                           {item.children.map((child) => {
                             if (child.onClick) {
@@ -188,11 +195,10 @@ const Navbar = () => {
                     <Link
                       key={item.name}
                       to={item.href}
-                      className={`inline-flex items-center px-1 pt-1 text-[14px] font-medium border-b-2 ${
-                        isActive(item.href)
-                          ? "border-primary-500 text-primary-600"
-                          : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
-                      } transition-colors duration-200`}
+                      className={`inline-flex items-center px-1 pt-1 text-[14px] font-medium border-b-2 ${isActive(item.href)
+                        ? "border-primary-500 text-primary-600"
+                        : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
+                        } transition-colors duration-200`}
                     >
                       <Icon className="w-4 h-4 mr-2" />
                       {item.name}
@@ -204,11 +210,18 @@ const Navbar = () => {
             )}
           </div>
 
-          {/* Right side */}
           <div className="hidden sm:ml-6 sm:flex sm:items-center sm:space-x-4">
             {selectedBusiness && (
-              <div className="flex items-center space-x-2 px-3 py-1 bg-primary-50 rounded-lg">
-                <Building2 className="w-4 h-4 text-primary-600" />
+              <div className="flex items-center space-x-2 px-3 py-1 bg-primary-50 rounded-lg border border-primary-100">
+                {selectedBusiness.logo_url ? (
+                  <img
+                    src={`${import.meta.env.VITE_BACKEND_URL}${selectedBusiness.logo_url}`}
+                    alt="Biz Logo"
+                    className="h-6 w-6 object-contain rounded bg-white"
+                  />
+                ) : (
+                  <Building2 className="w-4 h-4 text-primary-600" />
+                )}
                 <span className="text-sm font-medium text-primary-900">
                   {selectedBusiness.business_name}
                 </span>
@@ -265,9 +278,8 @@ const Navbar = () => {
                         </span>
                       </button>
                       <div
-                        className={`${
-                          openDropdown === item.name ? "block" : "hidden"
-                        } bg-white border shadow-lg rounded-md z-50`}
+                        className={`${openDropdown === item.name ? "block" : "hidden"
+                          } bg-white border shadow-lg rounded-md z-50`}
                       >
                         {item.children.map((child) => {
                           if (child.onClick) {
@@ -309,11 +321,10 @@ const Navbar = () => {
                   <Link
                     key={item.name}
                     to={item.href}
-                    className={`block pl-3 pr-4 py-2 text-base font-medium ${
-                      isActive(item.href)
-                        ? "text-primary-700 bg-primary-50 border-r-4 border-primary-500"
-                        : "text-gray-600 hover:text-gray-900 hover:bg-gray-50"
-                    }`}
+                    className={`block pl-3 pr-4 py-2 text-base font-medium ${isActive(item.href)
+                      ? "text-primary-700 bg-primary-50 border-r-4 border-primary-500"
+                      : "text-gray-600 hover:text-gray-900 hover:bg-gray-50"
+                      }`}
                     onClick={() => setIsMobileMenuOpen(false)}
                   >
                     <div className="flex items-center">

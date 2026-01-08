@@ -18,6 +18,7 @@ import TransactionEdit from './components/transactions/TransactionEdit';
 import LedgerBalancing from './components/reports/LedgerBalancing';
 import IncomeReport from './components/reports/IncomeReport';
 import TrialBalance from './components/reports/TrialBalance';
+import BalanceSheet from './components/reports/BalanceSheet';
 
 
 import './index.css';
@@ -49,6 +50,7 @@ function App() {
             <Route path="/ledger-balancing" element={<PrivateRoute><LedgerBalancing /></PrivateRoute>} />
             <Route path="/income-report" element={<PrivateRoute><IncomeReport /></PrivateRoute>} />
             <Route path="/trial-balance" element={<PrivateRoute><TrialBalance /></PrivateRoute>} />
+            <Route path="/balance-sheet" element={<PrivateRoute><BalanceSheet /></PrivateRoute>} />
             <Route path="/transaction-edit/:transactionId" element={<PrivateRoute><TransactionEdit /></PrivateRoute>} />
           </Routes>
         </div >

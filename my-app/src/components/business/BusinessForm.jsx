@@ -22,6 +22,8 @@ const BusinessForm = () => {
     phone: '',
     plan: 'free',
   });
+  const [logoFile, setLogoFile] = useState(null);
+  const [logoPreview, setLogoPreview] = useState(null);
 
   const [errors, setErrors] = useState({});
 
@@ -39,6 +41,9 @@ const BusinessForm = () => {
         phone: business.phone || '',
         plan: business.plan || 'free',
       });
+      if (business.logo_url) {
+        setLogoPreview(`${import.meta.env.VITE_BACKEND_URL}${business.logo_url}`);
+      }
       setIsEditMode(true);
     }
   }, [location.state]);
@@ -53,6 +58,22 @@ const BusinessForm = () => {
     setFormData(prev => ({ ...prev, [name]: value }));
     if (errors[name]) {
       setErrors(prev => ({ ...prev, [name]: '' }));
+    }
+  };
+
+  const handleLogoChange = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      if (file.size > 2 * 1024 * 1024) { // 2MB limit
+        setErrors(prev => ({ ...prev, logo: 'File size must be less than 2MB' }));
+        return;
+      }
+      setLogoFile(file);
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setLogoPreview(reader.result);
+      };
+      reader.readAsDataURL(file);
     }
   };
 
@@ -85,32 +106,41 @@ const BusinessForm = () => {
       return;
     }
 
-    const payload = {
-    plan: formData.plan,
-    businessName: formData.business_name,
-    businessType: formData.business_type,
-    industry: formData.plan === 'premium' ? formData.industry : null,
-    ntn: formData.plan === 'premium' ? formData.ntn_number : null,
-    address: formData.plan === 'premium' ? formData.address : null,
-    city: formData.plan === 'premium' ? formData.city : null,
-    country: formData.plan === 'premium' ? formData.country : null,
-    phone: formData.plan === 'premium' ? formData.phone : null,
-  };
+    const submitData = new FormData();
+    submitData.append("plan", formData.plan);
+    submitData.append("businessName", formData.business_name);
+    submitData.append("businessType", formData.business_type);
 
+    if (formData.plan === 'premium') {
+      submitData.append("industry", formData.industry);
+      submitData.append("ntn", formData.ntn_number);
+      submitData.append("address", formData.address);
+      submitData.append("city", formData.city);
+      submitData.append("country", formData.country);
+      submitData.append("phone", formData.phone);
+    }
+
+    if (logoFile) {
+      submitData.append("logo", logoFile);
+    }
 
     try {
       if (isEditMode) {
         const businessId = location.state.business.business_id;
-        console.log("Submitting payload:", formData);
-
-        await axios.put(`${import.meta.env.VITE_BACKEND_URL}/api/business/${businessId}`, payload, { withCredentials: true });
+        await axios.put(`${import.meta.env.VITE_BACKEND_URL}/api/business/${businessId}`, submitData, {
+          withCredentials: true,
+          headers: { "Content-Type": "multipart/form-data" },
+        });
       } else {
-        await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/business`, payload, { withCredentials: true });
+        await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/business`, submitData, {
+          withCredentials: true,
+          headers: { "Content-Type": "multipart/form-data" },
+        });
       }
       navigate('/list');
     } catch (err) {
       console.error(err);
-      setErrors({ general: 'Something went wrong. Please try again.' + err.response.data.error});
+      setErrors({ general: 'Something went wrong. Please try again.' + err.response.data.error });
     } finally {
       setIsLoading(false);
     }
@@ -149,62 +179,86 @@ const BusinessForm = () => {
 
         <form onSubmit={handleSubmit} className="space-y-6">
           {/* Plan Selector */}
-           <div>
-                <label className="block text-sm font-medium text-gray-700 mb-3">
-                  Select Plan
-                </label>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div
-                    className={`cursor-pointer border-2 rounded-lg p-4 transition-colors ${
-                      formData.plan === 'free'
-                        ? 'border-primary-500 bg-primary-50'
-                        : 'border-gray-200 hover:border-gray-300'
-                    }`}
-                    onClick={() => setFormData(prev => ({ ...prev, plan: 'free' }))}
-                  >
-                    <div className="flex items-center">
-                      <input
-                        type="radio"
-                        name="plan"
-                        value="free"
-                        checked={formData.plan === 'free'}
-                        onChange={handleChange}
-                        className="h-4 w-4 text-primary-600 focus:ring-primary-500"
-                      />
-                      <div className="ml-3">
-                        <h3 className="text-lg font-medium text-gray-900">Free Plan</h3>
-                        <p className="text-sm text-gray-600">Up to 3 businesses</p>
-                        <p className="text-sm text-gray-600">Basic business information</p>
-                      </div>
-                    </div>
-                  </div>
-
-                  <div
-                    className={`cursor-pointer border-2 rounded-lg p-4 transition-colors ${
-                      formData.plan === 'premium'
-                        ? 'border-warning-500 bg-warning-50'
-                        : 'border-gray-200 hover:border-gray-300'
-                    }`}
-                    onClick={() => setFormData(prev => ({ ...prev, plan: 'premium' }))}
-                  >
-                    <div className="flex items-center">
-                      <input
-                        type="radio"
-                        name="plan"
-                        value="premium"
-                        checked={formData.plan === 'premium'}
-                        onChange={handleChange}
-                        className="h-4 w-4 text-warning-600 focus:ring-warning-500"
-                      />
-                      <div className="ml-3">
-                        <h3 className="text-lg font-medium text-gray-900">Premium Plan</h3>
-                        <p className="text-sm text-gray-600">Unlimited businesses</p>
-                        <p className="text-sm text-gray-600">Complete business profiles</p>
-                      </div>
-                    </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-3">
+              Select Plan
+            </label>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div
+                className={`cursor-pointer border-2 rounded-lg p-4 transition-colors ${formData.plan === 'free'
+                  ? 'border-primary-500 bg-primary-50'
+                  : 'border-gray-200 hover:border-gray-300'
+                  }`}
+                onClick={() => setFormData(prev => ({ ...prev, plan: 'free' }))}
+              >
+                <div className="flex items-center">
+                  <input
+                    type="radio"
+                    name="plan"
+                    value="free"
+                    checked={formData.plan === 'free'}
+                    onChange={handleChange}
+                    className="h-4 w-4 text-primary-600 focus:ring-primary-500"
+                  />
+                  <div className="ml-3">
+                    <h3 className="text-lg font-medium text-gray-900">Free Plan</h3>
+                    <p className="text-sm text-gray-600">Up to 3 businesses</p>
+                    <p className="text-sm text-gray-600">Basic business information</p>
                   </div>
                 </div>
               </div>
+
+              <div
+                className={`cursor-pointer border-2 rounded-lg p-4 transition-colors ${formData.plan === 'premium'
+                  ? 'border-warning-500 bg-warning-50'
+                  : 'border-gray-200 hover:border-gray-300'
+                  }`}
+                onClick={() => setFormData(prev => ({ ...prev, plan: 'premium' }))}
+              >
+                <div className="flex items-center">
+                  <input
+                    type="radio"
+                    name="plan"
+                    value="premium"
+                    checked={formData.plan === 'premium'}
+                    onChange={handleChange}
+                    className="h-4 w-4 text-warning-600 focus:ring-warning-500"
+                  />
+                  <div className="ml-3">
+                    <h3 className="text-lg font-medium text-gray-900">Premium Plan</h3>
+                    <p className="text-sm text-gray-600">Unlimited businesses</p>
+                    <p className="text-sm text-gray-600">Complete business profiles</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Logo Upload */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Business Logo
+            </label>
+            <div className="flex items-center space-x-4">
+              {logoPreview && (
+                <div className="relative w-24 h-24 rounded-lg overflow-hidden border border-gray-300 shadow-sm">
+                  <img src={logoPreview} alt="Logo Preview" className="w-full h-full object-contain p-1" />
+                </div>
+              )}
+              <input
+                type="file"
+                accept="image/*"
+                onChange={handleLogoChange}
+                className="block w-full text-sm text-slate-500
+                  file:mr-4 file:py-2 file:px-4
+                  file:rounded-full file:border-0
+                  file:text-sm file:font-semibold
+                  file:bg-primary-50 file:text-primary-700
+                  hover:file:bg-primary-100"
+              />
+            </div>
+            {errors.logo && <p className="text-sm text-red-600 mt-1">{errors.logo}</p>}
+          </div>
 
           {/* Business Name */}
           <div>

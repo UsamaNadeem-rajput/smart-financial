@@ -56,6 +56,15 @@ app.use((req, res, next) => {
   next();
 });
 
+// ✅ Serve Static Files for Logo Uploads with CORS headers
+app.use('/logoupload', (req, res, next) => {
+  res.set('Access-Control-Allow-Origin', '*');
+  res.set('Access-Control-Allow-Methods', 'GET, OPTIONS');
+  res.set('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept');
+  res.set('Cross-Origin-Resource-Policy', 'cross-origin');
+  next();
+}, express.static('logoupload'));
+
 /* ---------- Session ---------- */
 app.use(
   session({
@@ -128,6 +137,7 @@ serverRouter.use('/api/*', (req, res) => {
 });
 
 // ✅ MOUNT ROUTER at root
+serverRouter.use('/api/balance-sheet', require('./routers/balanceSheet'));
 app.use('/', serverRouter);
 
 // ✅ ROOT ROUTE REDIRECT

@@ -21,6 +21,7 @@ import {
   Clock,
   Sparkles,
   ChevronDown,
+  User,
 } from "lucide-react";
 import { motion } from "framer-motion";
 import { ref, runTransaction, onValue } from "firebase/database";
@@ -510,19 +511,13 @@ const LandingPage = () => {
   // Visitor & Click Tracking Logic
   useEffect(() => {
     // --- Visitor Counting ---
-    const userKey = 'has_visited_sim_session';
-    const hasVisited = sessionStorage.getItem(userKey);
-
-    if (!hasVisited) {
-      const visitorsRef = ref(db, 'site_stats/visitors');
-      runTransaction(visitorsRef, (currentCount) => {
-        return (currentCount || 0) + 1;
-      }).then(() => {
-        sessionStorage.setItem(userKey, 'true');
-      }).catch((error) => {
-        console.error("Error updating visitor count:", error);
-      });
-    }
+    // Always increment visitor count on mount
+    const visitorsRef = ref(db, 'site_stats/visitors');
+    runTransaction(visitorsRef, (currentCount) => {
+      return (currentCount || 0) + 1;
+    }).catch((error) => {
+      console.error("Error updating visitor count:", error);
+    });
 
     // --- Click Counting ---
     const handleGlobalClick = () => {
@@ -603,27 +598,27 @@ const LandingPage = () => {
             >
               {user ? (
                 <>
-
-                  <span className="sm:text-gray-700 font-medium max-sm:text-xs flex items-center">
-                    <div className="w-2 h-2 bg-green-500 rounded-full mr-2 animate-pulse"></div>
-                    Logged-in
-                  </span>
+                  <button
+                    onClick={() => {
+                      navigate("/list");
+                    }}
+                    className="text-gray-600 hover:text-gray-900 font-medium max-sm:text-xs transition-all duration-300 border border-gray-300 rounded-lg px-4 py-2 hover:bg-gray-50 hover:shadow-md"
+                  >
+                    Dashboard
+                  </button>
                   <button
                     onClick={handleLogout}
                     className="text-gray-600 hover:text-gray-900 font-medium max-sm:text-xs transition-all duration-300 border border-gray-300 rounded-lg px-4 py-2 hover:bg-gray-50 hover:shadow-md"
                   >
                     Logout
                   </button>
-                  <button
-                    onClick={() => {
+                  <div className="flex items-center space-x-2 px-3 py-2 bg-gray-50 rounded-full border border-gray-200">
+                    <div className="bg-primary-100 p-1 rounded-full">
+                      <User className="w-4 h-4 text-primary-600" />
+                    </div>
+                    <span className="text-sm font-medium text-gray-700 hidden sm:inline-block">{user}</span>
+                  </div>
 
-                      navigate("/list");
-                    }}
-                    className="text-gray-600 hover:text-gray-900 font-medium max-sm:text-xs transition-all duration-300 border border-gray-300 rounded-lg px-4 py-2 hover:bg-gray-50 hover:shadow-md"
-
-                  >
-                    Dashboard
-                  </button>
                 </>
               ) : (
                 <>

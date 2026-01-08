@@ -3,10 +3,31 @@ import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import Navbar from '../layout/Navbar';
 import { useBusiness } from '../../context/BusinessContext';
-import html2canvas from 'html2canvas';
 import { jsPDF } from 'jspdf';
+import autoTable from 'jspdf-autotable';
 
 const currency = (n) => new Intl.NumberFormat('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(Number(n || 0));
+
+// Helper to convert image URL to data URL using proxy endpoint (bypasses CORS for print/PDF)
+async function getImageAsDataUrl(logoPath, backendUrl) {
+  try {
+    const filename = logoPath.split('/').pop();
+    const proxyUrl = `${backendUrl}/api/business/logo-proxy/${filename}`;
+    const response = await fetch(proxyUrl, { credentials: 'include' });
+    if (!response.ok) throw new Error('Failed to fetch image');
+    const blob = await response.blob();
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onloadend = () => resolve(reader.result);
+      reader.onerror = reject;
+      reader.readAsDataURL(blob);
+    });
+  } catch (error) {
+    console.error('Error converting image to data URL:', error);
+    return null;
+  }
+}
+
 
 const IncomeReport = () => {
   const navigate = useNavigate();
@@ -24,6 +45,12 @@ const IncomeReport = () => {
   const [hasGenerated, setHasGenerated] = useState(false);
   const reportRef = useRef(null);
 
+  // Range selection states
+  const [rangeType, setRangeType] = useState(''); // 'date', 'month', or 'year'
+  const [fromMonth, setFromMonth] = useState('');
+  const [toMonth, setToMonth] = useState('');
+  const [selectedYear, setSelectedYear] = useState('');
+
   useEffect(() => {
     const now = new Date();
     const formattedDate = now.toLocaleString('en-US', {
@@ -32,27 +59,25 @@ const IncomeReport = () => {
       day: 'numeric',
     });
     setCurrentDate(formattedDate);
-    const today = new Date();
-    const yyyy = today.getFullYear();
-    const mm = String(today.getMonth() + 1).padStart(2, '0');
-    const dd = String(today.getDate()).padStart(2, '0');
-    const todayStr = `${yyyy}-${mm}-${dd}`;
-    setFromDate(todayStr);
-    setToDate(todayStr);
+    // Note: fromDate/toDate initialization removed - user selects range type first
   }, []);
 
-  const fetchIncomeReport = async () => {
+  const fetchIncomeReport = async (computedFromDate, computedToDate) => {
+    // Use passed parameters or fall back to state values
+    const effectiveFromDate = computedFromDate || fromDate;
+    const effectiveToDate = computedToDate || toDate;
+
     if (!selectedBusiness?.business_id) {
       setError('Please select a business');
       return;
     }
 
-    if (!fromDate || !toDate) {
+    if (!effectiveFromDate || !effectiveToDate) {
       setError('Please select a date range');
       return;
     }
 
-    if (fromDate > toDate) {
+    if (effectiveFromDate > effectiveToDate) {
       setError('From date must be before or equal to to date');
       return;
     }
@@ -62,10 +87,8 @@ const IncomeReport = () => {
 
     try {
       const params = new URLSearchParams();
-      if (fromDate && toDate) {
-        params.append('fromDate', fromDate);
-        params.append('toDate', toDate);
-      }
+      params.append('fromDate', effectiveFromDate);
+      params.append('toDate', effectiveToDate);
 
       const { data } = await axios.get(`${apiUrl}/api/income-report/${selectedBusiness.business_id}?${params.toString()}`, { withCredentials: true });
 
@@ -87,12 +110,53 @@ const IncomeReport = () => {
   };
 
   const handleGenerateReport = () => {
-    fetchIncomeReport();
+    // Compute fromDate and toDate based on rangeType before generating
+    if (rangeType === 'month') {
+      if (!fromMonth || !toMonth) {
+        setError('Please select both From Month and To Month');
+        return;
+      }
+      // fromMonth/toMonth are in format YYYY-MM
+      const [fromYear, fromM] = fromMonth.split('-').map(Number);
+      const [toYear, toM] = toMonth.split('-').map(Number);
+      // First day of fromMonth
+      const computedFromDate = `${fromYear}-${String(fromM).padStart(2, '0')}-01`;
+      // Last day of toMonth
+      const lastDay = new Date(toYear, toM, 0).getDate();
+      const computedToDate = `${toYear}-${String(toM).padStart(2, '0')}-${String(lastDay).padStart(2, '0')}`;
+
+      setFromDate(computedFromDate);
+      setToDate(computedToDate);
+      // Delay fetch to allow state to update
+      setTimeout(() => fetchIncomeReport(computedFromDate, computedToDate), 0);
+    } else if (rangeType === 'year') {
+      if (!selectedYear) {
+        setError('Please select a year');
+        return;
+      }
+      const computedFromDate = `${selectedYear}-01-01`;
+      const computedToDate = `${selectedYear}-12-31`;
+      setFromDate(computedFromDate);
+      setToDate(computedToDate);
+      setTimeout(() => fetchIncomeReport(computedFromDate, computedToDate), 0);
+    } else if (rangeType === 'date') {
+      if (!fromDate || !toDate) {
+        setError('Please select both From Date and To Date');
+        return;
+      }
+      fetchIncomeReport(fromDate, toDate);
+    } else {
+      setError('Please select a range type (Date, Month, or Year)');
+    }
   };
 
   const formatDate = (dateStr) => {
     const date = new Date(dateStr);
     return date.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
+  };
+  const formatMonth = (monthStr) => {
+    const date = new Date(monthStr);
+    return date.toLocaleDateString('en-US', { year: 'numeric', month: 'long' });
   };
 
   const businessName = selectedBusiness?.business_name || selectedBusiness?.businessName || 'Business';
@@ -100,32 +164,259 @@ const IncomeReport = () => {
   const groupedIncome = incomeData;
   const groupedExpense = expenseData;
 
-  const handlePrint = () => {
-    window.print();
+  // Helper to get formatted range label based on rangeType
+  const getFormattedRangeLabel = () => {
+    if (rangeType === 'year') return `Year: ${selectedYear}`;
+    if (rangeType === 'month') return `Month: ${formatMonth(fromMonth)} to ${formatMonth(toMonth)}`;
+    if (rangeType === 'date') {
+      return fromDate === toDate
+        ? `Date: ${formatDate(fromDate)}`
+        : `Date: ${formatDate(fromDate)} to ${formatDate(toDate)}`;
+    }
+    return `${formatDate(fromDate)} to ${formatDate(toDate)}`;
+  };
+
+  const handlePrint = async () => {
+    const printWindow = window.open("", "", "height=800,width=900");
+
+    const logoPath = selectedBusiness?.logo_url;
+    let logoDataUrl = null;
+    if (logoPath) {
+      logoDataUrl = await getImageAsDataUrl(logoPath, apiUrl);
+    }
+
+    printWindow.document.write(`
+      <html>
+        <head>
+          <title>Income Statement - ${businessName}</title>
+          <style>
+            * { margin: 0; padding: 0; box-sizing: border-box; }
+            body { font-family: 'Segoe UI', Arial, sans-serif; padding: 20px; color: #333; }
+            .print-header { 
+              display: flex; 
+              align-items: center; 
+              margin-bottom: 25px; 
+              padding-bottom: 15px;
+              border-bottom: 2px solid #4169e1;
+            }
+            .logo-container { 
+              width: 80px; 
+              height: 80px; 
+              display: flex; 
+              align-items: center; 
+              justify-content: center;
+              margin-right: 20px;
+            }
+            .logo { max-height: 70px; max-width: 70px; object-fit: contain; }
+            .header-center { flex-grow: 1; text-align: center; }
+            .business-name { font-size: 22px; font-weight: bold; color: #1a1a2e; margin-bottom: 5px; }
+            .report-title { font-size: 16px; color: #4169e1; font-weight: 600; }
+            .date-range { font-size: 12px; color: #666; margin-top: 3px; }
+            .header-right { text-align: right; font-size: 11px; color: #666; min-width: 100px; }
+            .section { margin-top: 20px; }
+            .section-title { font-size: 16px; font-weight: bold; color: #1a1a2e; margin-bottom: 10px; border-bottom: 1px solid #ddd; padding-bottom: 5px; }
+            table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+            th { background-color: #4169e1; color: #fff; padding: 10px 8px; text-align: left; font-size: 13px; }
+            td { padding: 8px; border: 1px solid #ddd; font-size: 12px; }
+            .total-row { background-color: #e8f0fe; font-weight: 600; }
+            .grand-total { background-color: #4169e1; color: white; font-weight: bold; }
+            .amount { text-align: right; }
+            .net-profit { color: #16a34a; }
+            .net-loss { color: #dc2626; }
+            @media print { body { padding: 10px; } }
+          </style>
+        </head>
+        <body>
+          <div class="print-header">
+            <div class="logo-container">
+              ${logoDataUrl ? `<img src="${logoDataUrl}" class="logo" alt="Logo" id="printLogo" />` : '<div style="font-size: 24px; color: #4169e1; font-weight: bold;">SF</div>'}
+            </div>
+            <div class="header-center">
+              <div class="business-name">${businessName}</div>
+              <div class="report-title">Income Statement</div>
+              <div class="date-range">${getFormattedRangeLabel()}</div>
+            </div>
+            <div class="header-right">
+              <div>Printed on:</div>
+              <div>${currentDate}</div>
+            </div>
+          </div>
+          
+          <div class="section">
+            <div class="section-title">Income</div>
+            <table>
+              <thead><tr><th>Account</th><th class="amount">Amount (PKR)</th></tr></thead>
+              <tbody>
+                ${groupedIncome.map(ledger => `<tr><td>${ledger.ledger_name}</td><td class="amount">${currency(Math.abs(ledger.balance))}</td></tr>`).join('')}
+                <tr class="total-row"><td><strong>Total Income</strong></td><td class="amount"><strong>${currency(Math.abs(totals.income))}</strong></td></tr>
+              </tbody>
+            </table>
+          </div>
+          
+          <div class="section">
+            <div class="section-title">Expenses</div>
+            <table>
+              <thead><tr><th>Account</th><th class="amount">Amount (PKR)</th></tr></thead>
+              <tbody>
+                ${groupedExpense.map(ledger => `<tr><td>${ledger.ledger_name}</td><td class="amount">${currency(Math.abs(ledger.balance))}</td></tr>`).join('')}
+                <tr class="total-row"><td><strong>Total Expenses</strong></td><td class="amount"><strong>${currency(Math.abs(totals.expense))}</strong></td></tr>
+              </tbody>
+            </table>
+          </div>
+          
+          <div class="section">
+            <table>
+              <tr class="grand-total ${totals.netProfitLoss >= 0 ? 'net-profit' : 'net-loss'}">
+                <td style="background-color: ${totals.netProfitLoss >= 0 ? '#16a34a' : '#dc2626'}; color: white;"><strong>${totals.netProfitLoss >= 0 ? 'Net Profit' : 'Net Loss'}</strong></td>
+                <td class="amount" style="background-color: ${totals.netProfitLoss >= 0 ? '#16a34a' : '#dc2626'}; color: white;"><strong>${currency(Math.abs(totals.netProfitLoss))}</strong></td>
+              </tr>
+            </table>
+          </div>
+        </body>
+      </html>
+    `);
+
+    printWindow.document.close();
+
+    if (logoDataUrl) {
+      const img = printWindow.document.getElementById('printLogo');
+      if (img) {
+        await new Promise((resolve) => {
+          if (img.complete) resolve();
+          else { img.onload = resolve; img.onerror = resolve; }
+        });
+        await new Promise(resolve => setTimeout(resolve, 300));
+      }
+    }
+
+    printWindow.focus();
+    printWindow.print();
+    printWindow.close();
   };
 
   const handleSavePDF = async () => {
-    if (!reportRef.current) return;
-    const canvas = await html2canvas(reportRef.current, { scale: 2, useCORS: true });
-    const imgData = canvas.toDataURL('image/png');
-    const pdf = new jsPDF('p', 'mm', 'a4');
-    const pageWidth = pdf.internal.pageSize.getWidth();
-    const pageHeight = pdf.internal.pageSize.getHeight();
-    const imgWidth = pageWidth;
-    const imgHeight = (canvas.height * pageWidth) / canvas.width;
-    let heightLeft = imgHeight;
-    let position = 0;
-    pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
-    heightLeft -= pageHeight;
-    while (heightLeft > 0) {
-      position = heightLeft - imgHeight;
-      pdf.addPage();
-      pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
-      heightLeft -= pageHeight;
+    const doc = new jsPDF();
+    const pageWidth = doc.internal.pageSize.getWidth();
+    let y = 15;
+
+    const logoPath = selectedBusiness?.logo_url;
+    let logoDataUrl = null;
+    if (logoPath) {
+      logoDataUrl = await getImageAsDataUrl(logoPath, apiUrl);
     }
-    const name = fromDate === toDate ? `Income_Report_${fromDate}.pdf` : `Income_Report_${fromDate}_to_${toDate}.pdf`;
-    pdf.save(name);
+
+    // === HEADER SECTION ===
+    const headerY = y;
+    const logoWidth = 25;
+    let logoHeight = 25;
+
+    if (logoDataUrl) {
+      try {
+        const img = new Image();
+        img.src = logoDataUrl;
+        await new Promise((resolve, reject) => { img.onload = resolve; img.onerror = reject; });
+        logoHeight = (img.height * logoWidth) / img.width;
+        doc.addImage(logoDataUrl, 'PNG', 10, headerY - 5, logoWidth, logoHeight);
+      } catch (e) {
+        doc.setFillColor(65, 105, 225);
+        doc.rect(10, headerY - 5, logoWidth, logoWidth, 'F');
+        doc.setTextColor(255, 255, 255);
+        doc.setFontSize(10);
+        doc.text("SF", 10 + logoWidth / 2, headerY + 8, { align: "center" });
+      }
+    } else {
+      doc.setFillColor(65, 105, 225);
+      doc.rect(10, headerY - 5, logoWidth, logoWidth, 'F');
+      doc.setTextColor(255, 255, 255);
+      doc.setFontSize(10);
+      doc.text("SF", 10 + logoWidth / 2, headerY + 8, { align: "center" });
+    }
+
+    doc.setTextColor(0, 0, 0);
+    doc.setFontSize(16);
+    doc.setFont(undefined, "bold");
+    doc.text(businessName, pageWidth / 2, headerY, { align: "center" });
+
+    doc.setFontSize(12);
+    doc.setFont(undefined, "normal");
+    doc.setTextColor(65, 105, 225);
+    doc.text("Income Statement", pageWidth / 2, headerY + 7, { align: "center" });
+
+    doc.setFontSize(9);
+    doc.setTextColor(100, 100, 100);
+    doc.text(getFormattedRangeLabel(), pageWidth / 2, headerY + 13, { align: "center" });
+
+    doc.setFontSize(8);
+    doc.text(`Generated: ${currentDate}`, pageWidth - 10, headerY, { align: "right" });
+
+    const lineY = Math.max(headerY + logoHeight, headerY + 18);
+    doc.setDrawColor(65, 105, 225);
+    doc.setLineWidth(0.5);
+    doc.line(10, lineY, pageWidth - 10, lineY);
+    y = lineY + 8;
+
+    // === INCOME TABLE ===
+    doc.setFontSize(12);
+    doc.setTextColor(0, 0, 0);
+    doc.setFont(undefined, "bold");
+    doc.text("Income", 10, y);
+    y += 3;
+
+    const incomeRows = groupedIncome.map(l => [l.ledger_name, currency(Math.abs(l.balance))]);
+    incomeRows.push([{ content: 'Total Income', styles: { fontStyle: 'bold', fillColor: [232, 240, 254] } }, { content: currency(Math.abs(totals.income)), styles: { fontStyle: 'bold', fillColor: [232, 240, 254], halign: 'right' } }]);
+
+    autoTable(doc, {
+      startY: y,
+      head: [[
+        { content: '', styles: { halign: 'left' } },
+        { content: 'Amount (PKR)', styles: { halign: 'right' } }
+      ]],
+      body: incomeRows,
+      headStyles: { fillColor: [65, 105, 225], textColor: 255 },
+      columnStyles: { 1: { halign: 'right' } },
+      margin: { left: 10, right: 10 },
+    });
+
+    y = doc.lastAutoTable.finalY + 10;
+
+    // === EXPENSE TABLE ===
+    doc.setFont(undefined, "bold");
+    doc.text("Expenses", 10, y);
+    y += 3;
+
+    const expenseRows = groupedExpense.map(l => [l.ledger_name, currency(Math.abs(l.balance))]);
+    expenseRows.push([{ content: 'Total Expenses', styles: { fontStyle: 'bold', fillColor: [232, 240, 254] } }, { content: currency(Math.abs(totals.expense)), styles: { fontStyle: 'bold', fillColor: [232, 240, 254], halign: 'right' } }]);
+
+    autoTable(doc, {
+      startY: y,
+      head: [[
+        { content: '', styles: { halign: 'left' } },
+        { content: 'Amount (PKR)', styles: { halign: 'right' } }
+      ]],
+      body: expenseRows,
+      headStyles: { fillColor: [65, 105, 225], textColor: 255 },
+      columnStyles: { 1: { halign: 'right' } },
+      margin: { left: 10, right: 10 },
+    });
+
+    y = doc.lastAutoTable.finalY + 10;
+
+    // === NET PROFIT/LOSS ===
+    const netColor = totals.netProfitLoss >= 0 ? [22, 163, 74] : [220, 38, 38];
+    autoTable(doc, {
+      startY: y,
+      body: [[
+        { content: totals.netProfitLoss >= 0 ? 'Net Profit' : 'Net Loss', styles: { fontStyle: 'bold', fillColor: netColor, textColor: 255 } },
+        { content: currency(Math.abs(totals.netProfitLoss)), styles: { fontStyle: 'bold', fillColor: netColor, textColor: 255, halign: 'right' } }
+      ]],
+      columnStyles: { 1: { halign: 'right' } },
+      margin: { left: 10, right: 10 },
+    });
+
+    const name = fromDate === toDate ? `Income_Statement_${fromDate}.pdf` : `Income_Statement_${fromDate}_to_${toDate}.pdf`;
+    doc.save(name);
   };
+
 
   return (
     <div className="min-h-screen relative overflow-hidden">
@@ -186,41 +477,149 @@ const IncomeReport = () => {
             </div>
 
             <div className="bg-white shadow sm:rounded-lg p-6 mb-6">
-              {/* Date Range Selector */}
-              <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    From Date
+              {/* Range Type Radio Buttons */}
+              <div className="mb-6">
+                <label className="block text-sm font-medium text-gray-700 mb-3">
+                  Select Range Type
+                </label>
+                <div className="flex flex-wrap gap-6">
+                  <label className="inline-flex items-center cursor-pointer group">
+                    <input
+                      type="radio"
+                      name="rangeType"
+                      value="date"
+                      checked={rangeType === 'date'}
+                      onChange={(e) => setRangeType(e.target.value)}
+                      className="w-4 h-4 text-primary-600 border-gray-300 focus:ring-primary-500"
+                    />
+                    <span className="ml-2 text-sm font-medium text-gray-700 group-hover:text-primary-600 transition-colors">
+                      📅 Date
+                    </span>
                   </label>
-                  <input
-                    type="date"
-                    value={fromDate}
-                    onChange={(e) => setFromDate(e.target.value)}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary-500 focus:border-primary-500"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    To Date
+                  <label className="inline-flex items-center cursor-pointer group">
+                    <input
+                      type="radio"
+                      name="rangeType"
+                      value="month"
+                      checked={rangeType === 'month'}
+                      onChange={(e) => setRangeType(e.target.value)}
+                      className="w-4 h-4 text-primary-600 border-gray-300 focus:ring-primary-500"
+                    />
+                    <span className="ml-2 text-sm font-medium text-gray-700 group-hover:text-primary-600 transition-colors">
+                      📆 Month
+                    </span>
                   </label>
-                  <input
-                    type="date"
-                    value={toDate}
-                    onChange={(e) => setToDate(e.target.value)}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary-500 focus:border-primary-500"
-                  />
-                </div>
-
-                <div className="flex items-end">
-                  <button
-                    onClick={handleGenerateReport}
-                    disabled={loading}
-                    className="w-full px-4 py-2 bg-primary-600 text-white rounded-md hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 disabled:opacity-50 disabled:cursor-not-allowed"
-                  >
-                    {loading ? 'Generating...' : 'Generate Report'}
-                  </button>
+                  <label className="inline-flex items-center cursor-pointer group">
+                    <input
+                      type="radio"
+                      name="rangeType"
+                      value="year"
+                      checked={rangeType === 'year'}
+                      onChange={(e) => setRangeType(e.target.value)}
+                      className="w-4 h-4 text-primary-600 border-gray-300 focus:ring-primary-500"
+                    />
+                    <span className="ml-2 text-sm font-medium text-gray-700 group-hover:text-primary-600 transition-colors">
+                      📊 Year
+                    </span>
+                  </label>
                 </div>
               </div>
+
+              {/* Conditional Date/Month/Year Inputs */}
+              {rangeType && (
+                <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-4 p-4 bg-gray-50 rounded-lg border border-gray-200 animate-fadeIn">
+                  {/* Date Range Inputs */}
+                  {rangeType === 'date' && (
+                    <>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                          From Date
+                        </label>
+                        <input
+                          type="date"
+                          value={fromDate}
+                          onChange={(e) => setFromDate(e.target.value)}
+                          className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary-500 focus:border-primary-500"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                          To Date
+                        </label>
+                        <input
+                          type="date"
+                          value={toDate}
+                          onChange={(e) => setToDate(e.target.value)}
+                          className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary-500 focus:border-primary-500"
+                        />
+                      </div>
+                    </>
+                  )}
+
+                  {/* Month Range Inputs */}
+                  {rangeType === 'month' && (
+                    <>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                          From Month
+                        </label>
+                        <input
+                          type="month"
+                          value={fromMonth}
+                          onChange={(e) => setFromMonth(e.target.value)}
+                          className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary-500 focus:border-primary-500"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                          To Month
+                        </label>
+                        <input
+                          type="month"
+                          value={toMonth}
+                          onChange={(e) => setToMonth(e.target.value)}
+                          className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary-500 focus:border-primary-500"
+                        />
+                      </div>
+                    </>
+                  )}
+
+                  {/* Year Input */}
+                  {rangeType === 'year' && (
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Select Year
+                      </label>
+                      <select
+                        value={selectedYear}
+                        onChange={(e) => setSelectedYear(e.target.value)}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary-500 focus:border-primary-500"
+                      >
+                        <option value="">-- Select Year --</option>
+                        {Array.from({ length: 10 }, (_, i) => {
+                          const year = new Date().getFullYear() - i;
+                          return (
+                            <option key={year} value={year}>
+                              {year}
+                            </option>
+                          );
+                        })}
+                      </select>
+                    </div>
+                  )}
+
+                  {/* Generate Button */}
+                  <div className="flex items-end">
+                    <button
+                      onClick={handleGenerateReport}
+                      disabled={loading}
+                      className="w-full px-4 py-2 bg-primary-600 text-white rounded-md hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+                    >
+                      {loading ? 'Generating...' : 'Generate Report'}
+                    </button>
+                  </div>
+                </div>
+              )}
 
               <div className="flex justify-right gap-2 px-6">
                 <button onClick={handlePrint} className="no-print px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700">
@@ -242,15 +641,33 @@ const IncomeReport = () => {
               <div id="printable-report" ref={reportRef} className="bg-white shadow sm:rounded-lg">
                 {/* Header */}
 
-                <div className="bg-white shadow sm:rounded-lg p-6 text-center">
+                <div className="bg-white shadow sm:rounded-lg p-6 text-center relative">
+                  {selectedBusiness?.logo_url && (
+                    <div className="absolute top-6 left-6 hidden print:block">
+                      <img
+                        src={`${import.meta.env.VITE_BACKEND_URL}${selectedBusiness.logo_url}`}
+                        alt="Company Logo"
+                        className="h-16 w-auto object-contain"
+                        crossOrigin="anonymous" // Helpful for html2canvas
+                      />
+                    </div>
+                  )}
+                  {/* Also show for screen view if desired, but request says pdf/print. We can keep it simple or show always. 
+                      Let's show it always in the header if it exists, styling it nicely. 
+                  */}
+
+
                   <h2 className="text-xl font-bold text-gray-900 mb-2">{businessName}</h2>
                   <h3 className="text-lg font-semibold text-gray-700 mb-2">Income Statement</h3>
                   <p className="text-sm text-gray-600">
-                    {fromDate === toDate
+                    {rangeType === 'year' && `Year: ${selectedYear}`}
+                    {rangeType === 'month' && `Month: ${formatMonth(fromMonth)} to ${formatMonth(toMonth)}`}
+                    {rangeType === 'date' && (fromDate === toDate
                       ? `Date: ${formatDate(fromDate)}`
-                      : `Period: ${formatDate(fromDate)} to ${formatDate(toDate)}`}
+                      : `Date: ${formatDate(fromDate)} to ${formatDate(toDate)}`)}
+                    {!rangeType && `${formatMonth(fromMonth)} to ${formatMonth(toMonth)}`}
                   </p>
-                  <p className="text-sm text-gray-500 mt-1">Generated on {currentDate}</p>
+
                 </div>
 
                 {/* Income Table */}
@@ -352,6 +769,7 @@ const IncomeReport = () => {
                     </span>
                   </div>
                 </div>
+                <p className="text-sm text-gray-500 m-2 flex justify-end">Generated on {currentDate}</p>
               </div>
             ) : (
               !loading && (
@@ -367,6 +785,13 @@ const IncomeReport = () => {
               </div>
             )}
             <style>{`
+            @keyframes fadeIn {
+              from { opacity: 0; transform: translateY(-10px); }
+              to { opacity: 1; transform: translateY(0); }
+            }
+            .animate-fadeIn {
+              animation: fadeIn 0.3s ease-out forwards;
+            }
             @media print {
               .no-print, .relative.z-20, .absolute.inset-0, button, input { display: none !important; }
               body { visibility: hidden; background: white; }

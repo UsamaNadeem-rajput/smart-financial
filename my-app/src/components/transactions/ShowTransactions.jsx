@@ -24,6 +24,30 @@ function formatAmount(val) {
   });
 }
 
+// Helper to convert image URL to data URL using proxy endpoint (bypasses CORS for print/PDF)
+async function getImageAsDataUrl(logoPath, backendUrl) {
+  try {
+    // Extract filename from the logo path (e.g., "/logoupload/filename.png" -> "filename.png")
+    const filename = logoPath.split('/').pop();
+    // Use the proxy endpoint which has CORS headers
+    const proxyUrl = `${backendUrl}/api/business/logo-proxy/${filename}`;
+
+    const response = await fetch(proxyUrl, { credentials: 'include' });
+    if (!response.ok) throw new Error('Failed to fetch image');
+    const blob = await response.blob();
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onloadend = () => resolve(reader.result);
+      reader.onerror = reject;
+      reader.readAsDataURL(blob);
+    });
+  } catch (error) {
+    console.error('Error converting image to data URL:', error);
+    return null;
+  }
+}
+
+
 export default function TransactionEntryTable() {
   const [fromDate, setFromDate] = useState(getLocalDateString());
   const [toDate, setToDate] = useState(getLocalDateString());
@@ -88,7 +112,7 @@ export default function TransactionEntryTable() {
     setTotals({ debit: 0, credit: 0 });
   }, [selectedBusiness]);
 
-  const handlePrint = () => {
+  const handlePrint = async () => {
     const printWindow = window.open("", "", "height=600,width=800");
     const grouped = entries.reduce((acc, entry) => {
       if (!acc[entry.frontend_transaction_id])
@@ -97,48 +121,123 @@ export default function TransactionEntryTable() {
       return acc;
     }, {});
 
+    const logoPath = selectedBusiness?.logo_url;
+    const backendUrl = import.meta.env.VITE_BACKEND_URL;
+
+    // Convert logo to data URL using proxy endpoint to bypass CORS
+    let logoDataUrl = null;
+    if (logoPath) {
+      logoDataUrl = await getImageAsDataUrl(logoPath, backendUrl);
+    }
+
     printWindow.document.write(`
       <html>
         <head>
-          <title>Print Transactions</title>
-          <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" />
+          <title>General Journal - ${selectedBusiness?.business_name || "Report"}</title>
           <style>
+            * { margin: 0; padding: 0; box-sizing: border-box; }
+            body { font-family: 'Segoe UI', Arial, sans-serif; padding: 20px; color: #333; }
+            .print-header { 
+              display: flex; 
+              align-items: center; 
+              margin-bottom: 25px; 
+              padding-bottom: 15px;
+              border-bottom: 2px solid #4169e1;
+            }
+            .logo-container { 
+              width: 80px; 
+              height: 80px; 
+              display: flex; 
+              align-items: center; 
+              justify-content: center;
+              margin-right: 20px;
+            }
+            .logo { 
+              max-height: 70px; 
+              max-width: 70px; 
+              object-fit: contain; 
+            }
+            .header-center { 
+              flex-grow: 1; 
+              text-align: center; 
+            }
+            .business-name { 
+              font-size: 22px; 
+              font-weight: bold; 
+              color: #1a1a2e;
+              margin-bottom: 5px;
+            }
+            .report-title { 
+              font-size: 16px; 
+              color: #4169e1;
+              font-weight: 600;
+            }
+            .date-range {
+              font-size: 12px;
+              color: #666;
+              margin-top: 3px;
+            }
+            .header-right { 
+              text-align: right; 
+              font-size: 11px; 
+              color: #666;
+              min-width: 100px;
+            }
+            table { width: 100%; border-collapse: collapse; margin-top: 15px; }
+            th { 
+              background-color: #4169e1; 
+              color: #fff; 
+              padding: 10px 8px; 
+              text-align: left; 
+              font-size: 13px;
+              font-weight: 600;
+            }
+            td { 
+              padding: 8px; 
+              border: 1px solid #ddd; 
+              font-size: 12px; 
+            }
+            .transaction-total-row { 
+              background-color: #e8f0fe; 
+              font-weight: 600; 
+            }
+            .total-row { 
+              background-color: #4169e1; 
+              color: white;
+              font-weight: bold; 
+            }
+            .total-row td {
+              border-color: #4169e1;
+            }
+            .separator-row td { border: none; padding: 4px; }
+            .text-right { text-align: right; }
             @media print {
-              body { font-family: Arial, sans-serif; margin: 20px; }
-              .print-header { display: flex !important; justify-content: space-between; align-items: center; margin-bottom: 20px; }
-              .print-header h2 { color: #1e90ff; font-size: 24px; margin: 0; }
-              .print-header .business-name { font-size: 18px; text-align: center; flex-grow: 1; }
-              .print-header .date { font-size: 12px; text-align: right; }
-              .table { width: 100%; border-collapse: collapse; }
-              .table th, .table td { border: 1px solid #000; padding: 8px; text-align: left; }
-              .table th { background-color: #4169e1; color: #fff; font-size: 14px; }
-              .table td { font-size: 12px; }
-              .table th:first-child, .table td:first-child { width: 120px; max-width: 120px; }
-              .transaction-total-row { background-color: #e6f3ff; font-weight: bold; }
-              .total-row { border-top: 2px solid black; border-bottom: 2px solid black; font-weight: bold; }
-              .separator-row td { border: none; padding: 4px; }
+              body { padding: 10px; }
             }
           </style>
         </head>
         <body>
           <div class="print-header">
-            <h2>FinanceFlow</h2>
-            <div class="business-name">
-              <h4>${selectedBusiness?.business_name || "Your Business Name"
-      }</h4>
-              <div class="text-center">General Journal</div>
+            <div class="logo-container">
+              ${logoDataUrl ? `<img src="${logoDataUrl}" class="logo" alt="Logo" id="printLogo" />` : '<div style="font-size: 24px; color: #4169e1; font-weight: bold;">SF</div>'}
             </div>
-            <div class="date">${new Date().toLocaleDateString()}</div>
+            <div class="header-center">
+              <div class="business-name">${selectedBusiness?.business_name || "Your Business Name"}</div>
+              <div class="report-title">General Journal</div>
+              <div class="date-range">${fromDate} to ${toDate}</div>
+            </div>
+            <div class="header-right">
+              <div>Generated on:</div>
+              <div>${new Date().toLocaleDateString()}</div>
+            </div>
           </div>
-            <div style="width: 50px;"></div>
-          </div>
-          <table class="table table-bordered">
-            <thead class="table-dark">
+          <table>
+            <thead>
               <tr>
-                <th>Transaction ID / Date</th>
+                <th style="width: 120px;">Transaction ID / Date</th>
                 <th>Ledger Name</th>
-                <th>Debit</th>
-                <th>Credit</th>
+                <th style="width: 100px; text-align: right;">Debit</th>
+                <th style="width: 100px; text-align: right;">Credit</th>
               </tr>
             </thead>
             <tbody>
@@ -150,31 +249,26 @@ export default function TransactionEntryTable() {
           printWindow.document.write(`
           <tr class="${entry.isTotal ? "transaction-total-row" : ""}">
             ${idx === 0 && !entry.isTotal
-              ? `<td rowspan="${group.length
-              }">${frontend_transaction_id}<br><span style="font-size: 0.8em; color: #888;">${entry.transaction_date || "No Date"
-              }</span></td>`
+              ? `<td rowspan="${group.length}">${frontend_transaction_id}<br><span style="font-size: 0.8em; color: #888;">${entry.transaction_date || "No Date"}</span></td>`
               : ""
             }
             <td>${entry.account_name}</td>
-            <td>${formatAmount(entry.debit)}</td>
-            <td>${formatAmount(entry.credit)}</td>
+            <td style="text-align: right;">${formatAmount(entry.debit)}</td>
+            <td style="text-align: right;">${formatAmount(entry.credit)}</td>
           </tr>
         `);
         });
         if (groupIndex < Object.keys(grouped).length - 1) {
-          printWindow.document.write(`
-          <tr class="separator-row"><td colspan="4"></td></tr>
-
-        `);
+          printWindow.document.write(`<tr class="separator-row"><td colspan="4"></td></tr>`);
         }
       }
     );
 
     printWindow.document.write(`
           <tr class="total-row">
-            <td colspan="2" class="text-right">Total</td>
-            <td>${formatAmount(totals.debit)}</td>
-            <td>${formatAmount(totals.credit)}</td>
+            <td colspan="2" class="text-right" style="text-align: right; font-weight: bold;">Grand Total</td>
+            <td style="text-align: right;">${formatAmount(totals.debit)}</td>
+            <td style="text-align: right;">${formatAmount(totals.credit)}</td>
           </tr>
         </tbody>
       </table>
@@ -183,135 +277,201 @@ export default function TransactionEntryTable() {
     `);
 
     printWindow.document.close();
+
+    // Wait for image to load before printing
+    if (logoDataUrl) {
+      const img = printWindow.document.getElementById('printLogo');
+      if (img) {
+        await new Promise((resolve) => {
+          if (img.complete) {
+            resolve();
+          } else {
+            img.onload = resolve;
+            img.onerror = resolve;
+          }
+        });
+        // Small delay to ensure rendering is complete
+        await new Promise(resolve => setTimeout(resolve, 300));
+      }
+    }
+
     printWindow.focus();
     printWindow.print();
     printWindow.close();
   };
 
-  const handleSavePDF = () => {
+  const handleSavePDF = async () => {
     const doc = new jsPDF();
     const pageWidth = doc.internal.pageSize.getWidth();
-    let y = 20;
+    let y = 15;
 
-    const addHeader = (callback) => {
-      doc.setFontSize(18);
-      doc.setTextColor(30, 144, 255);
-      doc.text("Smart Financial", 10, y);
+    const logoPath = selectedBusiness?.logo_url;
+    const backendUrl = import.meta.env.VITE_BACKEND_URL;
 
-      doc.setFontSize(14);
-      doc.setTextColor(0, 0, 0);
-      doc.text(
-        selectedBusiness?.business_name || "Your Business Name",
-        pageWidth / 2,
-        y,
-        { align: "center" }
-      );
+    // Convert logo to data URL using proxy endpoint to bypass CORS
+    let logoDataUrl = null;
+    if (logoPath) {
+      logoDataUrl = await getImageAsDataUrl(logoPath, backendUrl);
+    }
 
+    // === HEADER SECTION ===
+    const headerY = y;
+    const logoWidth = 25;
+    let logoHeight = 25;
+
+    // Add logo on the left
+    if (logoDataUrl) {
+      try {
+        const img = new Image();
+        img.src = logoDataUrl;
+        await new Promise((resolve, reject) => {
+          img.onload = resolve;
+          img.onerror = reject;
+        });
+        logoHeight = (img.height * logoWidth) / img.width;
+        doc.addImage(logoDataUrl, 'PNG', 10, headerY - 5, logoWidth, logoHeight);
+      } catch (e) {
+        console.error('Failed to add logo to PDF:', e);
+        // Fallback: Draw placeholder box
+        doc.setFillColor(65, 105, 225);
+        doc.rect(10, headerY - 5, logoWidth, logoWidth, 'F');
+        doc.setTextColor(255, 255, 255);
+        doc.setFontSize(10);
+        doc.text("SF", 10 + logoWidth / 2, headerY + 8, { align: "center" });
+      }
+    } else {
+      // Draw placeholder for no logo
+      doc.setFillColor(65, 105, 225);
+      doc.rect(10, headerY - 5, logoWidth, logoWidth, 'F');
+      doc.setTextColor(255, 255, 255);
       doc.setFontSize(10);
-      doc.text(`Date: ${new Date().toLocaleDateString()}`, pageWidth - 10, y, {
-        align: "right",
-      });
+      doc.text("SF", 10 + logoWidth / 2, headerY + 8, { align: "center" });
+    }
 
-      callback();
-    };
+    // Business name and report title (centered)
+    doc.setTextColor(0, 0, 0);
+    doc.setFontSize(16);
+    doc.setFont(undefined, "bold");
+    doc.text(
+      selectedBusiness?.business_name || "Your Business Name",
+      pageWidth / 2,
+      headerY,
+      { align: "center" }
+    );
 
-    const buildTable = () => {
-      const grouped = entries.reduce((acc, entry) => {
-        if (!acc[entry.frontend_transaction_id])
-          acc[entry.frontend_transaction_id] = [];
-        acc[entry.frontend_transaction_id].push(entry);
-        return acc;
-      }, {});
+    doc.setFontSize(12);
+    doc.setFont(undefined, "normal");
+    doc.setTextColor(65, 105, 225);
+    doc.text("General Journal", pageWidth / 2, headerY + 7, { align: "center" });
 
-      const tableRows = [];
+    doc.setFontSize(9);
+    doc.setTextColor(100, 100, 100);
+    doc.text(`${fromDate} to ${toDate}`, pageWidth / 2, headerY + 13, { align: "center" });
 
-      Object.entries(grouped).forEach(
-        ([frontend_transaction_id, group], groupIndex) => {
-          group.forEach((entry, idx) => {
-            tableRows.push([
-              idx === 0 && !entry.isTotal
-                ? `${frontend_transaction_id}\n(${entry.transaction_date || "No Date"
-                })`
-                : "",
-              entry.account_name,
-              formatAmount(entry.debit),
-              formatAmount(entry.credit),
-              entry.isTotal ? "transaction-total-row" : "",
-            ]);
-          });
-          if (groupIndex < Object.keys(grouped).length - 1) {
-            tableRows.push(["", "", "", "", ""]);
-          }
+    // Date info on the right
+    doc.setFontSize(8);
+    doc.setTextColor(100, 100, 100);
+    doc.text(`Generated on: ${new Date().toLocaleDateString()}`, pageWidth - 10, headerY, { align: "right" });
+
+    // Draw header separator line
+    const lineY = Math.max(headerY + logoHeight, headerY + 18);
+    doc.setDrawColor(65, 105, 225);
+    doc.setLineWidth(0.5);
+    doc.line(10, lineY, pageWidth - 10, lineY);
+
+    y = lineY + 5;
+
+    // Build table
+    const grouped = entries.reduce((acc, entry) => {
+      if (!acc[entry.frontend_transaction_id])
+        acc[entry.frontend_transaction_id] = [];
+      acc[entry.frontend_transaction_id].push(entry);
+      return acc;
+    }, {});
+
+    const tableRows = [];
+
+    Object.entries(grouped).forEach(
+      ([frontend_transaction_id, group], groupIndex) => {
+        group.forEach((entry, idx) => {
+          tableRows.push([
+            idx === 0 && !entry.isTotal
+              ? `${frontend_transaction_id}\n(${entry.transaction_date || "No Date"
+              })`
+              : "",
+            entry.account_name,
+            formatAmount(entry.debit),
+            formatAmount(entry.credit),
+            entry.isTotal ? "transaction-total-row" : "",
+          ]);
+        });
+        if (groupIndex < Object.keys(grouped).length - 1) {
+          tableRows.push(["", "", "", "", ""]);
         }
-      );
+      }
+    );
 
-      tableRows.push([
-        "",
-        "Total",
-        formatAmount(totals.debit),
-        formatAmount(totals.credit),
-        "",
-      ]);
+    tableRows.push([
+      "",
+      "Total",
+      formatAmount(totals.debit),
+      formatAmount(totals.credit),
+      "",
+    ]);
 
-      let totalRowIndex = tableRows.length - 1;
+    let totalRowIndex = tableRows.length - 1;
 
-      autoTable(doc, {
-        startY: y + 10,
-        head: [["Transaction ID/  Date", "Ledger Name", "Debit", "Credit"]],
-        body: tableRows,
-        columnStyles: {
-          0: { cellWidth: 35 }, // Transaction ID/Date column - reduced width
-          1: { cellWidth: "auto" }, // Ledger Name column - auto width
-          2: { cellWidth: 25 }, // Debit column
-          3: { cellWidth: 25 }, // Credit column
-        },
-        styles: {
-          fontSize: 12,
-          textColor: [0, 0, 0],
-        },
-        headStyles: {
-          fillColor: [65, 105, 225],
-          textColor: [255, 255, 255],
-        },
-        didDrawCell: (data) => {
-          // Check if this is a "Total for Transaction" row by checking the account name
-          if (
-            data.section === "body" &&
-            data.row.raw[1] &&
-            data.row.raw[1].includes("Total for Transaction")
-          ) {
-            // Make the text bold for transaction total rows
-            doc.setFont(undefined, "bold");
-            doc.setFontSize(12);
-          } else {
-            // Reset to normal font for other rows
-            doc.setFont(undefined, "normal");
-            doc.setFontSize(12);
-          }
+    autoTable(doc, {
+      startY: y + 10,
+      head: [["Transaction ID/  Date", "Ledger Name", "Debit", "Credit"]],
+      body: tableRows,
+      columnStyles: {
+        0: { cellWidth: 35 },
+        1: { cellWidth: "auto" },
+        2: { cellWidth: 25 },
+        3: { cellWidth: 25 },
+      },
+      styles: {
+        fontSize: 12,
+        textColor: [0, 0, 0],
+      },
+      headStyles: {
+        fillColor: [65, 105, 225],
+        textColor: [255, 255, 255],
+      },
+      didDrawCell: (data) => {
+        if (
+          data.section === "body" &&
+          data.row.raw[1] &&
+          data.row.raw[1].includes("Total for Transaction")
+        ) {
+          doc.setFont(undefined, "bold");
+          doc.setFontSize(12);
+        } else {
+          doc.setFont(undefined, "normal");
+          doc.setFontSize(12);
+        }
 
-          if (
-            data.section === "body" &&
-            data.row.raw.every((cell) => cell === "")
-          ) {
-            const { x, y, width } = data.cell;
-            doc.setDrawColor(0, 0, 0);
-            doc.setLineWidth(0.5);
-            doc.line(x, y, x + width, y);
-          }
-          if (data.section === "body" && data.row.index === totalRowIndex) {
-            const { x, y, width, height } = data.cell;
-            doc.setDrawColor(0, 0, 0);
-            doc.setLineWidth(0.5);
-            doc.line(x, y, x + width, y);
-            doc.line(x, y + height, x + width, y + height);
-          }
-        },
-      });
+        if (
+          data.section === "body" &&
+          data.row.raw.every((cell) => cell === "")
+        ) {
+          const { x, y, width } = data.cell;
+          doc.setDrawColor(0, 0, 0);
+          doc.setLineWidth(0.5);
+          doc.line(x, y, x + width, y);
+        }
+        if (data.section === "body" && data.row.index === totalRowIndex) {
+          const { x, y, width, height } = data.cell;
+          doc.setDrawColor(0, 0, 0);
+          doc.setLineWidth(0.5);
+          doc.line(x, y, x + width, y);
+          doc.line(x, y + height, x + width, y + height);
+        }
+      },
+    });
 
-      doc.save(`transactions_${fromDate}_to_${toDate}.pdf`);
-    };
-
-    addHeader(buildTable);
+    doc.save(`transactions_${fromDate}_to_${toDate}.pdf`);
   };
 
   const navigate = useNavigate();
