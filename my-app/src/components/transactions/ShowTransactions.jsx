@@ -24,6 +24,22 @@ function formatAmount(val) {
   });
 }
 
+// Helper to format date as YYYY-mmm-DD (e.g., 2024-jan-27)
+function formatCustomDate(dateStr) {
+  if (!dateStr) return "";
+  const parts = dateStr.split('-');
+  if (parts.length !== 3) return dateStr;
+  const year = parts[0];
+  const monthIndex = parseInt(parts[1], 10) - 1;
+  const day = parts[2];
+
+  const monthNames = ["jan", "feb", "mar", "apr", "may", "jun", "jul", "aug", "sep", "oct", "nov", "dec"];
+  if (monthIndex < 0 || monthIndex > 11) return dateStr;
+  const month = monthNames[monthIndex];
+
+  return `${year}-${month}-${day}`;
+}
+
 // Helper to convert image URL to data URL using proxy endpoint (bypasses CORS for print/PDF)
 async function getImageAsDataUrl(logoPath, backendUrl) {
   try {
@@ -133,7 +149,6 @@ export default function TransactionEntryTable() {
     printWindow.document.write(`
       <html>
         <head>
-          <title>General Journal - ${selectedBusiness?.business_name || "Report"}</title>
           <style>
             * { margin: 0; padding: 0; box-sizing: border-box; }
             body { font-family: 'Segoe UI', Arial, sans-serif; padding: 20px; color: #333; }
@@ -212,7 +227,8 @@ export default function TransactionEntryTable() {
             .separator-row td { border: none; padding: 4px; }
             .text-right { text-align: right; }
             @media print {
-              body { padding: 10px; }
+              @page { margin: 0; }
+              body { margin: 2cm; }
             }
           </style>
         </head>
@@ -224,11 +240,11 @@ export default function TransactionEntryTable() {
             <div class="header-center">
               <div class="business-name">${selectedBusiness?.business_name || "Your Business Name"}</div>
               <div class="report-title">General Journal</div>
-              <div class="date-range">${fromDate} to ${toDate}</div>
+              <div class="date-range">${formatCustomDate(fromDate)} to ${formatCustomDate(toDate)}</div>
             </div>
             <div class="header-right">
               <div>Generated on:</div>
-              <div>${new Date().toLocaleDateString()}</div>
+              <div>${formatCustomDate(getLocalDateString())}</div>
             </div>
           </div>
           <table>
@@ -249,7 +265,7 @@ export default function TransactionEntryTable() {
           printWindow.document.write(`
           <tr class="${entry.isTotal ? "transaction-total-row" : ""}">
             ${idx === 0 && !entry.isTotal
-              ? `<td rowspan="${group.length}">${frontend_transaction_id}<br><span style="font-size: 0.8em; color: #888;">${entry.transaction_date || "No Date"}</span></td>`
+              ? `<td rowspan="${group.length}">${frontend_transaction_id}<br><span style="font-size: 0.8em; color: #888;">${formatCustomDate(entry.transaction_date) || "No Date"}</span></td>`
               : ""
             }
             <td>${entry.account_name}</td>
@@ -296,8 +312,15 @@ export default function TransactionEntryTable() {
     }
 
     printWindow.focus();
-    printWindow.print();
-    printWindow.close();
+
+    // Fix: Wait for content to render, then print. Use onafterprint to close.
+    setTimeout(() => {
+      printWindow.print();
+    }, 500);
+
+    printWindow.onafterprint = () => {
+      printWindow.close();
+    };
   };
 
   const handleSavePDF = async () => {
@@ -333,19 +356,19 @@ export default function TransactionEntryTable() {
       } catch (e) {
         console.error('Failed to add logo to PDF:', e);
         // Fallback: Draw placeholder box
-        doc.setFillColor(65, 105, 225);
+        doc.setFillColor(255, 255, 255);
         doc.rect(10, headerY - 5, logoWidth, logoWidth, 'F');
-        doc.setTextColor(255, 255, 255);
-        doc.setFontSize(10);
-        doc.text("SF", 10 + logoWidth / 2, headerY + 8, { align: "center" });
+        doc.setTextColor(65, 105, 225);
+        doc.setFontSize(16);
+        doc.text("KF", 10 + logoWidth / 2, headerY + 8, { align: "center" });
       }
     } else {
       // Draw placeholder for no logo
-      doc.setFillColor(65, 105, 225);
+      doc.setFillColor(255, 255, 255);
       doc.rect(10, headerY - 5, logoWidth, logoWidth, 'F');
-      doc.setTextColor(255, 255, 255);
-      doc.setFontSize(10);
-      doc.text("SF", 10 + logoWidth / 2, headerY + 8, { align: "center" });
+      doc.setTextColor(65, 105, 225);
+      doc.setFontSize(16);
+      doc.text("KF", 10 + logoWidth / 2, headerY + 8, { align: "center" });
     }
 
     // Business name and report title (centered)
@@ -366,12 +389,13 @@ export default function TransactionEntryTable() {
 
     doc.setFontSize(9);
     doc.setTextColor(100, 100, 100);
-    doc.text(`${fromDate} to ${toDate}`, pageWidth / 2, headerY + 13, { align: "center" });
+
+    doc.text(`${formatCustomDate(fromDate)} to ${formatCustomDate(toDate)}`, pageWidth / 2, headerY + 13, { align: "center" });
 
     // Date info on the right
     doc.setFontSize(8);
     doc.setTextColor(100, 100, 100);
-    doc.text(`Generated on: ${new Date().toLocaleDateString()}`, pageWidth - 10, headerY, { align: "right" });
+    doc.text(`Generated on: ${formatCustomDate(getLocalDateString())}`, pageWidth - 10, headerY, { align: "right" });
 
     // Draw header separator line
     const lineY = Math.max(headerY + logoHeight, headerY + 18);
@@ -396,7 +420,7 @@ export default function TransactionEntryTable() {
         group.forEach((entry, idx) => {
           tableRows.push([
             idx === 0 && !entry.isTotal
-              ? `${frontend_transaction_id}\n(${entry.transaction_date || "No Date"
+              ? `${frontend_transaction_id}\n(${formatCustomDate(entry.transaction_date) || "No Date"
               })`
               : "",
             entry.account_name,

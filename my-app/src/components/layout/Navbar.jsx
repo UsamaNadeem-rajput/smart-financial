@@ -93,7 +93,7 @@ const Navbar = () => {
         {
           name: "Balance Sheet",
           href: "/balance-sheet",
-          icon: Scale,
+          icon: FileText,
         }
 
       ],
@@ -116,17 +116,8 @@ const Navbar = () => {
         <div className="flex justify-between h-16">
           {/* Logo and main navigation */}
           <div className="flex">
-            {/* <div className="flex-shrink-0 flex items-center">
-              <Link
-                to="/list"
-                className="lg:text-2xl font-bold lg:text-primary-600"
-              >
-                Smart Financial
-              </Link>
-            </div> */}
-            {/* Logo and Business Name grouped together */}
             <div>
-              <img src="/final.png" onClick={() => navigate("/")} alt="Logo" className="h-16 w-auto mr-2" />
+              <img src="/final.png" onClick={() => navigate("/")} alt="Logo" className="h-16 w-auto mr-2 cursor-pointer " />
             </div>
 
             {selectedBusiness && (

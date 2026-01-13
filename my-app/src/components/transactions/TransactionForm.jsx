@@ -202,13 +202,21 @@ export default function TransectionForm() {
   };
 
   const handleSaveAndClose = () => {
-
-
+    playSound();
     setIsLoading(true);
     setSubmitMode("close");
     handleSubmit(async () => {
       await incrementNumber();
-      window.history.back();
+      // Reset form on success so the background is clean
+      setRows([
+        { accountName: "", debit: "", credit: "" },
+        { accountName: "", debit: "", credit: "" },
+      ]);
+      setSuggestions([]);
+      setShowSuggestionsIdx(null);
+      setDate(getLocalDateString());
+      setTime(new Date().toLocaleTimeString());
+      // Do NOT navigate back here; wait for "Close" on popup
     });
   };
 
@@ -651,23 +659,25 @@ export default function TransectionForm() {
                   </div>
                 </div>
                 <div className="d-flex justify-content-end gap-2">
-                  <button
-                    className={`btn ${submitMode === "new" ? "btn-success" : "btn-outline-success"}`}
-                    onClick={async () => {
-                      setShowSuccess(false);
-                      await incrementNumber();
-                      setRows([
-                        { accountName: "", debit: "", credit: "" },
-                        { accountName: "", debit: "", credit: "" },
-                      ]);
-                      setSuggestions([]);
-                      setShowSuggestionsIdx(null);
-                      setDate(getLocalDateString());
-                      setTime(new Date().toLocaleTimeString());
-                    }}
-                  >
-                    Add Another
-                  </button>
+                  {submitMode !== 'close' && (
+                    <button
+                      className={`btn ${submitMode === "new" ? "btn-success" : "btn-outline-success"}`}
+                      onClick={async () => {
+                        setShowSuccess(false);
+                        await incrementNumber();
+                        setRows([
+                          { accountName: "", debit: "", credit: "" },
+                          { accountName: "", debit: "", credit: "" },
+                        ]);
+                        setSuggestions([]);
+                        setShowSuggestionsIdx(null);
+                        setDate(getLocalDateString());
+                        setTime(new Date().toLocaleTimeString());
+                      }}
+                    >
+                      Add Another
+                    </button>
+                  )}
                   <button
                     className={`btn ${submitMode === "close" ? "btn-primary" : "btn-outline-primary"}`}
                     onClick={async () => {

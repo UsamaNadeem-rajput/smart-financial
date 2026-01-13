@@ -22,8 +22,10 @@ import {
   Sparkles,
   ChevronDown,
   User,
+  Menu,
+  X,
 } from "lucide-react";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import { ref, runTransaction, onValue } from "firebase/database";
 import { db } from "../Visister/firebase";
 
@@ -506,6 +508,7 @@ const LandingPage = () => {
   const navigate = useNavigate();
   const [user, setUser] = useState(null);
   const [scrollY, setScrollY] = useState(0);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   // Track visit on mount
   // Visitor & Click Tracking Logic
@@ -591,7 +594,7 @@ const LandingPage = () => {
               />
             </motion.div>
             <motion.div
-              className="flex items-center space-x-4"
+              className="hidden md:flex items-center space-x-4"
               initial={{ opacity: 0, x: 20 }}
               animate={{ opacity: 1, x: 0 }}
               transition={{ duration: 0.5, delay: 0.2 }}
@@ -638,8 +641,89 @@ const LandingPage = () => {
                 </>
               )}
             </motion.div>
+
+            {/* Mobile Menu Button */}
+            <div className="md:hidden flex items-center">
+              <button
+                onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+                className="text-gray-600 hover:text-gray-900 focus:outline-none p-2"
+              >
+                {isMobileMenuOpen ? (
+                  <X className="h-6 w-6" />
+                ) : (
+                  <Menu className="h-6 w-6" />
+                )}
+              </button>
+            </div>
           </div>
         </div>
+
+        {/* Mobile Menu Dropdown */}
+        <AnimatePresence>
+          {isMobileMenuOpen && (
+            <motion.div
+              initial={{ opacity: 0, height: 0 }}
+              animate={{ opacity: 1, height: "auto" }}
+              exit={{ opacity: 0, height: 0 }}
+              className="md:hidden bg-white border-t border-gray-100 overflow-hidden"
+            >
+              <div className="px-4 pt-2 pb-6 space-y-3">
+                {user ? (
+                  <>
+                    <div className="flex items-center space-x-3 px-3 py-3 bg-gray-50 rounded-lg border border-gray-100 mb-4">
+                      <div className="bg-primary-100 p-2 rounded-full">
+                        <User className="w-5 h-5 text-primary-600" />
+                      </div>
+                      <div>
+                        <p className="text-sm font-medium text-gray-900">Signed in as</p>
+                        <p className="text-sm font-bold text-primary-600 truncate max-w-[200px]">{user}</p>
+                      </div>
+                    </div>
+
+                    <button
+                      onClick={() => {
+                        navigate("/list");
+                        setIsMobileMenuOpen(false);
+                      }}
+                      className="w-full text-left flex items-center space-x-3 px-3 py-3 rounded-lg text-gray-700 hover:bg-gray-50 font-medium transition-colors border border-transparent hover:border-gray-200"
+                    >
+                      <BarChart3 className="w-5 h-5 text-gray-400" />
+                      <span>Dashboard</span>
+                    </button>
+
+                    <button
+                      onClick={() => {
+                        handleLogout();
+                        setIsMobileMenuOpen(false);
+                      }}
+                      className="w-full text-left flex items-center space-x-3 px-3 py-3 rounded-lg text-red-600 hover:bg-red-50 font-medium transition-colors border border-transparent hover:border-red-100"
+                    >
+                      <div className="w-5 h-5" /> {/* Spacer alignment */}
+                      <span>Logout</span>
+                    </button>
+                  </>
+                ) : (
+                  <div className="flex flex-col space-y-3 pt-2">
+                    <Link
+                      to="/login"
+                      onClick={() => setIsMobileMenuOpen(false)}
+                      className="w-full text-center px-4 py-3 border border-gray-300 rounded-lg text-gray-700 font-medium hover:bg-gray-50 transition-colors"
+                    >
+                      Sign In
+                    </Link>
+                    <Link
+                      to="/register"
+                      onClick={() => setIsMobileMenuOpen(false)}
+                      className="w-full text-center px-4 py-3 bg-primary-600 text-white rounded-lg font-medium hover:bg-primary-700 shadow-md transition-colors"
+                    >
+                      Get Started
+                    </Link>
+                  </div>
+                )}
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
       </nav>
 
       {/* Enhanced Hero Section */}
@@ -949,10 +1033,10 @@ const LandingPage = () => {
             </motion.div>
           </div>
         </div>
-      </section>
+      </section >
 
       {/* Enhanced Features Section */}
-      <section className="py-20 bg-white relative">
+      < section className="py-20 bg-white relative" >
         <div className="absolute inset-0 bg-gradient-to-r from-blue-50/30 to-purple-50/30"></div>
         <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-16">
@@ -1009,13 +1093,13 @@ const LandingPage = () => {
             })}
           </div>
         </div>
-      </section>
+      </section >
 
       {/* Stats Section */}
-      <StatsSection />
+      < StatsSection />
 
       {/* Enhanced Pricing Section */}
-      <section className="py-20 bg-gradient-to-br from-gray-50 to-blue-50 relative overflow-hidden">
+      < section className="py-20 bg-gradient-to-br from-gray-50 to-blue-50 relative overflow-hidden" >
         <div className="absolute top-0 right-0 w-96 h-96 bg-gradient-to-l from-blue-200 to-transparent rounded-full opacity-20 -translate-y-1/2 translate-x-1/2"></div>
         <div className="absolute bottom-0 left-0 w-96 h-96 bg-gradient-to-r from-purple-200 to-transparent rounded-full opacity-20 translate-y-1/2 -translate-x-1/2"></div>
 
@@ -1126,13 +1210,13 @@ const LandingPage = () => {
             ))}
           </div>
         </div>
-      </section>
+      </section >
 
       {/* Testimonials Section */}
-      <TestimonialsSection />
+      < TestimonialsSection />
 
       {/* Enhanced CTA Banner */}
-      <section className="py-20 bg-gradient-to-r from-gray-900 via-blue-900 to-purple-900 relative overflow-hidden">
+      < section className="py-20 bg-gradient-to-r from-gray-900 via-blue-900 to-purple-900 relative overflow-hidden" >
         <div className="absolute inset-0 bg-black/50"></div>
         <div
           className="absolute inset-0 opacity-20"
@@ -1238,10 +1322,10 @@ const LandingPage = () => {
             </div>
           </motion.div>
         </div>
-      </section>
+      </section >
 
       {/* Enhanced Footer */}
-      <footer className="bg-gradient-to-r from-gray-900 to-gray-800 text-gray-300 py-16">
+      < footer className="bg-gradient-to-r from-gray-900 to-gray-800 text-gray-300 py-16" >
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid grid-cols-1 md:grid-cols-4 gap-8 mb-12">
             <div>
@@ -1420,8 +1504,8 @@ const LandingPage = () => {
             </div>
           </div>
         </div>
-      </footer>
-    </div>
+      </footer >
+    </div >
   );
 };
 

@@ -182,7 +182,9 @@ const BalanceSheet = () => {
         doc.text('Capital', 14, y);
         y += 4;
 
-        const equityRows = data.equity.map(e => [e.name, currency(e.balance)]);
+        const equityRows = data.equity
+            .filter(e => !e.name.includes("Net Profit") && !e.name.includes("Net Loss"))
+            .map(e => [e.name, currency(e.balance)]);
         const totalEquity = data.equity.reduce((sum, item) => sum + item.balance, 0);
         equityRows.push([{ content: 'Total Capital', styles: { fontStyle: 'bold', fillColor: [239, 246, 255] } }, { content: currency(totalEquity), styles: { fontStyle: 'bold', fillColor: [239, 246, 255], halign: 'right' } }]);
 
@@ -419,12 +421,14 @@ const BalanceSheet = () => {
                                             </div>
                                             <div className="divide-y divide-gray-50">
                                                 {data.equity.length > 0 ? (
-                                                    data.equity.map((item, index) => (
-                                                        <div key={index} className="px-6 py-4 flex justify-between items-center hover:bg-gray-50/80 transition-colors">
-                                                            <span className="text-sm font-medium text-gray-600">{item.name}</span>
-                                                            <span className={`text-sm font-bold font-mono ${item.name.includes('Profit') ? 'text-green-600' : item.name.includes('Loss') ? 'text-red-500' : 'text-gray-900'}`}>{currency(item.balance)}</span>
-                                                        </div>
-                                                    ))
+                                                    data.equity
+                                                        .filter(item => !item.name.includes("Net Profit") && !item.name.includes("Net Loss"))
+                                                        .map((item, index) => (
+                                                            <div key={index} className="px-6 py-4 flex justify-between items-center hover:bg-gray-50/80 transition-colors">
+                                                                <span className="text-sm font-medium text-gray-600">{item.name}</span>
+                                                                <span className={`text-sm font-bold font-mono ${item.name.includes('Profit') ? 'text-green-600' : item.name.includes('Loss') ? 'text-red-500' : 'text-gray-900'}`}>{currency(item.balance)}</span>
+                                                            </div>
+                                                        ))
                                                 ) : (
                                                     <div className="px-6 py-8 text-center text-gray-400 text-sm">No capital accounts recorded.</div>
                                                 )}

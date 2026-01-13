@@ -78,7 +78,7 @@ router.get('/:business_id', async (req, res) => {
             JOIN transaction_entries te ON t.transaction_id = te.transaction_id
             JOIN accounts a ON te.account_id = a.account_id
             WHERE t.business_id = ? 
-            AND t.date <= ?
+            AND t.date = ?
             GROUP BY a.account_id, a.account_name, a.type_id
         `;
 
