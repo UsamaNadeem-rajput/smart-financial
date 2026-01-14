@@ -15,13 +15,13 @@ router.get('/next-transaction-id/:business_id', async (req, res) => {
     let conn;
     try {
         conn = await pool.getConnection();
-        
+
         // Get the maximum frontend_transaction_id for this business
         const [rows] = await conn.execute(
             'SELECT COALESCE(MAX(frontend_transaction_id), 0) as max_id FROM transactions WHERE business_id = ?',
             [business_id]
         );
-        
+
         const nextId = (rows[0].max_id || 0) + 1;
         res.json({ success: true, next_transaction_id: nextId });
     } catch (err) {
@@ -56,21 +56,21 @@ async function updateAccountBalances(conn, business_id) {
         let newBalance = 0;
 
         // Check if this is an Assets or Expense account (including subtypes)
-        const isAssetsAccount = account.type_name === 'Assets' || 
-                               account.type_name === 'Fixed Assets' || 
-                               account.type_name === 'Current Assets' || 
-                               account.type_name === 'Other Assets' ||
-                               account.type_id === 3 || // Assets
-                               account.type_id === 4 || // Fixed Assets
-                               account.type_id === 5 || // Current Assets
-                               account.type_id === 11;  // Other Assets
+        const isAssetsAccount = account.type_name === 'Assets' ||
+            account.type_name === 'Fixed Assets' ||
+            account.type_name === 'Current Assets' ||
+            account.type_name === 'Other Assets' ||
+            account.type_id === 3 || // Assets
+            account.type_id === 4 || // Fixed Assets
+            account.type_id === 5 || // Current Assets
+            account.type_id === 11;  // Other Assets
 
-        const isExpenseAccount = account.type_name === 'Expense' || 
-                                account.type_name === 'Other Expenses' ||
-                                account.type_name === 'Cost Of Goods Sold' ||
-                                account.type_id === 2 || // Expense
-                                account.type_id === 13 || // Other Expenses
-                                account.type_id === 14;   // Cost Of Goods Sold
+        const isExpenseAccount = account.type_name === 'Expense' ||
+            account.type_name === 'Other Expenses' ||
+            account.type_name === 'Cost Of Goods Sold' ||
+            account.type_id === 2 || // Expense
+            account.type_id === 13 || // Other Expenses
+            account.type_id === 14;   // Cost Of Goods Sold
 
         if (isAssetsAccount || isExpenseAccount) {
             // For Assets and Expenses: Balance = (add all debits) - (subtract all credits)
@@ -100,18 +100,70 @@ async function updateAccountBalances(conn, business_id) {
     }
 }
 
-// POST /api/transactions
-router.post('/transactions', async (req, res) => {
-    const { transaction_id, business_id, description, debit, credit, date, entries } = req.body;
+/**
+ * Core function to create a transaction.
+ * Can be reused by other backend logic.
+ * @param {Object} conn - Active database connection (must be inside a transaction if caller handles it, or stand-alone)
+ * @param {Object} data - { transaction_id (optional), business_id, description, debit, credit, date, entries }
+ */
+async function createTransactionCore(conn, data) {
+    const { transaction_id, business_id, description, debit, credit, date, entries } = data;
 
-    // Validate input
+    // Validate input (Basic validation, caller should ensure deeper validation)
     if (!business_id || !debit || !credit || !date || !Array.isArray(entries) || entries.length < 2) {
-        return res.status(400).json({ error: 'Missing or invalid fields' });
+        throw new Error('Missing or invalid fields');
     }
 
-    // Validate that debit and credit totals match
-    if (debit !== credit) {
-        return res.status(400).json({ error: 'Debit and credit totals must match' });
+    if (parseFloat(debit) !== parseFloat(credit)) {
+        throw new Error('Debit and credit totals must match');
+    }
+
+    let insertResult;
+    if (transaction_id) {
+        // Insert with provided transaction_id
+        [insertResult] = await conn.execute(
+            'INSERT INTO transactions (frontend_transaction_id, business_id, description, debit, credit, date) VALUES (?, ?, ?, ?, ?, ?)',
+            [transaction_id, business_id, description || '', debit, credit, date]
+        );
+    } else {
+        // Insert and let DB auto-generate transaction_id
+        [insertResult] = await conn.execute(
+            'INSERT INTO transactions (business_id, description, debit, credit, date) VALUES (?, ?, ?, ?, ?)',
+            [business_id, description || '', debit, credit, date]
+        );
+    }
+
+    const new_transaction_id = insertResult.insertId;
+
+    // Insert entries into transaction_entries
+    for (const entry of entries) {
+        if (!entry.account_id || !entry.amount || !entry.type) {
+            throw new Error('Invalid entry in entries');
+        }
+        await conn.execute(
+            'INSERT INTO transaction_entries (transaction_id, account_id, amount, type) VALUES (?, ?, ?, ?)',
+            [new_transaction_id, entry.account_id, entry.amount, entry.type]
+        );
+    }
+
+    // Update account balances after inserting transaction entries
+    await updateAccountBalances(conn, business_id);
+
+    return new_transaction_id;
+}
+
+
+/**
+ * Handles the creation of an opening balance transaction.
+ * @param {number} business_id 
+ * @param {number} ledger_id - The ID of the newly created ledger
+ * @param {number} amount 
+ * @param {string} type - 'debit' or 'credit'
+ * @param {string} date - Transaction date
+ */
+async function handleOpeningBalance(business_id, ledger_id, amount, type, date = new Date()) {
+    if (!amount || amount <= 0 || !['debit', 'credit'].includes(type)) {
+        return; // Nothing to do
     }
 
     let conn;
@@ -119,37 +171,76 @@ router.post('/transactions', async (req, res) => {
         conn = await pool.getConnection();
         await conn.beginTransaction();
 
-        let insertResult;
-        if (transaction_id) {
-            // Insert with provided transaction_id
-            [insertResult] = await conn.execute(
-                'INSERT INTO transactions (frontend_transaction_id, business_id, description, debit, credit, date) VALUES (?, ?, ?, ?, ?, ?)',
-                [transaction_id, business_id, description || '', debit, credit, date]
-            );
+        // 1. Check/Create "Opening Balance Equity" ledger
+        const equityLedgerName = 'Opening Balance Equity';
+        const [existingEquity] = await conn.execute(
+            'SELECT account_id FROM accounts WHERE business_id = ? AND account_name = ?',
+            [business_id, equityLedgerName]
+        );
+
+        let equityLedgerId;
+
+        if (existingEquity.length > 0) {
+            equityLedgerId = existingEquity[0].account_id;
         } else {
-            // Insert and let DB auto-generate transaction_id
-            [insertResult] = await conn.execute(
-                'INSERT INTO transactions (business_id, description, debit, credit, date) VALUES (?, ?, ?, ?, ?)',
-                [business_id, description || '', debit, credit, date]
+            // Create it. Type ID 9 is Equity.
+            const [createResult] = await conn.execute(
+                'INSERT INTO accounts (account_name, type_id, business_id, description) VALUES (?, ?, ?, ?)',
+                [equityLedgerName, 9, business_id, 'System generated account for opening balances']
             );
+            equityLedgerId = createResult.insertId;
         }
 
-        const new_transaction_id = insertResult.insertId;
+        // 1.5 Get Next Transaction ID
+        const [idRows] = await conn.execute(
+            'SELECT COALESCE(MAX(frontend_transaction_id), 0) as max_id FROM transactions WHERE business_id = ?',
+            [business_id]
+        );
+        const nextId = (idRows[0].max_id || 0) + 1;
 
-        // Insert entries into transaction_entries
-        for (const entry of entries) {
-            if (!entry.account_id || !entry.amount || !entry.type) {
-                await conn.rollback();
-                return res.status(400).json({ error: 'Invalid entry in entries' });
-            }
-            await conn.execute(
-                'INSERT INTO transaction_entries (transaction_id, account_id, amount, type) VALUES (?, ?, ?, ?)',
-                [new_transaction_id, entry.account_id, entry.amount, entry.type]
-            );
-        }
+        // 2. Prepare Transaction
+        // If User Ledger is Dr, Equity is Cr. And vice versa.
+        const userEntryType = type; // 'debit' or 'credit'
+        const equityEntryType = type === 'debit' ? 'credit' : 'debit';
 
-        // Update account balances after inserting transaction entries
-        await updateAccountBalances(conn, business_id);
+        const transactionData = {
+            transaction_id: nextId, // Assign the frontend transaction ID
+            business_id,
+            description: 'Opening Balance Transaction',
+            debit: amount,
+            credit: amount,
+            date: date,
+            entries: [
+                { account_id: ledger_id, amount: amount, type: userEntryType },
+                { account_id: equityLedgerId, amount: amount, type: equityEntryType }
+            ]
+        };
+
+        // 3. Execute
+        await createTransactionCore(conn, transactionData);
+
+        await conn.commit();
+        console.log(`Opening balance processed for ledger ${ledger_id} with Transaction ID ${nextId}`);
+    } catch (err) {
+        if (conn) await conn.rollback();
+        console.error('Error handling opening balance:', err);
+        throw err;
+    } finally {
+        if (conn) conn.release();
+    }
+}
+
+
+// POST /api/transactions
+router.post('/transactions', async (req, res) => {
+    const transactionData = req.body;
+
+    let conn;
+    try {
+        conn = await pool.getConnection();
+        await conn.beginTransaction();
+
+        const new_transaction_id = await createTransactionCore(conn, transactionData);
 
         await conn.commit();
         res.json({ success: true, transaction_id: new_transaction_id });
@@ -198,7 +289,7 @@ router.get('/account-balances/:business_id', async (req, res) => {
     let conn;
     try {
         conn = await pool.getConnection();
-        
+
         // Get all accounts with their current balances and types
         const [accounts] = await conn.execute(
             `SELECT a.account_id, a.account_name, a.balance, t.type_name, t.type_id
@@ -216,5 +307,9 @@ router.get('/account-balances/:business_id', async (req, res) => {
         if (conn) conn.release();
     }
 });
+
+// Attach helper functions to the router for external use
+router.handleOpeningBalance = handleOpeningBalance;
+router.createTransactionCore = createTransactionCore;
 
 module.exports = router;

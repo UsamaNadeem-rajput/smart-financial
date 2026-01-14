@@ -13,8 +13,8 @@ try {
     .map(cert => cert + '-----END CERTIFICATE-----\n');
   console.log('✅ CA bundle loaded, certs:', https.globalAgent.options.ca.length);
 } catch (e) {
-  console.error('❌ Could not load CA bundle:', e.message);
-  process.exit(1);          // refuse to start
+  console.warn('⚠️ Could not load CA bundle (skipping):', e.message);
+  // process.exit(1); // Don't crash on local/Windows
 }
 
 require('dotenv').config();

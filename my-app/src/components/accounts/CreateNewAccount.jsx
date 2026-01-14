@@ -19,7 +19,10 @@ const CreateNewAccount = () => {
     type_id: '',
     parent_account_id: '',
     description: '',
-    is_sub_account: false
+    is_sub_account: false,
+    add_opening_balance: false,
+    debit_amount: '',
+    credit_amount: ''
   });
   const [errors, setErrors] = useState({});
 
@@ -34,14 +37,6 @@ const CreateNewAccount = () => {
   }, [formData.type_id]);
 
   const initialize = async () => {
-    // try {
-    //   // Check if user is authenticated
-    //   const authResponse = await axios.get('http://localhost:5000/api/check-auth', {
-    //     withCredentials: true
-    //   });
-
-    //   if (authResponse.data.user) {
-    //     setUser(authResponse.data.user);
     if (!selectedBusiness) {
       navigate('/list');
       return;
@@ -64,13 +59,6 @@ const CreateNewAccount = () => {
       { type_id: 14, type_name: 'Cost Of Goods Sold', parent_type_id: 10, is_subtype: true }
     ]);
     fetchExistingAccounts();
-    //   } else {
-    //     navigate('/login');
-    //   }
-    // } catch (error) {
-    //   console.error('Authentication check failed:', error);
-    //   navigate('/login');
-    // }
   };
 
   const fetchExistingAccounts = async () => {
@@ -108,10 +96,36 @@ const CreateNewAccount = () => {
 
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
-    setFormData(prev => ({
-      ...prev,
-      [name]: type === 'checkbox' ? checked : value
-    }));
+    setFormData(prev => {
+      const newData = {
+        ...prev,
+        [name]: type === 'checkbox' ? checked : value
+      };
+
+      // Digit Grouping for Amount Fields
+      if (name === 'debit_amount' || name === 'credit_amount') {
+        // Remove existing commas to get raw number
+        const rawValue = value.replace(/,/g, '');
+        if (!isNaN(rawValue) && rawValue !== '') {
+          // Format with commas
+          newData[name] = Number(rawValue).toLocaleString('en-US');
+        } else if (rawValue === '') {
+          newData[name] = '';
+        } else {
+          // Invalid input, don't update (effectively blocks non-numeric)
+          return prev;
+        }
+      }
+
+      // Mutual exclusivity for debit/credit inputs
+      if (name === 'debit_amount' && newData.debit_amount) {
+        newData.credit_amount = '';
+      } else if (name === 'credit_amount' && newData.credit_amount) {
+        newData.debit_amount = '';
+      }
+
+      return newData;
+    });
     // Clear error when user starts typing
     if (errors[name]) {
       setErrors(prev => ({
@@ -156,7 +170,10 @@ const CreateNewAccount = () => {
     try {
       const accountData = {
         ...formData,
-        business_id: selectedBusiness.business_id
+        business_id: selectedBusiness.business_id,
+        // Send separate fields as requested (parse commas out)
+        opening_balance_debit: formData.add_opening_balance ? (parseFloat(formData.debit_amount.replace(/,/g, '')) || 0) : 0,
+        opening_balance_credit: formData.add_opening_balance ? (parseFloat(formData.credit_amount.replace(/,/g, '')) || 0) : 0
       };
 
       await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/createnewaccount`, accountData, {
@@ -185,6 +202,24 @@ const CreateNewAccount = () => {
     if (!formData.type_id) return [];
     return subAccountOptions.filter(account => account.type_id == formData.type_id);
   };
+
+  const getAccountNature = (typeId) => {
+    // 1=Income, 2=Expense, 3=Assets, 4=Fixed Assets, 5=Current Assets, 
+    // 6=Liability, 7=Current Lia, 8=Non-Current Lia, 9=Equity, 
+    // 11=Other Assets, 12=Other Income, 13=Other Expense, 14=COGS
+
+    // Debit Nature: Assets (3,4,5,11), Expenses (2,13,14)
+    const debitIds = [2, 3, 4, 5, 11, 13, 14];
+
+    if (debitIds.includes(parseInt(typeId))) return 'Debit';
+    return 'Credit'; // Income, Liability, Equity are Credit nature
+  };
+
+  const currentNature = formData.type_id ? getAccountNature(formData.type_id) : null;
+  const showNatureWarning = formData.add_opening_balance && (
+    (currentNature === 'Credit' && formData.debit_amount && parseFloat(formData.debit_amount.replace(/,/g, '')) > 0) ||
+    (currentNature === 'Debit' && formData.credit_amount && parseFloat(formData.credit_amount.replace(/,/g, '')) > 0)
+  );
 
   return (
     <div
@@ -358,6 +393,67 @@ const CreateNewAccount = () => {
                         </select>
                       </div>
                     )}
+
+                    {/* Opening Balance Section */}
+                    <div className="bg-gray-50 p-4 rounded-lg border border-gray-200 space-y-4">
+                      <div className="flex items-center">
+                        <input
+                          id="add_opening_balance"
+                          name="add_opening_balance"
+                          type="checkbox"
+                          checked={formData.add_opening_balance}
+                          onChange={handleChange}
+                          className="h-4 w-4 text-primary-600 focus:ring-primary-500 border-gray-300 rounded"
+                        />
+                        <label htmlFor="add_opening_balance" className="ml-2 block text-sm font-medium text-gray-900">
+                          Add Opening Balance
+                        </label>
+                      </div>
+
+                      {formData.add_opening_balance && (
+                        <>
+                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pl-6 border-l-2 border-primary-200">
+                            <div>
+                              <label htmlFor="debit_amount" className="block text-sm font-medium text-gray-700 mb-1">
+                                Debit Amount
+                              </label>
+                              <input
+                                id="debit_amount"
+                                name="debit_amount"
+                                type="text"
+                                value={formData.debit_amount}
+                                onChange={handleChange}
+                                className={`input-field focus:border-primary-500 focus:ring-primary-500 ${showNatureWarning && formData.debit_amount ? 'border-warning-300 bg-warning-50' : ''}`}
+                                placeholder="0.00"
+                              />
+                            </div>
+                            <div>
+                              <label htmlFor="credit_amount" className="block text-sm font-medium text-gray-700 mb-1">
+                                Credit Amount
+                              </label>
+                              <input
+                                id="credit_amount"
+                                name="credit_amount"
+                                type="text"
+                                value={formData.credit_amount}
+                                onChange={handleChange}
+                                className={`input-field focus:border-primary-500 focus:ring-primary-500 ${showNatureWarning && formData.credit_amount ? 'border-warning-300 bg-warning-50' : ''}`}
+                                placeholder="0.00"
+                              />
+                            </div>
+                          </div>
+                          {showNatureWarning && (
+                            <div className="mt-2 text-warning-700 bg-warning-50 border border-warning-200 p-2 rounded-md text-sm flex items-start">
+                              <HelpCircle className="w-4 h-4 mr-1 mt-0.5 flex-shrink-0" />
+                              <span>
+                                Warning: You are entering a <strong>{formData.debit_amount ? 'Debit' : 'Credit'}</strong> balance for a <strong>{currentNature}</strong> nature account.
+                                Usually {currentNature === 'Debit' ? 'Assets & Expenses' : 'Liabilities, Equity & Income'} have a {currentNature} balance.
+                              </span>
+                            </div>
+                          )}
+                        </>
+                      )}
+                    </div>
 
                     {/* Description */}
                     <div>
