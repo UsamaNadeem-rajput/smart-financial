@@ -1,3 +1,4 @@
+// module.exports = router;
 // Express API for income report functionality
 const express = require('express');
 const pool = require('../db');
@@ -7,19 +8,19 @@ const router = express.Router();
 router.use((req, res, next) => {
   const origin = req.headers.origin;
   const allowedOrigins = ['http://localhost:5173', 'https://khushifinances.com'];
-  
+
   if (allowedOrigins.includes(origin)) {
     res.set('Access-Control-Allow-Origin', origin);
   }
   res.set('Access-Control-Allow-Credentials', 'true');
   res.set('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
   res.set('Access-Control-Allow-Headers', 'Content-Type, Authorization');
-  
+
   if (req.method === 'OPTIONS') {
     res.status(200).end();
     return;
   }
-  
+
   next();
 });
 
@@ -78,34 +79,16 @@ router.get('/:business_id', async (req, res) => {
       toDateStr = `${toMonth}-${String(t.getDate()).padStart(2, '0')}`;
     }
 
-    // Get all income and expense ledgers for this business
-    const [ledgers] = await conn.execute(
+    // UPDATED QUERY: Uses SUM() and GROUP BY directly in SQL
+    // Filters for Type 1 (Income) and Type 2 (Expense) inside the query
+    const [accountRows] = await conn.execute(
       `SELECT 
         a.account_id,
         a.account_name,
         COALESCE(t.type_id, a.type_id) as type_id,
-        COALESCE(t.type_name, 'Unknown') as type_name
-       FROM accounts a
-       LEFT JOIN account_types t ON a.type_id = t.type_id
-       WHERE a.business_id = ?
-         AND (t.type_id IN (1, 2) OR a.type_id IN (1, 2))
-       ORDER BY COALESCE(t.type_id, a.type_id), a.account_name`,
-      [business_id]
-    );
-
-    // Get all transaction entries in the date range first, then filter by account type
-    // This helps us see all transactions and then filter for income/expense
-    const [allEntries] = await conn.execute(
-      `SELECT 
-        tr.transaction_id,
-        tr.date,
-        te.account_id,
-        te.amount,
-        te.type,
-        a.account_name,
-        a.type_id as account_type_id,
-        COALESCE(t.type_id, a.type_id) as type_id,
-        COALESCE(t.type_name, 'Unknown') as type_name
+        COALESCE(t.type_name, 'Unknown') as type_name,
+        SUM(CASE WHEN te.type = 'debit' THEN te.amount ELSE 0 END) as total_debit,
+        SUM(CASE WHEN te.type = 'credit' THEN te.amount ELSE 0 END) as total_credit
        FROM transactions tr
        INNER JOIN transaction_entries te ON tr.transaction_id = te.transaction_id
        INNER JOIN accounts a ON te.account_id = a.account_id
@@ -113,81 +96,51 @@ router.get('/:business_id', async (req, res) => {
        WHERE tr.business_id = ?
          AND DATE(tr.date) >= ?
          AND DATE(tr.date) <= ?
-       ORDER BY tr.date, tr.transaction_id`,
+         AND (COALESCE(t.type_id, a.type_id) IN (1, 2)) -- Only fetch Income (1) and Expense (2)
+       GROUP BY a.account_id, a.account_name, t.type_id, t.type_name, a.type_id
+       ORDER BY type_id, a.account_name`,
       [business_id, fromDate, toDateStr]
     );
-    
-    // Filter for income/expense accounts only
-    // We use all entries here to ensure we don't miss any data due to type mismatches
-    // The filtering happens naturally in the ledger loop below where we only iterate over income/expense ledgers
-    const transactions = allEntries;
 
-    // Aggregate totals per account across the selected date range
-    const accountTotals = {};
-
-    transactions.forEach(trans => {
-      const accountId = trans.account_id;
-      const accountName = trans.account_name;
-      const typeId = trans.type_id;
-      const typeName = trans.type_name;
-      if (!accountTotals[accountId]) {
-        accountTotals[accountId] = {
-          account_id: accountId,
-          account_name: accountName,
-          type_id: typeId,
-          type_name: typeName,
-          debits: 0,
-          credits: 0
-        };
-      }
-      if (trans.type === 'debit') {
-        accountTotals[accountId].debits += Number(trans.amount);
-      } else {
-        accountTotals[accountId].credits += Number(trans.amount);
-      }
-    });
-
-    // Calculate balances per ledger across selected date(s)
+    // Calculate balances per ledger from SQL results
     const incomeData = [];
     const expenseData = [];
 
-    // Process each ledger
-    ledgers.forEach(ledger => {
-      const typeId = Number(ledger.type_id);
-      
-      // Standard definition of Income and Expense - STRICT MODE requested by user
+    // Process each aggregated ledger row
+    accountRows.forEach(row => {
+      const typeId = Number(row.type_id);
+
+      // Strict Mode Logic (Same as original)
       // Only include pure Income (1) and Expense (2) types
-      // Exclude: Other Incomes (12), Other Expenses (14), Cost Of Goods Sold (13)
-      let isIncome = [1].includes(typeId) || ['Income'].includes(ledger.type_name);
-      let isExpense = [2].includes(typeId) || ['Expense'].includes(ledger.type_name);
-      
-      // Strict Mode: Only show true P&L accounts
-      // However, if a user manually selected an account type that ISN'T normally income/expense but the ledger query returned it
-      // (because we filtered the ledger query to ONLY income/expense types), we should trust the ledger query.
+      let isIncome = [1].includes(typeId) || ['Income'].includes(row.type_name);
+      let isExpense = [2].includes(typeId) || ['Expense'].includes(row.type_name);
+
+      // Fallback Logic (Same as original)
       if (!isIncome && !isExpense) {
-         // Fallback: if it's in the list of "ledgers", it MUST be an income/expense account based on our SQL query
-         // So we force categorize it based on type_id if possible
-         
-         // If for some reason typeId is weird, let's re-check
-         if ([1].includes(typeId)) isIncome = true;
-         else if ([2].includes(typeId)) isExpense = true;
+        if ([1].includes(typeId)) isIncome = true;
+        else if ([2].includes(typeId)) isExpense = true;
       }
 
-      if (!isIncome && !isExpense) return; // Should theoretically never happen given the SQL query
+      if (!isIncome && !isExpense) return;
 
-      const totals = accountTotals[ledger.account_id] || { debits: 0, credits: 0 };
-      if (Math.abs(totals.debits) > 0 || Math.abs(totals.credits) > 0) {
+      // Get totals directly from SQL columns
+      const totalDebits = Number(row.total_debit || 0);
+      const totalCredits = Number(row.total_credit || 0);
+
+      if (Math.abs(totalDebits) > 0 || Math.abs(totalCredits) > 0) {
         let balance = 0;
         if (isIncome) {
-          balance = totals.credits - totals.debits;
+          balance = totalCredits - totalDebits;
         } else if (isExpense) {
-          balance = totals.debits - totals.credits;
+          balance = totalDebits - totalCredits;
         }
+
         const entry = {
-          ledger_id: ledger.account_id,
-          ledger_name: ledger.account_name,
+          ledger_id: row.account_id,
+          ledger_name: row.account_name,
           balance: balance
         };
+
         if (isIncome) {
           incomeData.push(entry);
         } else if (isExpense) {

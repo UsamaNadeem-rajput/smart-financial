@@ -13,8 +13,8 @@ try {
     .map(cert => cert + '-----END CERTIFICATE-----\n');
   console.log('✅ CA bundle loaded, certs:', https.globalAgent.options.ca.length);
 } catch (e) {
-  console.warn('⚠️ Could not load CA bundle (skipping):', e.message);
-  // process.exit(1); // Don't crash on local/Windows
+  console.error('❌ Could not load CA bundle:', e.message);
+  process.exit(1);          // refuse to start
 }
 
 require('dotenv').config();
@@ -56,7 +56,6 @@ app.use((req, res, next) => {
   next();
 });
 
-// ✅ Serve Static Files for Logo Uploads with CORS headers
 app.use('/logoupload', (req, res, next) => {
   res.set('Access-Control-Allow-Origin', '*');
   res.set('Access-Control-Allow-Methods', 'GET, OPTIONS');
@@ -89,6 +88,9 @@ app.use(passport.session());
 /* ---------- Logging ---------- */
 app.use((req, res, next) => {
   console.log(`${new Date().toISOString()} - ${req.method} ${req.path}`);
+  if (req.body && Object.keys(req.body).length > 0) {
+    console.log('Request body:', req.body);
+  }
   next();
 });
 
@@ -117,19 +119,26 @@ serverRouter.use('/api/showbusinesses', require('./routers/showbusinesses'));
 serverRouter.use('/api/createnewaccount', require('./routers/createnewaccount'));
 serverRouter.use('/api/accounts-list', require('./routers/list'));
 serverRouter.use('/api/account-types', require('./routers/accountTypes'));
+
 serverRouter.use('/api/search-accounts', require('./routers/searchAccounts'));
 serverRouter.use('/api', require('./routers/transactionApi'));
-serverRouter.use('/api/ledger-balancing', require('./routers/ledgerBalancing'));
-serverRouter.use('/api/income-report', require('./routers/incomeReport'));
 serverRouter.use('/api', require('./routers/showtransactions'));
-serverRouter.use('/api/edit-transaction', require('./routers/edittransaction'));
 serverRouter.use('/api/auth', require('./routers/auth'));
-// serverRouter.use('/api/contact', require('./routers/contact')); // removed, Google Form used instead
+
+serverRouter.use('/api/ledger-balancing', require('./routers/ledgerBalancing'));
+// serverRouter.use('/api/contact', require('./routers/contact'));
 serverRouter.use('/api/verify', require('./routers/verify'));
-// ✅ Public Stats Router
-serverRouter.use('/api/public/stats', require('./routers/publicStats'));
-// ✅ Google Auth Router
+// oogle Auth Router
 serverRouter.use("/api/auth", require("./routers/googleAuth"));
+// forgotPassword
+serverRouter.use('/api/authreset', require('./routers/authReset'));
+serverRouter.use('/api/income-report', require('./routers/incomeReport'));
+
+serverRouter.use('/api/edit-transaction', require('./routers/editTransaction'));
+serverRouter.use('/api/balance-sheet', require('./routers/balanceSheet'));
+
+
+
 
 /* ---------- Fallback for API routes ---------- */
 serverRouter.use('/api/*', (req, res) => {
@@ -137,7 +146,7 @@ serverRouter.use('/api/*', (req, res) => {
 });
 
 // ✅ MOUNT ROUTER at root
-serverRouter.use('/api/balance-sheet', require('./routers/balanceSheet'));
+
 app.use('/', serverRouter);
 
 // ✅ ROOT ROUTE REDIRECT
@@ -148,4 +157,5 @@ app.get('/', (req, res) => {
 app.listen(PORT, '0.0.0.0', () => {
   console.log(`✅ Server running on port ${PORT}`);
   console.log(`✅ Available at: https://server.khushifinances.com`);
+  console.log('GOOGLE_CALLBACK_URL:', process.env.GOOGLE_CALLBACK_URL);
 });
