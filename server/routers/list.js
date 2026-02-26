@@ -9,8 +9,9 @@ router.get("/:businessId", async (req, res) => {
     const [rows] = await pool.query(
       `SELECT a.*, t.type_name
       FROM accounts a
+      JOIN businesses b ON a.business_id = b.business_id
       LEFT JOIN account_types t ON a.type_id = t.type_id
-      WHERE a.business_id = ? AND a.is_deleted = 0`,
+      WHERE a.business_id = ? AND a.is_deleted = 0 AND b.is_deleted = 0`,
       [req.params.businessId]
     );
     return res.status(200).json({ accounts: rows });

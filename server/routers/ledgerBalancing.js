@@ -5,22 +5,22 @@ const router = express.Router();
 
 // Explicit CORS headers for credentials
 router.use((req, res, next) => {
-  const origin = req.headers.origin;
-  const allowedOrigins = ['http://localhost:5173', 'https://khushifinances.com'];
-  
-  if (allowedOrigins.includes(origin)) {
-    res.set('Access-Control-Allow-Origin', origin);
-  }
-  res.set('Access-Control-Allow-Credentials', 'true');
-  res.set('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
-  res.set('Access-Control-Allow-Headers', 'Content-Type, Authorization');
-  
-  if (req.method === 'OPTIONS') {
-    res.status(200).end();
-    return;
-  }
-  
-  next();
+    const origin = req.headers.origin;
+    const allowedOrigins = ['http://localhost:5173', 'https://khushifinances.com'];
+
+    if (allowedOrigins.includes(origin)) {
+        res.set('Access-Control-Allow-Origin', origin);
+    }
+    res.set('Access-Control-Allow-Credentials', 'true');
+    res.set('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
+    res.set('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+
+    if (req.method === 'OPTIONS') {
+        res.status(200).end();
+        return;
+    }
+
+    next();
 });
 
 // GET /api/ledger-balancing/:business_id
@@ -44,10 +44,14 @@ router.get('/:business_id', async (req, res) => {
                 COALESCE(SUM(CASE WHEN te.type = 'credit' THEN te.amount ELSE 0 END), 0) AS total_credits
              FROM accounts a
              LEFT JOIN account_types t ON a.type_id = t.type_id
-             LEFT JOIN transaction_entries te ON te.account_id = a.account_id
-             LEFT JOIN transactions tr ON tr.transaction_id = te.transaction_id
+             LEFT JOIN (
+                 SELECT te.account_id, te.type, te.amount
+                 FROM transaction_entries te
+                 JOIN transactions tr ON tr.transaction_id = te.transaction_id
+                 WHERE tr.business_id = ? AND tr.is_deleted = 0
+             ) te ON te.account_id = a.account_id
              WHERE a.business_id = ?
-               AND (tr.business_id = ? OR tr.business_id IS NULL)
+               AND a.is_deleted = 0
              GROUP BY a.account_id, a.account_name, t.type_id, t.type_name
              ORDER BY t.type_name, a.account_name`,
             [business_id, business_id]
@@ -56,8 +60,8 @@ router.get('/:business_id', async (req, res) => {
         // Compute closing balance based on normal balance by type
         const result = rows.map(r => {
             const typeId = Number(r.type_id);
-            const isAssets = [3,4,5,11].includes(typeId) || ['Assets','Fixed Assets','Current Assets','Other Assets'].includes(r.type_name);
-            const isExpense = [2,13,14].includes(typeId) || ['Expense','Other Expenses','Cost Of Goods Sold'].includes(r.type_name);
+            const isAssets = [3, 4, 5, 11].includes(typeId) || ['Assets', 'Fixed Assets', 'Current Assets', 'Other Assets'].includes(r.type_name);
+            const isExpense = [2, 13, 14].includes(typeId) || ['Expense', 'Other Expenses', 'Cost Of Goods Sold'].includes(r.type_name);
             let closing_balance;
             if (isAssets || isExpense) {
                 closing_balance = Number(r.total_debits) - Number(r.total_credits);
@@ -97,7 +101,7 @@ router.get('/:business_id/:account_id', async (req, res) => {
         const [[acct]] = await conn.execute(
             `SELECT a.account_id, a.account_name, COALESCE(t.type_id, a.type_id) as type_id, COALESCE(t.type_name, 'Unknown') as type_name
              FROM accounts a LEFT JOIN account_types t ON a.type_id = t.type_id
-             WHERE a.account_id = ? AND a.business_id = ?`,
+             WHERE a.account_id = ? AND a.business_id = ? AND a.is_deleted = 0`,
             [account_id, business_id]
         );
         if (!acct) return res.status(404).json({ error: 'Account not found' });
@@ -112,14 +116,14 @@ router.get('/:business_id/:account_id', async (req, res) => {
              LEFT JOIN transaction_entries opp_te ON opp_te.transaction_id = tr.transaction_id 
                  AND opp_te.entry_id != te.entry_id
              LEFT JOIN accounts opp_account ON opp_account.account_id = opp_te.account_id
-             WHERE tr.business_id = ? AND te.account_id = ?
+             WHERE tr.business_id = ? AND te.account_id = ? AND tr.is_deleted = 0
              ORDER BY tr.date, tr.transaction_id, te.entry_id`,
             [business_id, account_id]
         );
 
         const typeId = Number(acct.type_id);
-        const isAssets = [3,4,5,11].includes(typeId) || ['Assets','Fixed Assets','Current Assets','Other Assets'].includes(acct.type_name);
-        const isExpense = [2,13,14].includes(typeId) || ['Expense','Other Expenses','Cost Of Goods Sold'].includes(acct.type_name);
+        const isAssets = [3, 4, 5, 11].includes(typeId) || ['Assets', 'Fixed Assets', 'Current Assets', 'Other Assets'].includes(acct.type_name);
+        const isExpense = [2, 13, 14].includes(typeId) || ['Expense', 'Other Expenses', 'Cost Of Goods Sold'].includes(acct.type_name);
 
         let running_balance = 0;
         let total_debits = 0;

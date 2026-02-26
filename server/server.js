@@ -118,6 +118,7 @@ serverRouter.use('/api/business', require('./routers/business'));
 serverRouter.use('/api/showbusinesses', require('./routers/showbusinesses'));
 serverRouter.use('/api/createnewaccount', require('./routers/createnewaccount'));
 serverRouter.use('/api/accounts-list', require('./routers/list'));
+serverRouter.use('/api/accounts', require('./routers/accounts'));
 serverRouter.use('/api/account-types', require('./routers/accountTypes'));
 
 serverRouter.use('/api/search-accounts', require('./routers/searchAccounts'));
@@ -136,6 +137,9 @@ serverRouter.use('/api/income-report', require('./routers/incomeReport'));
 
 serverRouter.use('/api/edit-transaction', require('./routers/editTransaction'));
 serverRouter.use('/api/balance-sheet', require('./routers/balanceSheet'));
+
+serverRouter.use('/api/profile', require('./routers/profile'));
+serverRouter.use('/api/history', require('./routers/history'));
 
 
 

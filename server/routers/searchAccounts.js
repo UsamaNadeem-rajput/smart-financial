@@ -6,19 +6,19 @@ const pool = require('../db');
 router.get('/', async (req, res) => {
     const { query, business_id } = req.query;
     if (!query) return res.json([]);
-    
+
     try {
-        let sql = "SELECT account_id, account_name, balance FROM accounts WHERE account_name LIKE ?";
+        let sql = "SELECT account_id, account_name, balance FROM accounts WHERE account_name LIKE ? AND is_deleted = 0";
         let params = [`%${query}%`];
-        
+
         // Add business_id filter if provided
         if (business_id) {
             sql += " AND business_id = ?";
             params.push(business_id);
         }
-        
+
         sql += " ORDER BY account_name LIMIT 10";
-        
+
         const [rows] = await pool.query(sql, params);
         res.json(rows);
     } catch (err) {

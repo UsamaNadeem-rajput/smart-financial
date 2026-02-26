@@ -35,7 +35,7 @@ async function getImageAsDataUrl(logoPath, backendUrl) {
 }
 
 const BalanceSheet = () => {
-    const { selectedBusiness } = useBusiness();
+    const { selectedBusiness, refreshTrigger } = useBusiness();
     const navigate = useNavigate();
     const [targetDate, setTargetDate] = useState(new Date().toISOString().split('T')[0]);
     const [data, setData] = useState({ assets: [], liabilities: [], equity: [], totals: {} });
@@ -65,7 +65,7 @@ const BalanceSheet = () => {
 
     useEffect(() => {
         fetchData();
-    }, [selectedBusiness, targetDate]);
+    }, [selectedBusiness, targetDate, refreshTrigger]);
 
     // Format Currency
     const currency = (amount) => {

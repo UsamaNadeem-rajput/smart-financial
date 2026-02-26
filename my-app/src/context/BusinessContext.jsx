@@ -13,6 +13,11 @@ export const useBusiness = () => {
 export const BusinessProvider = ({ children }) => {
   const [selectedBusiness, setSelectedBusiness] = useState(null);
   const [businesses, setBusinesses] = useState([]);
+  const [refreshTrigger, setRefreshTrigger] = useState(0);
+
+  const triggerRefresh = () => {
+    setRefreshTrigger(prev => prev + 1);
+  };
 
   useEffect(() => {
     // Check if business is already selected
@@ -35,9 +40,11 @@ export const BusinessProvider = ({ children }) => {
   const value = {
     selectedBusiness,
     businesses,
+    refreshTrigger,
     setBusinesses,
     selectBusiness,
-    clearBusiness
+    clearBusiness,
+    triggerRefresh
   };
 
   return (

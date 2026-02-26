@@ -96,6 +96,8 @@ router.get('/:business_id', async (req, res) => {
        WHERE tr.business_id = ?
          AND DATE(tr.date) >= ?
          AND DATE(tr.date) <= ?
+         AND tr.is_deleted = 0
+         AND a.is_deleted = 0
          AND (COALESCE(t.type_id, a.type_id) IN (1, 2)) -- Only fetch Income (1) and Expense (2)
        GROUP BY a.account_id, a.account_name, t.type_id, t.type_name, a.type_id
        ORDER BY type_id, a.account_name`,

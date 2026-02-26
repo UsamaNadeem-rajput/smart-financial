@@ -77,8 +77,12 @@ router.get('/:business_id', async (req, res) => {
             FROM transactions t
             JOIN transaction_entries te ON t.transaction_id = te.transaction_id
             JOIN accounts a ON te.account_id = a.account_id
+            JOIN businesses b ON t.business_id = b.business_id
             WHERE t.business_id = ? 
-            AND t.date = ?
+            AND t.date <= ? -- If running "as of" date
+            AND t.is_deleted = 0 
+            AND a.is_deleted = 0
+            AND b.is_deleted = 0
             GROUP BY a.account_id, a.account_name, a.type_id
         `;
 

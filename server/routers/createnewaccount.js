@@ -11,10 +11,20 @@ router.post('/', async (req, res) => {
   }
 
   try {
+    // Check if an ACTIVE account already exists with the same name
+    const [existing] = await pool.query(
+      `SELECT account_id FROM accounts WHERE account_name = ? AND business_id = ? AND is_deleted = 0`,
+      [account_name, business_id]
+    );
+
+    if (existing.length > 0) {
+      return res.status(400).json({ message: 'Account with this name already exists' });
+    }
+
     const [result] = await pool.query(
       `INSERT INTO accounts
-  (account_name, type_id, business_id, description, parent_account_id)
-VALUES(?, ?, ?, ?, ?)`,
+  (account_name, type_id, business_id, description, parent_account_id, is_deleted)
+VALUES(?, ?, ?, ?, ?, 0)`,
       [account_name, type_id, business_id, description, parent_account_id || null]
     );
 

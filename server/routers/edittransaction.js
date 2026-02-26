@@ -13,7 +13,7 @@ router.get("/:transactionId/:businessId", async (req, res) => {
       FROM transactions t
       JOIN transaction_entries te ON t.transaction_id = te.transaction_id
       JOIN accounts a ON te.account_id = a.account_id
-      WHERE t.transaction_id = ? AND t.business_id = ?
+      WHERE t.transaction_id = ? AND t.business_id = ? AND t.is_deleted = 0 AND a.is_deleted = 0
       `,
       [transactionId, businessId]
     );
@@ -82,7 +82,7 @@ router.put("/:transactionId/:businessId", async (req, res) => {
       // ✅ 3. Validate that all accounts exist under the same business (ledger must be available)
       for (const entry of entries) {
         const [acctRows] = await conn.query(
-          `SELECT account_id FROM accounts WHERE account_id = ? AND business_id = ?`,
+          `SELECT account_id FROM accounts WHERE account_id = ? AND business_id = ? AND is_deleted = 0`,
           [entry.account_id, businessId]
         );
         if (!acctRows.length) {

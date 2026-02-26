@@ -71,7 +71,7 @@ export default function TransactionEntryTable() {
   const [totals, setTotals] = useState({ debit: 0, credit: 0 });
   const [hasViewed, setHasViewed] = useState(false);
   const [showNoTransactionPopup, setShowNoTransactionPopup] = useState(false);
-  const { selectedBusiness } = useBusiness();
+  const { selectedBusiness, refreshTrigger, triggerRefresh } = useBusiness();
 
   const fetchData = async () => {
     if (!fromDate || !toDate || !selectedBusiness?.business_id) return 0;
@@ -127,6 +127,12 @@ export default function TransactionEntryTable() {
     setEntries([]);
     setTotals({ debit: 0, credit: 0 });
   }, [selectedBusiness]);
+
+  useEffect(() => {
+    if (hasViewed) {
+      fetchData();
+    }
+  }, [refreshTrigger]);
 
   const handlePrint = async () => {
     const printWindow = window.open("", "", "height=600,width=800");
@@ -512,6 +518,33 @@ export default function TransactionEntryTable() {
     }
   };
 
+  const handleDelete = async (transactionId) => {
+    if (!window.confirm("Are you sure you want to delete this transaction? This will permanently remove it from your reports and update ledger balances.")) {
+      return;
+    }
+
+    try {
+      const res = await fetch(
+        `${import.meta.env.VITE_BACKEND_URL}/api/delete-transaction/${transactionId}?business_id=${selectedBusiness.business_id}`,
+        {
+          method: 'DELETE',
+        }
+      );
+
+      const data = await res.json();
+      if (res.ok) {
+        alert("Transaction deleted successfully");
+        fetchData(); // Refresh the table
+        triggerRefresh();
+      } else {
+        alert(data.error || "Failed to delete transaction");
+      }
+    } catch (err) {
+      console.error("Error deleting transaction:", err);
+      alert("An error occurred while deleting the transaction.");
+    }
+  };
+
   return (
     <div
       className="min-h-screen relative overflow-hidden"
@@ -695,7 +728,7 @@ export default function TransactionEntryTable() {
                     <th>Ledger Name</th>
                     <th>Debit</th>
                     <th>Credit</th>
-                    <th>Edit</th>
+                    <th>Actions</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -737,14 +770,24 @@ export default function TransactionEntryTable() {
                             <td>{formatAmount(entry.credit)}</td>
                             {idx === 0 && !entry.isTotal && (
                               <td rowSpan={group.length}>
-                                <button
-                                  className="btn btn-sm btn-primary ms-2"
-                                  onClick={() =>
-                                    handleEdit(entry.transaction_id)
-                                  }
-                                >
-                                  Edit
-                                </button>
+                                <div className="d-flex flex-column gap-2" style={{ width: "90px" }}>
+                                  <button
+                                    className="btn btn-sm btn-primary w-100"
+                                    onClick={() =>
+                                      handleEdit(entry.transaction_id)
+                                    }
+                                  >
+                                    Edit
+                                  </button>
+                                  <button
+                                    className="btn btn-sm btn-danger w-100"
+                                    onClick={() =>
+                                      handleDelete(entry.transaction_id)
+                                    }
+                                  >
+                                    Delete
+                                  </button>
+                                </div>
                               </td>
                             )}
                           </tr>

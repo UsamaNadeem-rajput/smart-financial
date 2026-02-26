@@ -31,7 +31,7 @@ async function getImageAsDataUrl(logoPath, backendUrl) {
 
 const IncomeReport = () => {
   const navigate = useNavigate();
-  const { selectedBusiness } = useBusiness();
+  const { selectedBusiness, refreshTrigger } = useBusiness();
   const apiUrl = import.meta.env.VITE_BACKEND_URL;
 
   const [loading, setLoading] = useState(false);
@@ -61,6 +61,13 @@ const IncomeReport = () => {
     setCurrentDate(formattedDate);
     // Note: fromDate/toDate initialization removed - user selects range type first
   }, []);
+
+  useEffect(() => {
+    if (hasGenerated) {
+      fetchIncomeReport();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [refreshTrigger]);
 
   const fetchIncomeReport = async (computedFromDate, computedToDate) => {
     // Use passed parameters or fall back to state values

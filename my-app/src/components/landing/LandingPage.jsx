@@ -615,12 +615,12 @@ const LandingPage = () => {
                   >
                     Logout
                   </button>
-                  <div className="flex items-center space-x-2 px-3 py-2 bg-gray-50 rounded-full border border-gray-200">
+                  <Link to="/profile" className="flex items-center space-x-2 px-3 py-2 bg-gray-50 rounded-full border border-gray-200 hover:bg-gray-100 hover:border-primary-200 transition-colors cursor-pointer text-decoration-none">
                     <div className="bg-primary-100 p-1 rounded-full">
                       <User className="w-4 h-4 text-primary-600" />
                     </div>
-                    <span className="text-sm font-medium text-gray-700 hidden sm:inline-block">{user}</span>
-                  </div>
+                    <span className="text-sm font-medium text-gray-700 hidden sm:inline-block">Welcome, {user}</span>
+                  </Link>
 
                 </>
               ) : (

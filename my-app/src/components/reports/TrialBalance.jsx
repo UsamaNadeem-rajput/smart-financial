@@ -49,7 +49,7 @@ const getCategoryName = (order) => {
 
 const TrialBalance = () => {
   const navigate = useNavigate();
-  const { selectedBusiness } = useBusiness();
+  const { selectedBusiness, refreshTrigger } = useBusiness();
   const apiUrl = import.meta.env.VITE_BACKEND_URL;
 
   const [loading, setLoading] = useState(true);
@@ -119,7 +119,7 @@ const TrialBalance = () => {
       }
     };
     fetchData();
-  }, [selectedBusiness?.business_id, apiUrl]);
+  }, [selectedBusiness?.business_id, apiUrl, refreshTrigger]);
 
   const businessName = selectedBusiness?.business_name || selectedBusiness?.businessName || 'Business';
 

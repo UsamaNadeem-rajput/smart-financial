@@ -19,6 +19,7 @@ import LedgerBalancing from './components/reports/LedgerBalancing';
 import IncomeReport from './components/reports/IncomeReport';
 import TrialBalance from './components/reports/TrialBalance';
 import BalanceSheet from './components/reports/BalanceSheet';
+import Profile from './components/profile/Profile';
 
 
 import './index.css';
@@ -39,6 +40,7 @@ function App() {
             <Route path="/forgot-password" element={<ForgotPassword />} />
 
             {/* Protected Routes */}
+            <Route path="/profile" element={<PrivateRoute><Profile /></PrivateRoute>} />
             <Route path="/business" element={<PrivateRoute><BusinessForm /></PrivateRoute>} />
             <Route path="/list" element={<PrivateRoute><List /></PrivateRoute>} />
             <Route path="/creatnewaccount" element={<PrivateRoute><CreateNewAccount /></PrivateRoute>} />

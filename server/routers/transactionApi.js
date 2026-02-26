@@ -38,7 +38,7 @@ async function updateAccountBalances(conn, business_id) {
         `SELECT a.account_id, a.balance, t.type_name, t.type_id
          FROM accounts a
          LEFT JOIN account_types t ON a.type_id = t.type_id
-         WHERE a.business_id = ?`,
+         WHERE a.business_id = ? AND a.is_deleted = 0`,
         [business_id]
     );
 
@@ -49,7 +49,7 @@ async function updateAccountBalances(conn, business_id) {
             `SELECT te.amount, te.type
              FROM transaction_entries te
              JOIN transactions t ON te.transaction_id = t.transaction_id
-             WHERE te.account_id = ? AND t.business_id = ?`,
+             WHERE te.account_id = ? AND t.business_id = ? AND t.is_deleted = 0`,
             [account.account_id, business_id]
         );
 
@@ -174,7 +174,7 @@ async function handleOpeningBalance(business_id, ledger_id, amount, type, date =
         // 1. Check/Create "Opening Balance Equity" ledger
         const equityLedgerName = 'Opening Balance Equity';
         const [existingEquity] = await conn.execute(
-            'SELECT account_id FROM accounts WHERE business_id = ? AND account_name = ?',
+            'SELECT account_id FROM accounts WHERE business_id = ? AND account_name = ? AND is_deleted = 0',
             [business_id, equityLedgerName]
         );
 
@@ -295,7 +295,7 @@ router.get('/account-balances/:business_id', async (req, res) => {
             `SELECT a.account_id, a.account_name, a.balance, t.type_name, t.type_id
              FROM accounts a
              LEFT JOIN account_types t ON a.type_id = t.type_id
-             WHERE a.business_id = ?
+             WHERE a.business_id = ? AND a.is_deleted = 0
              ORDER BY t.type_name, a.account_name`,
             [business_id]
         );

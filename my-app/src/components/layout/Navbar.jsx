@@ -14,6 +14,7 @@ import {
   Contact,
   ArrowDownIcon,
   Scale,
+  User,
 } from "lucide-react";
 
 const Navbar = () => {
@@ -219,8 +220,13 @@ const Navbar = () => {
               </div>
             )}
 
-            <div className="flex items-center space-x-2">
-              <span className="text-sm text-gray-700">Welcome, {user}</span>
+            <div className="flex items-center space-x-4">
+              <Link to="/profile" className="flex items-center space-x-2 text-sm text-gray-700 hover:text-primary-600 font-medium transition-colors bg-gray-50 px-3 py-1.5 rounded-full border border-gray-200 hover:border-primary-200">
+                <div className="bg-primary-100 p-1 rounded-full">
+                  <User className="w-4 h-4 text-primary-600" />
+                </div>
+                <span>Welcome, {user}</span>
+              </Link>
 
               <button
                 onClick={handleLogout}
