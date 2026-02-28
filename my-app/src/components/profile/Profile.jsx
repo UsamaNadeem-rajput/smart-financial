@@ -262,7 +262,7 @@ export default function Profile() {
                                         {activeTab === 'accounts' && (
                                             <div>
                                                 <div className="bg-gray-50 px-6 py-4 border-b border-gray-200">
-                                                    <h3 className="text-lg font-medium text-gray-900">Deleted Accounts/Ledgers</h3>
+                                                    <h3 className="text-lg font-medium text-gray-900">Deleted Account/Ledgers</h3>
                                                 </div>
                                                 {history.accounts && history.accounts.length > 0 ? (
                                                     <div className="overflow-x-auto">
