@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import Navbar from "../layout/Navbar";
 import { useBusiness } from "../../context/BusinessContext";
 import { AnimatePresence, motion } from "framer-motion";
+import { Wallet, TrendingUp, BarChart3 } from 'lucide-react';
 
 // Helper to get local date string in YYYY-MM-DD
 function getLocalDateString() {
@@ -335,58 +336,70 @@ export default function TransectionForm() {
       >
         {/* Enhanced Professional Background */}
         <div className="absolute inset-0">
-          {/* Primary gradient background - different from List.js */}
-          <div className="absolute inset-0 bg-gradient-to-br from-slate-800 via-emerald-900 to-teal-900"></div>
+          {/* Primary gradient background */}
+          <div className="absolute inset-0 bg-gradient-to-br from-slate-900 via-blue-900 to-indigo-900"></div>
 
           {/* Overlay gradients for depth */}
-          <div className="absolute inset-0 bg-gradient-to-t from-green-900/30 via-transparent to-teal-800/20"></div>
-          <div className="absolute inset-0 bg-gradient-to-r from-cyan-800/20 via-transparent to-emerald-800/20"></div>
+          <div className="absolute inset-0 bg-gradient-to-t from-purple-900/30 via-transparent to-blue-800/20"></div>
+          <div className="absolute inset-0 bg-gradient-to-r from-indigo-800/20 via-transparent to-cyan-800/20"></div>
 
           {/* Professional grid pattern */}
           <div className="absolute inset-0 opacity-10">
             <div className="absolute inset-0" style={{
               backgroundImage: `
-              linear-gradient(90deg, rgba(255,255,255,0.1) 1px, transparent 1px),
-              linear-gradient(0deg, rgba(255,255,255,0.1) 1px, transparent 1px)
-            `,
+                linear-gradient(90deg, rgba(255,255,255,0.1) 1px, transparent 1px),
+                linear-gradient(0deg, rgba(255,255,255,0.1) 1px, transparent 1px)
+              `,
               backgroundSize: '50px 50px'
             }}></div>
           </div>
 
-          {/* Animated transaction elements */}
+          {/* Animated business elements */}
           <div className="absolute inset-0 overflow-hidden">
-            {/* Floating transaction icons */}
-            <div className="absolute top-20 left-10 text-4xl text-emerald-400/20 animate-pulse">💰</div>
-            <div className="absolute top-40 right-20 text-3xl text-teal-400/20 animate-bounce">📊</div>
-            <div className="absolute bottom-40 left-32 text-5xl text-cyan-400/20 animate-pulse">📝</div>
-            <div className="absolute bottom-20 right-40 text-3xl text-green-400/20 animate-bounce">💳</div>
-            <div className="absolute top-1/2 left-1/4 text-2xl text-teal-400/20 animate-pulse">📋</div>
-            <div className="absolute top-1/3 right-1/3 text-4xl text-emerald-400/20 animate-bounce">🏦</div>
+            {/* Floating financial icons */}
+            <div className="absolute top-20 left-10 text-blue-400/20 animate-pulse flex items-center justify-center">
+              <Wallet className="w-10 h-10" />
+            </div>
+            <div className="absolute top-40 right-20 text-cyan-400/20 animate-bounce flex items-center justify-center">
+              <TrendingUp className="w-8 h-8" />
+            </div>
+            <div className="absolute bottom-40 left-32 text-purple-400/20 animate-pulse flex items-center justify-center">
+              <BarChart3 className="w-12 h-12" />
+            </div>
+            <div className="absolute bottom-20 right-40 text-indigo-400/20 animate-bounce flex items-center justify-center">
+              <TrendingUp className="w-8 h-8" />
+            </div>
+            <div className="absolute top-1/2 left-1/4 text-teal-400/20 animate-pulse flex items-center justify-center">
+              <Wallet className="w-6 h-6" />
+            </div>
+            <div className="absolute top-1/3 right-1/3 text-violet-400/20 animate-bounce flex items-center justify-center">
+              <BarChart3 className="w-10 h-10" />
+            </div>
 
             {/* Subtle geometric shapes */}
             <div className="absolute top-1/4 right-10 w-32 h-32 border border-white/10 rounded-full animate-pulse"></div>
-            <div className="absolute bottom-1/4 left-10 w-24 h-24 border border-emerald-400/20 rounded-lg rotate-45 animate-spin" style={{ animationDuration: '20s' }}></div>
-            <div className="absolute top-1/2 right-1/4 w-20 h-20 bg-gradient-to-r from-teal-500/10 to-emerald-500/10 rounded-full animate-pulse"></div>
+            <div className="absolute bottom-1/4 left-10 w-24 h-24 border border-cyan-400/20 rounded-lg rotate-45 animate-spin" style={{ animationDuration: '20s' }}></div>
+            <div className="absolute top-1/2 right-1/4 w-20 h-20 bg-gradient-to-r from-purple-500/10 to-blue-500/10 rounded-full animate-pulse"></div>
 
             {/* Network connection lines */}
             <svg className="absolute inset-0 w-full h-full" style={{ filter: 'blur(0.5px)' }}>
               <defs>
-                <linearGradient id="transactionGradient" x1="0%" y1="0%" x2="100%" y2="100%">
-                  <stop offset="0%" style={{ stopColor: '#10b981', stopOpacity: 0.1 }} />
-                  <stop offset="50%" style={{ stopColor: '#14b8a6', stopOpacity: 0.2 }} />
+                <linearGradient id="networkGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                  <stop offset="0%" style={{ stopColor: '#3b82f6', stopOpacity: 0.1 }} />
+                  <stop offset="50%" style={{ stopColor: '#8b5cf6', stopOpacity: 0.2 }} />
                   <stop offset="100%" style={{ stopColor: '#06b6d4', stopOpacity: 0.1 }} />
                 </linearGradient>
               </defs>
               <path
                 d="M100,100 L300,200 L600,150 L900,300 L1200,200"
-                stroke="url(#transactionGradient)"
+                stroke="url(#networkGradient)"
                 strokeWidth="2"
                 fill="none"
                 className="animate-pulse"
               />
               <path
                 d="M200,400 L500,300 L800,450 L1100,350"
-                stroke="rgba(16, 185, 129, 0.2)"
+                stroke="rgba(59, 130, 246, 0.2)"
                 strokeWidth="1"
                 fill="none"
                 className="animate-pulse"

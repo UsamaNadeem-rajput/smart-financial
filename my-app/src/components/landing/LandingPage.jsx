@@ -1,570 +1,418 @@
-import { useState, useRef, useEffect, useCallback } from "react";
-import { Link, useNavigate } from "react-router-dom";
-import axios from "axios";
+import React, { useState, useEffect, useRef } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
+import axios from 'axios';
+import * as THREE from 'three';
+import gsap from 'gsap';
+import { ScrollTrigger } from 'gsap/ScrollTrigger';
+import { TextPlugin } from 'gsap/TextPlugin';
+import { useGSAP } from '@gsap/react';
 import {
-  Building2,
-  FileText,
-  TrendingUp,
-  Shield,
-  Check,
-  Star,
-  ArrowRight,
-  Play,
-  BarChart3,
-  Calculator,
-  PieChart,
-  Users,
-  Globe,
-  Zap,
-  Award,
-  DollarSign,
-  Clock,
-  Sparkles,
-  ChevronDown,
-  User,
-  Menu,
-  X,
-} from "lucide-react";
-import { motion, AnimatePresence } from "framer-motion";
+  User, Menu, X, ArrowRight, Shield, Globe, Users, Play, Building2,
+  BarChart3, Calculator, FileText, PieChart, Star, Check, ChevronDown, Award, TrendingUp
+} from 'lucide-react';
 import { ref, runTransaction, onValue } from "firebase/database";
 import { db } from "../Visister/firebase";
 
-// --- Floating Elements Component ---
-const FloatingElements = () => {
-  return (
-    <div className="absolute inset-0 overflow-hidden pointer-events-none">
-      {/* Floating geometric shapes */}
-      <motion.div
-        className="absolute top-20 left-10 w-20 h-20 bg-gradient-to-r from-blue-400 to-purple-500 rounded-full opacity-20"
-        animate={{
-          y: [0, -20, 0],
-          x: [0, 10, 0],
-          rotate: [0, 180, 360],
-        }}
-        transition={{
-          duration: 8,
-          repeat: Infinity,
-          ease: "easeInOut",
-        }}
-      />
-      <motion.div
-        className="absolute top-40 right-20 w-16 h-16 bg-gradient-to-r from-pink-400 to-red-500 rounded-lg opacity-20"
-        animate={{
-          y: [0, 30, 0],
-          rotate: [0, -180, -360],
-        }}
-        transition={{
-          duration: 10,
-          repeat: Infinity,
-          ease: "easeInOut",
-        }}
-      />
-      <motion.div
-        className="absolute bottom-40 left-20 w-12 h-12 bg-gradient-to-r from-green-400 to-blue-500 rotate-45 opacity-20"
-        animate={{
-          y: [0, -15, 0],
-          x: [0, -15, 0],
-          scale: [1, 1.2, 1],
-        }}
-        transition={{
-          duration: 6,
-          repeat: Infinity,
-          ease: "easeInOut",
-        }}
-      />
-      <motion.div
-        className="absolute bottom-20 right-32 w-24 h-24 bg-gradient-to-r from-yellow-400 to-orange-500 rounded-full opacity-15"
-        animate={{
-          y: [0, -25, 0],
-          scale: [1, 1.1, 1],
-        }}
-        transition={{
-          duration: 7,
-          repeat: Infinity,
-          ease: "easeInOut",
-        }}
-      />
-    </div>
-  );
-};
+gsap.registerPlugin(ScrollTrigger, TextPlugin, useGSAP);
 
-// --- Enhanced Stats Component ---
-const StatsSection = () => {
-  const stats = [
-    { number: "10K+", label: "Active Businesses", icon: Building2 },
-    { number: "$2.5B+", label: "Transactions Processed", icon: DollarSign },
-    { number: "99.9%", label: "Uptime Guarantee", icon: Shield },
-    { number: "24/7", label: "Customer Support", icon: Clock },
-  ];
+/* --- 1. Custom Scramble Text Component --- */
+const CustomScrambleText = ({ text, className, timeline, position = "<" }) => {
+  const textRef = useRef(null);
 
-  const [visitorStats, setVisitorStats] = useState({ visitors: 0, clicks: 0 });
+  useGSAP(() => {
+    const letters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789@#$%&*";
+    const targetText = text;
+    const el = textRef.current;
 
-  useEffect(() => {
-    const statsRef = ref(db, 'site_stats');
-    const unsubscribe = onValue(statsRef, (snapshot) => {
-      const data = snapshot.val();
-      if (data) {
-        setVisitorStats({
-          visitors: data.visitors || 0,
-          clicks: data.clicks || 0
-        });
-      }
-    });
-    return () => unsubscribe();
-  }, []);
-
-  const dynamicStats = [
-    { number: visitorStats.visitors.toLocaleString(), label: "Total Visitor", icon: Users },
-    { number: visitorStats.clicks.toLocaleString(), label: "Total Click", icon: Play },
-    { number: "99.9%", label: "Uptime Guarantee", icon: Shield },
-    { number: "24/7", label: "Customer Support", icon: Clock },
-  ];
-
-  return (
-    <section className="VisitorCounter py-16 bg-gradient-to-r from-gray-900 via-blue-900 to-purple-900 relative overflow-hidden">
-      <div className="absolute inset-0 bg-black opacity-50"></div>
-      <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="text-center mb-12">
-          <motion.h2
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            className="text-3xl font-bold text-white mb-4"
-          >
-            Trusted by businesses worldwide
-          </motion.h2>
-          <motion.p
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ delay: 0.2 }}
-            className="text-xl text-gray-300"
-          >
-            Join the growing community of successful businesses
-          </motion.p>
-        </div>
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-8">
-          {dynamicStats.map((stat, index) => {
-            const Icon = stat.icon;
-            return (
-              <motion.div
-                key={index}
-                initial={{ opacity: 0, scale: 0.8 }}
-                whileInView={{ opacity: 1, scale: 1 }}
-                viewport={{ once: true }}
-                transition={{ delay: index * 0.1, duration: 0.5 }}
-                className="text-center group"
-              >
-                <div className="inline-flex items-center justify-center w-16 h-16 bg-white/10 rounded-full mb-4 group-hover:bg-white/20 transition-colors">
-                  <Icon className="w-8 h-8 text-white" />
-                </div>
-                <div className="text-3xl font-bold text-white mb-2">
-                  {stat.number}
-                </div>
-                <div className="text-gray-300 font-medium">{stat.label}</div>
-              </motion.div>
-            );
-          })}
-        </div>
-      </div>
-    </section>
-  );
-};
-
-// --- Testimonials Component ---
-const TestimonialsSection = () => {
-  const testimonials = [
-    {
-      name: "Sarah Johnson",
-      role: "CEO, Tech Startup",
-      content:
-        "FinanceFlow transformed how we handle our accounting. The interface is intuitive and the features are exactly what we needed.",
-      avatar:
-        "https://images.unsplash.com/photo-1494790108755-2616b612b47c?w=64&h=64&fit=crop&crop=face",
-      rating: 5,
-    },
-    {
-      name: "Michael Chen",
-      role: "Small Business Owner",
-      content:
-        "The multi-business management feature is a game-changer. I can handle all my ventures from one place effortlessly.",
-      avatar:
-        "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=64&h=64&fit=crop&crop=face",
-      rating: 5,
-    },
-    {
-      name: "Emily Rodriguez",
-      role: "Freelance Consultant",
-      content:
-        "Simple, powerful, and reliable. FinanceFlow handles everything I need without the complexity of enterprise software.",
-      avatar:
-        "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=64&h=64&fit=crop&crop=face",
-      rating: 5,
-    },
-  ];
-
-  return (
-    <section className="py-20 bg-gradient-to-br from-blue-50 to-indigo-100">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="text-center mb-16">
-          <motion.h2
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            className="text-4xl font-bold text-gray-900 mb-4"
-          >
-            What our customers say
-          </motion.h2>
-          <motion.p
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ delay: 0.2 }}
-            className="text-xl text-gray-600"
-          >
-            Real feedback from real businesses
-          </motion.p>
-        </div>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-          {testimonials.map((testimonial, index) => (
-            <motion.div
-              key={index}
-              initial={{ opacity: 0, y: 30 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ delay: index * 0.2, duration: 0.6 }}
-              className="bg-white rounded-2xl p-8 shadow-lg hover:shadow-xl transition-shadow duration-300 border border-gray-100"
-            >
-              <div className="flex items-center mb-4">
-                {[...Array(testimonial.rating)].map((_, i) => (
-                  <Star
-                    key={i}
-                    className="w-5 h-5 text-yellow-400 fill-current"
-                  />
-                ))}
-              </div>
-              <p className="text-gray-700 mb-6 italic">
-                "{testimonial.content}"
-              </p>
-              <div className="flex items-center">
-                <img
-                  src={testimonial.avatar}
-                  alt={testimonial.name}
-                  className="w-12 h-12 rounded-full mr-4 object-cover"
-                />
-                <div>
-                  <div className="font-semibold text-gray-900">
-                    {testimonial.name}
-                  </div>
-                  <div className="text-gray-600 text-sm">
-                    {testimonial.role}
-                  </div>
-                </div>
-              </div>
-            </motion.div>
-          ))}
-        </div>
-      </div>
-    </section>
-  );
-};
-
-// --- Animated Features for Mobile/Tablet ---
-const hue = (h) => `hsl(${h}, 100%, 50%)`;
-
-function ScrollTriggeredFeatures({ features }) {
-  const colorPairs = [
-    [340, 20],
-    [200, 260],
-    [120, 180],
-    [40, 100],
-    [280, 340],
-    [160, 220],
-  ];
-  return (
-    <div
-      style={{
-        margin: "40px auto",
-        width: "100%",
-        paddingBottom: 40,
-        boxSizing: "border-box",
-        overflowX: "hidden",
-      }}
-    >
-      {features.map((feature, i) => {
-        const Icon = feature.icon;
-        const [hueA, hueB] = colorPairs[i % colorPairs.length];
-        const background = `linear-gradient(306deg, ${hue(hueA)}, ${hue(
-          hueB
-        )})`;
-        return (
-          <div
-            key={feature.title}
-            style={{
-              overflow: "visible",
-              display: "flex",
-              justifyContent: "center",
-              alignItems: "center",
-              position: "relative",
-              paddingTop: 40,
-              marginBottom: 56,
-              minHeight: 400,
-              width: "100%",
-              boxSizing: "border-box",
-            }}
-          >
-            <div
-              style={{
-                position: "absolute",
-                top: 0,
-                left: "50%",
-                transform: "translateX(-50%)",
-                width: "100%",
-                height: 400,
-                background,
-                borderRadius: 40,
-                zIndex: 0,
-                boxShadow: "0 8px 32px 0 rgba(0,0,0,0.10)",
-                clipPath:
-                  'path("M 0 373.5 C 0 362.454 8.995 355.101 20 353.5 L 320 289.5 C 330.085 288.033 340 298.454 340 309.5 L 340 400 C 340 411.046 331.046 420 320 420 L 20 420 C 8.954 420 0 411.046 0 400 Z")',
-              }}
-            />
-            <motion.div
-              style={{
-                fontSize: 56,
-                width: "85vw",
-                maxWidth: 320,
-                minWidth: 0,
-                height: 260,
-                display: "flex",
-                flexDirection: "column",
-                justifyContent: "center",
-                alignItems: "center",
-                borderRadius: 24,
-                background: "#f5f5f5",
-                boxShadow:
-                  "0 2px 8px 0 rgba(0,0,0,0.10), 0 1.5px 6px 0 rgba(0,0,0,0.08)",
-                transformOrigin: "50% 100%",
-                position: "relative",
-                zIndex: 1,
-                boxSizing: "border-box",
-              }}
-              initial={{ scale: 0.7, y: 120, opacity: 0 }}
-              whileInView={{ scale: 1, y: 0, opacity: 1 }}
-              transition={{
-                type: "spring",
-                bounce: 0.45,
-                duration: 0.85,
-              }}
-              viewport={{ once: true, amount: 0.7 }}
-            >
-              <Icon className="w-14 h-14 text-primary-600 mb-2" />
-              <div className="font-semibold text-gray-900 text-lg text-center px-2">
-                {feature.title}
-              </div>
-              <div className="text-xs text-gray-500 text-center px-2">
-                {feature.description}
-              </div>
-            </motion.div>
-          </div>
-        );
-      })}
-    </div>
-  );
-}
-
-// --- Enhanced FeatureBox for Desktop ---
-const FeatureBox = ({ feature, Icon, boxRef }) => {
-  const [isPC, setIsPC] = useState(window.innerWidth >= 1024);
-
-  const handleResize = useCallback(() => {
-    setIsPC(window.innerWidth >= 1024);
-  }, []);
-
-  useEffect(() => {
-    window.addEventListener("resize", handleResize);
-    return () => window.removeEventListener("resize", handleResize);
-  }, [handleResize]);
-
-  const content = (
-    <div className="group p-8 rounded-2xl border border-gray-200 hover:border-primary-300 hover:shadow-2xl h-full transition-all duration-300 bg-white backdrop-blur-sm hover:bg-gradient-to-br hover:from-white hover:to-primary-50 relative overflow-hidden">
-      <div className="absolute top-0 right-0 w-20 h-20 bg-gradient-to-br from-primary-100 to-transparent rounded-bl-3xl opacity-50"></div>
-      <div className="relative z-10">
-        <div className="w-14 h-14 bg-gradient-to-r from-primary-500 to-primary-600 rounded-xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-300 shadow-lg">
-          <Icon className="w-7 h-7 text-white" />
-        </div>
-        <h3 className="text-xl font-bold text-gray-900 mb-3 group-hover:text-primary-700 transition-colors">
-          {feature.title}
-        </h3>
-        <p className="text-gray-600 leading-relaxed">{feature.description}</p>
-      </div>
-    </div>
-  );
-
-  return (
-    <div className="h-full">
-      {isPC ? (
-        <motion.div
-          drag
-          dragConstraints={
-            boxRef?.current || { top: 0, bottom: 0, left: 0, right: 0 }
-          }
-          initial={{ opacity: 0, y: 40 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.8, ease: [0.25, 0.1, 0.25, 1] }}
-          whileHover={{ y: -5 }}
-        >
-          {content}
-        </motion.div>
-      ) : (
-        <motion.div
-          initial={{ opacity: 0, y: 40 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true, amount: 0.3 }}
-          transition={{ duration: 0.8, ease: [0.25, 0.1, 0.25, 1] }}
-        >
-          {content}
-        </motion.div>
-      )}
-    </div>
-  );
-};
-
-const features = [
-  {
-    icon: Building2,
-    title: "Multi-Business Management",
-    description:
-      "Manage multiple businesses from one dashboard with ease and precision",
-  },
-  {
-    icon: BarChart3,
-    title: "Chart of Accounts",
-    description:
-      "Organize your finances with a comprehensive chart of accounts system",
-  },
-  {
-    icon: Calculator,
-    title: "Double-Entry Accounting",
-    description:
-      "Professional accounting with automatic balance validation and accuracy",
-  },
-  {
-    icon: FileText,
-    title: "Transaction Management",
-    description:
-      "Track all your financial transactions with detailed records and insights",
-  },
-  {
-    icon: PieChart,
-    title: "Financial Reports",
-    description:
-      "Generate insightful reports to understand your business performance",
-  },
-  {
-    icon: Shield,
-    title: "Secure & Reliable",
-    description:
-      "Your financial data is protected with enterprise-grade security protocols",
-  },
-];
-
-const plans = [
-  {
-    name: "Free",
-    price: "$0",
-    period: "forever",
-    description: "Perfect for small businesses getting started",
-    features: [
-      "Up to 3 businesses",
-      "Basic business information",
-      "Essential accounting features",
-      "Transaction management",
-      "Basic reports",
-    ],
-    cta: "Start Free",
-    popular: false,
-  },
-  {
-    name: "Premium",
-    price: "$29",
-    period: "per month",
-    description: "Advanced features for growing businesses",
-    features: [
-      "Unlimited businesses",
-      "Complete business profiles",
-      "Advanced accounting features",
-      "Detailed financial reports",
-      "Priority support",
-      "Custom integrations",
-    ],
-    cta: "Start Premium Trial",
-    popular: true,
-  },
-];
-
-const LandingPage = () => {
-  const boxRef = useRef(null);
-  const navigate = useNavigate();
-  const [user, setUser] = useState(null);
-  const [scrollY, setScrollY] = useState(0);
-  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-
-  // Track visit on mount
-  // Visitor & Click Tracking Logic
-  useEffect(() => {
-    // --- Visitor Counting ---
-    // Always increment visitor count on mount
-    const visitorsRef = ref(db, 'site_stats/visitors');
-    runTransaction(visitorsRef, (currentCount) => {
-      return (currentCount || 0) + 1;
-    }).catch((error) => {
-      console.error("Error updating visitor count:", error);
-    });
-
-    // --- Click Counting ---
-    const handleGlobalClick = () => {
-      const clicksRef = ref(db, 'site_stats/clicks');
-      runTransaction(clicksRef, (currentCount) => {
-        return (currentCount || 0) + 1;
-      }).catch((error) => {
-        console.error("Error updating click count:", error);
-      });
+    const startScramble = () => {
+      let iterations = 0;
+      const interval = setInterval(() => {
+        if (!el) {
+          clearInterval(interval);
+          return;
+        }
+        el.innerText = targetText.split("")
+          .map((letter, index) => {
+            if (index < iterations) {
+              return targetText[index];
+            }
+            if (targetText[index] === " ") return " ";
+            return letters[Math.floor(Math.random() * letters.length)];
+          })
+          .join("");
+        if (iterations >= targetText.length) {
+          clearInterval(interval);
+        }
+        iterations += 1 / 3;
+      }, 30);
     };
 
+    if (timeline) {
+      // Add a clean zero-duration animation to the timeline that triggers the scramble
+      timeline.add(() => startScramble(), position);
+    } else {
+      // Fallback to basic scroll trigger if no timeline provided
+      ScrollTrigger.create({
+        trigger: el,
+        start: "top 85%",
+        onEnter: startScramble
+      });
+    }
+  }, [text, timeline, position]);
+
+  return <span ref={textRef} className={className}>{"\u00A0"}</span>;
+};
+
+/* --- 2. Three.js Background Component --- */
+const Background3D = () => {
+  const canvasRef = useRef(null);
+  const containerRef = useRef(null);
+
+  useGSAP(() => {
+    if (!canvasRef.current) return;
+    const canvas = canvasRef.current;
+    const scene = new THREE.Scene();
+
+    const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+    camera.position.z = 5;
+
+    const renderer = new THREE.WebGLRenderer({
+      canvas: canvas,
+      alpha: true,
+      antialias: true,
+      powerPreference: "high-performance"
+    });
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+
+    const cubeGroup = new THREE.Group();
+    scene.add(cubeGroup);
+
+    const glassMaterial = new THREE.MeshPhysicalMaterial({
+      color: 0xffffff,
+      metalness: 0.1,
+      roughness: 0.1,
+      transmission: 1.0,
+      ior: 1.5,
+      thickness: 0.5,
+      transparent: true,
+      opacity: 0.9,
+      side: THREE.DoubleSide
+    });
+
+    const cubeGeometry = new THREE.BoxGeometry(2.5, 2.5, 2.5);
+    const glassCube = new THREE.Mesh(cubeGeometry, glassMaterial);
+    cubeGroup.add(glassCube);
+
+    const innerCubeGeo = new THREE.BoxGeometry(2, 2, 2);
+    const linesGeometry = new THREE.EdgesGeometry(innerCubeGeo);
+    const linesMaterial = new THREE.LineBasicMaterial({
+      color: 0x00b7ff,
+      linewidth: 2,
+      transparent: true,
+      opacity: 0.9
+    });
+    const innerLines = new THREE.LineSegments(linesGeometry, linesMaterial);
+    cubeGroup.add(innerLines);
+
+    const coreGeometry = new THREE.BoxGeometry(1.2, 1.2, 1.2);
+    const coreMaterial = new THREE.MeshBasicMaterial({
+      color: 0x0044ff,
+      wireframe: true,
+      transparent: true,
+      opacity: 0.7
+    });
+    const coreCube = new THREE.Mesh(coreGeometry, coreMaterial);
+    cubeGroup.add(coreCube);
+
+    const isMobile = window.innerWidth < 992;
+    cubeGroup.position.x = isMobile ? 0 : 3.5;
+    cubeGroup.position.y = 0;
+
+    const particlesGeometry = new THREE.BufferGeometry();
+    const particleCount = 1200;
+    const posArray = new Float32Array(particleCount * 3);
+    for (let i = 0; i < particleCount * 3; i++) {
+      posArray[i] = (Math.random() - 0.5) * 20;
+    }
+    particlesGeometry.setAttribute('position', new THREE.BufferAttribute(posArray, 3));
+
+    const getParticleMaterial = () => {
+      const particleCanvas = document.createElement('canvas');
+      particleCanvas.width = 32;
+      particleCanvas.height = 32;
+      const ctx = particleCanvas.getContext('2d');
+      const grad = ctx.createRadialGradient(16, 16, 0, 16, 16, 16);
+      grad.addColorStop(0, 'rgba(0, 183, 255, 1)');
+      grad.addColorStop(1, 'rgba(0, 183, 255, 0)');
+      ctx.fillStyle = grad;
+      ctx.fillRect(0, 0, 32, 32);
+      const particleTexture = new THREE.CanvasTexture(particleCanvas);
+      return new THREE.PointsMaterial({
+        size: 0.08,
+        map: particleTexture,
+        transparent: true,
+        blending: THREE.AdditiveBlending,
+        depthWrite: false
+      });
+    }
+    const particlesMaterial = getParticleMaterial();
+    const particlesMesh = new THREE.Points(particlesGeometry, particlesMaterial);
+    scene.add(particlesMesh);
+
+    const ambientLight = new THREE.AmbientLight(0xffffff, 0.6);
+    scene.add(ambientLight);
+    const directionalLight = new THREE.DirectionalLight(0xffffff, 2);
+    directionalLight.position.set(5, 5, 5);
+    scene.add(directionalLight);
+    const pointLight = new THREE.PointLight(0x00d4ff, 4, 10);
+    pointLight.position.set(0, 0, 0);
+    cubeGroup.add(pointLight);
+
+    let mouseX = 0, mouseY = 0, targetX = 0, targetY = 0;
+    const windowHalfX = window.innerWidth / 2;
+    const windowHalfY = window.innerHeight / 2;
+
+    const onMouseMove = (event) => {
+      mouseX = (event.clientX - windowHalfX);
+      mouseY = (event.clientY - windowHalfY);
+    };
+    document.addEventListener('mousemove', onMouseMove);
+
+    const clock = new THREE.Clock();
+    let animationFrameId;
+
+    const tick = () => {
+      const elapsedTime = clock.getElapsedTime();
+      cubeGroup.rotation.y += 0.003;
+      cubeGroup.rotation.x += 0.002;
+      innerLines.rotation.y -= 0.005;
+      innerLines.rotation.z -= 0.002;
+      coreCube.rotation.x += 0.01;
+      coreCube.rotation.y += 0.01;
+
+      targetX = mouseX * 0.001;
+      targetY = mouseY * 0.001;
+      cubeGroup.position.y += Math.sin(elapsedTime * 2) * 0.001;
+
+      // Removed direct targetX * 0.5 mouse tilt which conflicts with GSAP causing jitter during scroll
+      cubeGroup.rotation.z = gsap.utils.interpolate(cubeGroup.rotation.z, targetX * 0.2, 0.05);
+
+      particlesMesh.rotation.y = -0.05 * elapsedTime;
+      particlesMesh.position.y = -window.scrollY * 0.0015;
+
+      renderer.render(scene, camera);
+      animationFrameId = window.requestAnimationFrame(tick);
+    };
+    tick();
+
+    // GSAP SCROLL ANIMATIONS FOR THE 3D CUBE
+
+    // Initial position for Hero (far right)
+    cubeGroup.position.set(isMobile ? 0 : 3.5, 0, 0);
+
+    // Create a unified master timeline for the 3D Cube's journey through the sections
+    // This is mathematically superior to individual triggers and eliminates "stop/start" jitter completely
+    const masterCubeTl = gsap.timeline({
+      scrollTrigger: {
+        trigger: '#main-content',
+        start: 'top top',
+        end: () => `+=${window.innerHeight * 4}`, // End after scrolling through Insights, Workflow, and into Dashboard
+        scrub: 1.5,
+        fastScrollEnd: true,
+        invalidateOnRefresh: true,
+      }
+    });
+
+    // 1. Journey to Insights Section (Left)
+    masterCubeTl.to(cubeGroup.position, {
+      x: () => (window.innerWidth < 992 ? 0 : -3.5),
+      y: 0,
+      z: 0,
+      ease: "power1.inOut",
+      duration: 1
+    }, 0);
+
+    // 2. Journey to Workflow Section (Center)
+    masterCubeTl.to(cubeGroup.position, {
+      x: 0,
+      y: 0, // Slight vertical adjustment to center between the cards
+      z: -1.5, // Push it back a bit to make it smaller as requested
+      ease: "power1.inOut",
+      duration: 1
+    }, 1);
+
+    // Helper to calculate exact scale needed to hit screen width without overflowing
+    const getTargetScale = () => {
+      // Use trigonometric calculation for the width of the view frustum at the object's distance
+      const vFov = (75 * Math.PI) / 180; // 75 degrees FOV
+      // Camera is at z=5. When expanding, we animating to center (z=0, x=0, y=0) in the 2nd step,
+      // but the 2nd step sets z: -1.5, so the distance is 6.5.
+      const distance = 6.5;
+
+      const heightAtDistance = 2 * Math.tan(vFov / 2) * distance;
+      const widthAtDistance = heightAtDistance * (window.innerWidth / window.innerHeight);
+
+      // The box's base size is 2.5 on all sides.
+      // However, because the box is constantly rotating, the *diagonal* can be wider
+      // The maximum width of a rotating box is roughly Math.sqrt(3) * size
+      const maxRotatedSize = 2.5 * Math.sqrt(3);
+
+      // We want to make sure it expands to 100% width but doesn't overspill
+      // Calculate what scale creates a size equal to the screen's width at that distance
+      let targetScale = widthAtDistance / maxRotatedSize;
+
+      // If the screen is very tall (mobile/portrait), expanding to width might overflow height
+      // So we take the minimum boundary to ensure it's exactly 100% of the screen without clipping
+      const heightTargetScale = heightAtDistance / maxRotatedSize;
+
+      return Math.min(targetScale, heightTargetScale);
+    };
+
+    // 3. Expand the object up to exactly screen width after Section 3
+    masterCubeTl.to(cubeGroup.scale, {
+      x: getTargetScale,
+      y: getTargetScale,
+      z: getTargetScale,
+      ease: "power1.inOut",
+      duration: 2
+    }, 2);
+
+    // Illusion of box opening: 
+    // The glass cube becomes completely transparent and dissolves, while the inner core lines
+    // burst out by scaling larger than the container itself.
+    masterCubeTl.to(glassMaterial, {
+      opacity: 0.0, // Reduce opacity to simulate opening/disappearing limits
+      transmission: 0.0, // Lower refraction
+      ease: "power1.inOut",
+      duration: 2
+    }, 2);
+
+    // Scale down the glass enclosure so it disappears
+    masterCubeTl.to(glassCube.scale, {
+      x: 0.01,
+      y: 0.01,
+      z: 0.01,
+      ease: "power2.inOut",
+      duration: 2
+    }, 2);
+
+    // Scale up the inner wireframe and core cube specifically to burst outside the bounds
+    masterCubeTl.to([innerLines.scale, coreCube.scale], {
+      x: 2.5,
+      y: 2.5,
+      z: 2.5,
+      ease: "power2.inOut",
+      duration: 2
+    }, 2);
+
+    const handleResize = () => {
+      camera.aspect = window.innerWidth / window.innerHeight;
+      camera.updateProjectionMatrix();
+      renderer.setSize(window.innerWidth, window.innerHeight);
+      renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+      if (window.innerWidth < 992 && ScrollTrigger.getAll().length === 0) {
+        cubeGroup.position.x = 0;
+      }
+    };
+    window.addEventListener('resize', handleResize);
+
+    return () => {
+      document.removeEventListener('mousemove', onMouseMove);
+      window.removeEventListener('resize', handleResize);
+      window.cancelAnimationFrame(animationFrameId);
+      renderer.dispose();
+      glassMaterial.dispose();
+      cubeGeometry.dispose();
+      innerCubeGeo.dispose();
+      linesGeometry.dispose();
+      linesMaterial.dispose();
+      coreGeometry.dispose();
+      coreMaterial.dispose();
+      particlesGeometry.dispose();
+      particlesMaterial.dispose();
+    };
+  }, { scope: containerRef });
+
+  return (
+    <div ref={containerRef} className="fixed inset-0 pointer-events-none z-0 bg-gradient-to-br from-slate-900 via-blue-950 to-indigo-950">
+      <div className="absolute inset-0 bg-gradient-to-t from-blue-600/10 via-transparent to-purple-600/10"></div>
+      <div className="absolute inset-0 bg-gradient-to-r from-cyan-500/10 via-transparent to-pink-500/10"></div>
+      <canvas ref={canvasRef} id="webgl-canvas" className="w-full h-full relative z-10" />
+    </div>
+  );
+};
+
+/* --- 3. Main Landing Page Component --- */
+export default function LandingPage() {
+  const container = useRef(null);
+  const heroTitleRef = useRef(null);
+  const dashboardContainerRef = useRef(null);
+  const dashboardElementRef = useRef(null);
+  const dashboardTitleRef = useRef(null);
+  const marqueeContainerRef = useRef(null);
+  const marqueeTextRef = useRef(null);
+  const testimonialsRef = useRef(null);
+  const testimonialsContainerRef = useRef(null);
+  const ctaRef = useRef(null);
+  const ctaContentRef = useRef(null);
+
+  const [ctaTimeline, setCtaTimeline] = useState(null);
+  const navigate = useNavigate();
+  const [user, setUser] = useState(null);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [stats, setStats] = useState({ visitors: 0, clicks: 0 });
+
+  const features = [
+    { icon: Building2, title: "Multi-Business Management", description: "Manage multiple businesses from one dashboard with ease and precision" },
+    { icon: BarChart3, title: "Chart of Accounts", description: "Organize your finances with a comprehensive chart of accounts system" },
+    { icon: Calculator, title: "Double-Entry Accounting", description: "Professional accounting with automatic balance validation and accuracy" },
+    { icon: FileText, title: "Transaction Management", description: "Track all your financial transactions with detailed records and insights" },
+    { icon: PieChart, title: "Financial Reports", description: "Generate insightful reports to understand your business performance" },
+    { icon: Shield, title: "Secure & Reliable", description: "Your financial data is protected with enterprise-grade security protocols" },
+  ];
+
+  const testimonials = [
+    { name: "Sarah Johnson", role: "CEO, Tech Startup", content: "FinanceFlow transformed how we handle our accounting. The interface is intuitive and the features are exactly what we needed.", avatar: "https://images.unsplash.com/photo-1494790108755-2616b612b47c?w=64&h=64&fit=crop&crop=face", rating: 5 },
+    { name: "Michael Chen", role: "Small Business Owner", content: "The multi-business management feature is a game-changer. I can handle all my ventures from one place effortlessly.", avatar: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=64&h=64&fit=crop&crop=face", rating: 5 },
+    { name: "Emily Rodriguez", role: "Freelance Consultant", content: "Simple, powerful, and reliable. FinanceFlow handles everything I need without the complexity of enterprise software.", avatar: "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=64&h=64&fit=crop&crop=face", rating: 5 }
+  ];
+
+  // Auth & Tracking
+  useEffect(() => {
+    const fetchUser = async () => {
+      try {
+        const res = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/login/session`, { withCredentials: true });
+        setUser(res.data.username);
+      } catch { setUser(null); }
+    };
+    fetchUser();
+
+    // Visitor tracking logic preserved
+    const visitorsRef = ref(db, 'site_stats/visitors');
+    runTransaction(visitorsRef, (currentCount) => (currentCount || 0) + 1).catch(console.error);
+
+    const statsRef = ref(db, 'site_stats');
+    const unsub = onValue(statsRef, (snapshot) => {
+      const data = snapshot.val();
+      if (data) setStats({ visitors: data.visitors || 0, clicks: data.clicks || 0 });
+    });
+
+    const handleGlobalClick = () => {
+      const clicksRef = ref(db, 'site_stats/clicks');
+      runTransaction(clicksRef, (currentCount) => (currentCount || 0) + 1).catch(console.error);
+    };
     window.addEventListener('click', handleGlobalClick);
 
     return () => {
+      unsub();
       window.removeEventListener('click', handleGlobalClick);
     };
   }, []);
 
-  useEffect(() => {
-    const fetchUser = async () => {
-      try {
-        const res = await axios.get(
-          `${import.meta.env.VITE_BACKEND_URL}/api/login/session`,
-          { withCredentials: true }
-        );
-        setUser(res.data.username);
-      } catch {
-        setUser(null);
-      }
-    };
-    fetchUser();
-  }, []);
-
-  useEffect(() => {
-    const handleScroll = () => setScrollY(window.scrollY);
-    window.addEventListener("scroll", handleScroll);
-    return () => window.removeEventListener("scroll", handleScroll);
-  }, []);
-
   const handleLogout = async () => {
     try {
-      await axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/auth/logout`, {
-        withCredentials: true,
-      });
+      await axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/auth/logout`, { withCredentials: true });
       localStorage.clear();
       setUser(null);
       navigate("/login");
@@ -574,939 +422,500 @@ const LandingPage = () => {
     }
   };
 
+  // Main GSAP Animations
+  useGSAP(() => {
+    // 1. Hero Typewriter
+    gsap.to(heroTitleRef.current, {
+      duration: 2.5,
+      repeat: -1,
+      yoyo: true,
+      text: { value: " simple & powerful", delimiter: "" },
+      ease: "none",
+      delay: 0.5
+    });
+
+    // 2. Pinned Dashboard Element
+    ScrollTrigger.create({
+      trigger: dashboardContainerRef.current,
+      start: "top top",
+      end: "+=150%", // pin for 150% of viewport height scroll
+      pin: dashboardElementRef.current,
+      scrub: 1,
+    });
+
+    // 2.5 Dashboard Title Animation
+    gsap.fromTo(dashboardTitleRef.current,
+      { y: 50, opacity: 0 },
+      {
+        y: 0,
+        opacity: 1,
+        ease: "power2.out",
+        scrollTrigger: {
+          trigger: dashboardContainerRef.current,
+          start: "top 60%", // Start animating in when the dashboard container is 60% down the screen
+          end: "top 20%",
+          scrub: 1
+        }
+      }
+    );
+
+    // 3. Pinned Left-to-Right Scrolling Marquee
+    const getMarqueeScroll = () => {
+      if (!marqueeTextRef.current) return 0;
+      return -(marqueeTextRef.current.scrollWidth - window.innerWidth);
+    };
+
+    gsap.fromTo(marqueeTextRef.current,
+      { x: 0 },
+      {
+        x: getMarqueeScroll,
+        ease: "none",
+        scrollTrigger: {
+          trigger: marqueeContainerRef.current,
+          start: "center center",
+          end: () => `+=${Math.abs(getMarqueeScroll())}`,
+          pin: true,
+          scrub: 1,
+          invalidateOnRefresh: true
+        }
+      }
+    );
+
+    // 4. Features Flip Cards
+    gsap.utils.toArray('.feature-flip-card').forEach((card) => {
+      const inner = card.querySelector('.flip-inner');
+
+      card.addEventListener('mouseenter', () => gsap.to(inner, { rotateY: 180, duration: 0.6, ease: 'power2.out', overwrite: "auto" }));
+      card.addEventListener('mouseleave', () => gsap.to(inner, { rotateY: 0, duration: 0.6, ease: 'power2.out', overwrite: "auto" }));
+
+      ScrollTrigger.create({
+        trigger: card,
+        start: "top 75%",
+        onEnter: () => {
+          gsap.to(inner, { rotateY: 180, duration: 0.6, ease: 'power2.out' });
+          gsap.delayedCall(1.2, () => gsap.to(inner, { rotateY: 0, duration: 0.6, ease: 'power2.out' }));
+        }
+      });
+    });
+
+    // 5. Testimonials Animations
+    // 5a. Entrance Animation (Fade Up)
+    gsap.from('.testimonial-card', {
+      y: 50,
+      opacity: 0,
+      duration: 1,
+      delay: 0.5,
+      stagger: 0.5,
+      ease: "power2.out",
+      scrollTrigger: {
+        trigger: testimonialsRef.current,
+        start: "top 70%", // Start animating when the section is 70% into view
+      }
+    });
+
+    // 5b. Horizontal Scroll (Pinned)
+    const totalTestimonialsWidth = testimonialsContainerRef.current.scrollWidth - window.innerWidth + 80; // slight offset
+    if (totalTestimonialsWidth > 0) {
+      gsap.to(testimonialsContainerRef.current, {
+        x: -totalTestimonialsWidth,
+        ease: "none",
+        scrollTrigger: {
+          trigger: testimonialsRef.current,
+          start: "center center",
+          end: () => `+=${totalTestimonialsWidth}`,
+          pin: true,
+          scrub: 1,
+          anticipatePin: 1
+        }
+      });
+    }
+
+    // 6. CTA Banner Timeline
+    // We create the state timeline in a ref so we can pass it to the Scramble text component
+    const ctaTl = gsap.timeline({
+      scrollTrigger: {
+        trigger: ctaRef.current,
+        start: "top 75%",
+      }
+    });
+
+    // Save to state so the Scramble component can react and attach to it
+    setCtaTimeline(ctaTl);
+
+    ctaTl.from(ctaContentRef.current, {
+      y: 50,
+      opacity: 0,
+      duration: 1,
+      ease: "power3.out"
+    }, 0); // start immediately on trigger
+
+  }, { scope: container });
+
   return (
-    <div className="min-h-screen bg-gradient-to-br from-primary-50 via-white to-primary-50 overflow-x-hidden">
-      {/* Enhanced Navbar */}
-      <nav className="bg-white/95 backdrop-blur-lg border-b border-gray-200 sticky top-0 z-50 min-h-24 shadow-sm">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-3">
-          <div className="flex justify-between items-center h-16">
-            <motion.div
-              className="flex flex-col items-center"
-              initial={{ opacity: 0, x: -20 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ duration: 0.5 }}
-            >
-              <img
-                src="/final.png"
-                alt="Logo"
-                className="h-16 w-auto mr-2"
-                style={{ marginTop: "18px" }}
-              />
-            </motion.div>
-            <motion.div
-              className="hidden md:flex items-center space-x-4"
-              initial={{ opacity: 0, x: 20 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ duration: 0.5, delay: 0.2 }}
-            >
+    <div ref={container} className="relative min-h-screen text-white overflow-x-hidden font-sans">
+      <Background3D />
+
+      {/* Nav */}
+      <nav className="fixed w-full top-0 z-50 shadow-lg border-b border-slate-800 backdrop-blur-xl bg-gradient-to-br from-slate-900 via-blue-950/80 to-indigo-950/80 text-white">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-3 pb-3">
+          <div className="flex justify-between items-center h-10">
+            <div className="flex items-center">
+              <img src="/final.png" alt="Logo" className="h-14 w-auto drop-shadow-lg" />
+            </div>
+            <div className="hidden md:flex items-center space-x-6">
               {user ? (
                 <>
-                  <button
-                    onClick={() => {
-                      navigate("/list");
-                    }}
-                    className="text-gray-600 hover:text-gray-900 font-medium max-sm:text-xs transition-all duration-300 border border-gray-300 rounded-lg px-4 py-2 hover:bg-gray-50 hover:shadow-md"
-                  >
-                    Dashboard
-                  </button>
-                  <button
-                    onClick={handleLogout}
-                    className="text-gray-600 hover:text-gray-900 font-medium max-sm:text-xs transition-all duration-300 border border-gray-300 rounded-lg px-4 py-2 hover:bg-gray-50 hover:shadow-md"
-                  >
-                    Logout
-                  </button>
-                  <Link to="/profile" className="flex items-center space-x-2 px-3 py-2 bg-gray-50 rounded-full border border-gray-200 hover:bg-gray-100 hover:border-primary-200 transition-colors cursor-pointer text-decoration-none">
-                    <div className="bg-primary-100 p-1 rounded-full">
-                      <User className="w-4 h-4 text-primary-600" />
-                    </div>
-                    <span className="text-sm font-medium text-gray-700 hidden sm:inline-block">Welcome, {user}</span>
+                  <button onClick={() => navigate("/list")} className="text-slate-200 hover:text-white font-medium transition-all">Dashboard</button>
+                  <button onClick={handleLogout} className="text-red-400 hover:text-red-300 font-medium transition-all">Logout</button>
+                  <Link to="/profile" className="flex items-center space-x-2 px-4 py-2 bg-slate-800 rounded-full border border-slate-700 hover:bg-slate-700 transition-colors">
+                    <User className="w-4 h-4 text-cyan-400" />
+                    <span className="text-sm font-medium text-white">Welcome, {user}</span>
                   </Link>
-
                 </>
               ) : (
                 <>
-                  <Link
-                    to="/login"
-                    className="text-gray-600 hover:text-gray-900 font-medium transition-colors duration-300"
-                  >
-                    Sign In
-                  </Link>
-                  <Link
-                    to="/register"
-
-                    className="btn-primary shadow-lg hover:shadow-xl transition-shadow duration-300"
-                  >
-                    Get Started
-                  </Link>
+                  <Link to="/login" className="text-slate-300 hover:text-white font-medium transition-colors">Sign In</Link>
+                  <Link to="/register" className="px-6 py-2 bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-white rounded-xl font-bold transition-all shadow-lg hover:shadow-cyan-500/30">Get Started</Link>
                 </>
               )}
-            </motion.div>
-
-            {/* Mobile Menu Button */}
+            </div>
             <div className="md:hidden flex items-center">
-              <button
-                onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-                className="text-gray-600 hover:text-gray-900 focus:outline-none p-2"
-              >
-                {isMobileMenuOpen ? (
-                  <X className="h-6 w-6" />
-                ) : (
-                  <Menu className="h-6 w-6" />
-                )}
+              <button onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)} className="text-white p-2 focus:outline-none">
+                {isMobileMenuOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
               </button>
             </div>
           </div>
         </div>
-
-        {/* Mobile Menu Dropdown */}
-        <AnimatePresence>
-          {isMobileMenuOpen && (
-            <motion.div
-              initial={{ opacity: 0, height: 0 }}
-              animate={{ opacity: 1, height: "auto" }}
-              exit={{ opacity: 0, height: 0 }}
-              className="md:hidden bg-white border-t border-gray-100 overflow-hidden"
-            >
-              <div className="px-4 pt-2 pb-6 space-y-3">
-                {user ? (
-                  <>
-                    <div className="flex items-center space-x-3 px-3 py-3 bg-gray-50 rounded-lg border border-gray-100 mb-4">
-                      <div className="bg-primary-100 p-2 rounded-full">
-                        <User className="w-5 h-5 text-primary-600" />
-                      </div>
-                      <div>
-                        <p className="text-sm font-medium text-gray-900">Signed in as</p>
-                        <p className="text-sm font-bold text-primary-600 truncate max-w-[200px]">{user}</p>
-                      </div>
-                    </div>
-
-                    <button
-                      onClick={() => {
-                        navigate("/list");
-                        setIsMobileMenuOpen(false);
-                      }}
-                      className="w-full text-left flex items-center space-x-3 px-3 py-3 rounded-lg text-gray-700 hover:bg-gray-50 font-medium transition-colors border border-transparent hover:border-gray-200"
-                    >
-                      <BarChart3 className="w-5 h-5 text-gray-400" />
-                      <span>Dashboard</span>
-                    </button>
-
-                    <button
-                      onClick={() => {
-                        handleLogout();
-                        setIsMobileMenuOpen(false);
-                      }}
-                      className="w-full text-left flex items-center space-x-3 px-3 py-3 rounded-lg text-red-600 hover:bg-red-50 font-medium transition-colors border border-transparent hover:border-red-100"
-                    >
-                      <div className="w-5 h-5" /> {/* Spacer alignment */}
-                      <span>Logout</span>
-                    </button>
-                  </>
-                ) : (
-                  <div className="flex flex-col space-y-3 pt-2">
-                    <Link
-                      to="/login"
-                      onClick={() => setIsMobileMenuOpen(false)}
-                      className="w-full text-center px-4 py-3 border border-gray-300 rounded-lg text-gray-700 font-medium hover:bg-gray-50 transition-colors"
-                    >
-                      Sign In
-                    </Link>
-                    <Link
-                      to="/register"
-                      onClick={() => setIsMobileMenuOpen(false)}
-                      className="w-full text-center px-4 py-3 bg-primary-600 text-white rounded-lg font-medium hover:bg-primary-700 shadow-md transition-colors"
-                    >
-                      Get Started
-                    </Link>
-                  </div>
-                )}
+        {/* Mobile Menu Output */}
+        {isMobileMenuOpen && (
+          <div className="md:hidden bg-slate-800 border-t border-slate-700 w-full p-4 absolute top-full left-0 z-50">
+            {user ? (
+              <div className="flex flex-col space-y-4">
+                <span className="text-cyan-400 font-bold block mb-2 px-2">Hi, {user}</span>
+                <button onClick={() => navigate("/list")} className="text-left px-2 py-1 text-white text-lg">Dashboard</button>
+                <button onClick={handleLogout} className="text-left px-2 py-1 text-red-400 text-lg">Logout</button>
               </div>
-            </motion.div>
-          )}
-        </AnimatePresence>
+            ) : (
+              <div className="flex flex-col space-y-4">
+                <Link to="/login" className="text-white text-lg block px-2 py-1 border-b border-slate-700">Sign In</Link>
+                <Link to="/register" className="text-white text-lg block px-2 py-1 font-bold text-cyan-400">Get Started</Link>
+              </div>
+            )}
+          </div>
+        )}
       </nav>
 
-      {/* Enhanced Hero Section */}
-      <section className="relative overflow-hidden py-20 lg:py-32 min-h-screen flex items-center">
-        <FloatingElements />
+      {/* Content Container ensures pointer events apply accurately above 3D context */}
+      <div id="main-content" className="relative z-10 mt-10">
 
-        {/* Enhanced Financial Background */}
-        <div className="absolute inset-0">
-          {/* Primary gradient background */}
-          <div className="absolute inset-0 bg-gradient-to-br from-slate-900 via-blue-900 to-indigo-900"></div>
-
-          {/* Overlay gradients for depth */}
-          <div className="absolute inset-0 bg-gradient-to-t from-blue-600/20 via-transparent to-purple-600/20"></div>
-          <div className="absolute inset-0 bg-gradient-to-r from-cyan-500/10 via-transparent to-pink-500/10"></div>
-
-          {/* Financial pattern overlay */}
-          <div className="absolute inset-0 opacity-10">
-            <div
-              className="absolute inset-0"
-              style={{
-                backgroundImage: `
-          linear-gradient(45deg, rgba(255,255,255,0.1) 1px, transparent 1px),
-          linear-gradient(-45deg, rgba(255,255,255,0.1) 1px, transparent 1px)
-        `,
-                backgroundSize: "20px 20px",
-              }}
-            ></div>
-          </div>
-
-          {/* Animated financial elements */}
-          <div className="absolute inset-0">
-            {/* Floating money symbols */}
-            <div className="absolute top-20 left-10 text-4xl text-green-400/20 animate-pulse">
-              $
-            </div>
-            <div className="absolute top-40 right-20 text-3xl text-yellow-400/20 animate-bounce">
-              €
-            </div>
-            <div className="absolute bottom-40 left-32 text-5xl text-blue-400/20 animate-pulse">
-              £
-            </div>
-            <div className="absolute bottom-20 right-40 text-3xl text-purple-400/20 animate-bounce">
-              ¥
-            </div>
-
-            {/* Chart lines effect */}
-            <svg
-              className="absolute inset-0 w-full h-full"
-              style={{ filter: "blur(1px)" }}
-            >
-              <defs>
-                <linearGradient
-                  id="chartGradient"
-                  x1="0%"
-                  y1="0%"
-                  x2="100%"
-                  y2="0%"
-                >
-                  <stop
-                    offset="0%"
-                    style={{ stopColor: "#3b82f6", stopOpacity: 0.2 }}
-                  />
-                  <stop
-                    offset="50%"
-                    style={{ stopColor: "#8b5cf6", stopOpacity: 0.3 }}
-                  />
-                  <stop
-                    offset="100%"
-                    style={{ stopColor: "#06b6d4", stopOpacity: 0.2 }}
-                  />
-                </linearGradient>
-              </defs>
-              <path
-                d="M0,400 Q200,200 400,300 T800,250 L800,600 L0,600 Z"
-                fill="url(#chartGradient)"
-                className="animate-pulse"
-              />
-              <path
-                d="M0,500 Q300,100 600,200 T1200,180"
-                stroke="rgba(59, 130, 246, 0.3)"
-                strokeWidth="2"
-                fill="none"
-                className="animate-pulse"
-              />
-            </svg>
-          </div>
-
-          {/* Subtle mesh pattern */}
-          <div className="absolute inset-0 bg-black/20"></div>
-        </div>
-
-        <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 z-10">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
-            <motion.div
-              initial={{ opacity: 0, x: -50 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ duration: 0.8 }}
-            >
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.2 }}
-                className="inline-flex items-center px-4 py-2 bg-gradient-to-r from-primary-500 to-purple-600 rounded-full text-white text-sm font-medium mb-8 shadow-lg"
-              >
-                <Sparkles className="w-4 h-4 mr-2" />
-                Now with Enhanced Features!
-              </motion.div>
-
-              <h1 className="text-4xl sm:text-5xl lg:text-7xl font-bold text-white leading-tight">
-                Accounting made{" "}
-                <span className="text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-purple-400 block">
-                  simple & powerful
-                </span>
+        {/* Hero Section */}
+        <section className="relative min-h-screen flex items-center pt-24 pb-16 px-4">
+          <div className="max-w-7xl mx-auto w-full grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
+            <div className="z-10">
+              <div className="inline-flex items-center px-4 py-2 bg-slate-800/80 border border-slate-700 backdrop-blur text-cyan-400 text-sm font-semibold rounded-full mb-8 shadow-2xl">
+                <Award className="w-4 h-4 mr-2" />
+                Premium Financial OS
+              </div>
+              {/* Typewriter target */}
+              <h1 className="text-5xl sm:text-6xl lg:text-7xl font-extrabold leading-[1.1] mb-6 min-h-[3em] lg:min-h-[2.2em]">Accounting made
+                <span ref={heroTitleRef} className="text-transparent bg-clip-text bg-gradient-to-r from-white via-slate-200 to-slate-400"></span>
               </h1>
-
-              <p className="text-lg sm:text-xl text-gray-300 mt-6 leading-relaxed">
-                Manage your business finances with professional-grade accounting
-                software. From startups to enterprises, we've got you covered
-                with intelligent automation and beautiful design.
+              <p className="text-xl text-slate-300 mb-10 leading-relaxed max-w-xl">
+                Manage your business finances with professional-grade software. From startups to enterprises, experience intelligent automation natively designed for the future.
               </p>
-
-              <div className="flex flex-col sm:flex-row gap-4 mt-8">
-                {user ? (
-                  <motion.button
-                    onClick={() => {
-
-                      navigate("/list");
-                    }}
-                    className="btn-primary text-lg px-8 py-4 flex items-center justify-center group shadow-2xl hover:shadow-3xl transition-all duration-300"
-                    whileHover={{ scale: 1.05 }}
-                    whileTap={{ scale: 0.95 }}
-                  >
-                    Go to Dashboard
-                    <ArrowRight className="w-5 h-5 ml-2 group-hover:translate-x-2 transition-transform duration-300" />
-                  </motion.button>
-                ) : (
-                  <motion.div
-                    whileHover={{ scale: 1.05 }}
-                    whileTap={{ scale: 0.95 }}
-                  >
-                    <Link
-                      to="/register"
-
-                      className="btn-primary text-lg px-8 py-4 flex items-center justify-center group shadow-2xl hover:shadow-3xl transition-all duration-300"
-                    >
-                      Start Free Today
-                      <ArrowRight className="w-5 h-5 ml-2 group-hover:translate-x-2 transition-transform duration-300" />
-                    </Link>
-                  </motion.div>
-                )}
-
-                <motion.button
-                  className="flex items-center justify-center text-gray-300 hover:text-white font-medium transition-colors duration-300 group"
-                  whileHover={{ scale: 1.05 }}
-                  whileTap={{ scale: 0.95 }}
-                >
-                  <div className="w-12 h-12 bg-white/10 backdrop-blur-sm rounded-full flex items-center justify-center shadow-lg mr-3 group-hover:shadow-xl group-hover:bg-white/20 transition-all duration-300">
-                    <Play className="w-5 h-5 ml-1 text-cyan-400" />
+              <div className="flex flex-wrap gap-6 items-center">
+                <Link to={user ? "/list" : "/register"} className="px-8 py-4 bg-white text-slate-900 font-black rounded-2xl hover:bg-slate-200 hover:scale-105 transition-all shadow-xl hover:shadow-cyan-400/20 flex items-center gap-2 group">
+                  {user ? "Go to Dashboard" : "Start Free Today"}
+                  <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
+                </Link>
+                <button className="flex items-center gap-3 text-slate-300 font-semibold hover:text-white transition-colors group">
+                  <div className="w-14 h-14 bg-slate-800/80 border border-slate-600 rounded-full flex items-center justify-center group-hover:bg-cyan-500/20 group-hover:border-cyan-500 transition-all shadow-xl">
+                    <Play className="w-5 h-5 text-cyan-400 ml-1" />
                   </div>
-                  Watch Demo
-                </motion.button>
+                  Watch Promo
+                </button>
               </div>
-
-              <div className="flex flex-wrap items-center mt-8 text-sm text-gray-400 gap-6">
-                <span className="flex items-center">
-                  <Check className="w-4 h-4 text-green-400 mr-2" />
-                  No credit card required
-                </span>
-                <span className="flex items-center">
-                  <Check className="w-4 h-4 text-green-400 mr-2" />
-                  Free forever plan
-                </span>
-                <span className="flex items-center">
-                  <Check className="w-4 h-4 text-green-400 mr-2" />
-                  Setup in under 5 minutes
-                </span>
+              <div className="flex gap-8 mt-12 text-sm text-slate-400 font-medium">
+                <span className="flex items-center gap-2"><Check className="text-cyan-400 w-4 h-4" /> No credit card</span>
+                <span className="flex items-center gap-2"><Check className="text-cyan-400 w-4 h-4" /> Setup in 5 mins</span>
               </div>
-            </motion.div>
-
-            <motion.div
-              className="relative mt-10 lg:mt-0"
-              initial={{ opacity: 0, x: 50 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ duration: 0.8, delay: 0.3 }}
-            >
-              {/* Enhanced Dashboard Preview */}
-              <div className="relative">
-                <motion.div
-                  className="bg-white rounded-3xl shadow-2xl p-8 transform hover:scale-105 transition-transform duration-500"
-                  style={{
-                    transform: `perspective(1000px) rotateX(${scrollY * 0.01
-                      }deg) rotateY(${scrollY * 0.005}deg)`,
-                  }}
-                >
-                  <div className="space-y-6">
-                    {/* Header */}
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <h3 className="text-lg font-semibold text-gray-900">
-                          Dashboard Overview
-                        </h3>
-                        <p className="text-sm text-gray-500">
-                          Real-time business insights
-                        </p>
-                      </div>
-                      <div className="flex space-x-2">
-                        <div className="w-3 h-3 bg-red-400 rounded-full"></div>
-                        <div className="w-3 h-3 bg-yellow-400 rounded-full"></div>
-                        <div className="w-3 h-3 bg-green-400 rounded-full"></div>
-                      </div>
-                    </div>
-
-                    {/* Revenue Card */}
-                    <div className="bg-gradient-to-r from-blue-500 to-purple-600 rounded-xl p-6 text-white">
-                      <div className="flex items-center justify-between">
-                        <div>
-                          <span className="text-sm opacity-90">
-                            Total Revenue
-                          </span>
-                          <div className="text-3xl font-bold mt-1">
-                            $124,563
-                          </div>
-                        </div>
-                        <TrendingUp className="w-8 h-8 opacity-90" />
-                      </div>
-                      <div className="mt-4">
-                        <div className="flex items-center text-sm">
-                          <span className="text-green-300">↗ +12.5%</span>
-                          <span className="ml-2 opacity-90">
-                            from last month
-                          </span>
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* Quick Stats */}
-                    <div className="grid grid-cols-2 gap-4">
-                      <div className="bg-gray-50 rounded-lg p-4">
-                        <div className="text-2xl font-bold text-gray-900">
-                          248
-                        </div>
-                        <div className="text-sm text-gray-500">
-                          Transactions
-                        </div>
-                      </div>
-                      <div className="bg-gray-50 rounded-lg p-4">
-                        <div className="text-2xl font-bold text-gray-900">
-                          $45.2K
-                        </div>
-                        <div className="text-sm text-gray-500">This Month</div>
-                      </div>
-                    </div>
-
-                    {/* Progress Bar */}
-                    <div>
-                      <div className="flex justify-between text-sm text-gray-600 mb-2">
-                        <span>Monthly Goal</span>
-                        <span>78%</span>
-                      </div>
-                      <div className="h-2 bg-gray-200 rounded-full overflow-hidden">
-                        <motion.div
-                          className="h-full bg-gradient-to-r from-primary-500 to-primary-600 rounded-full"
-                          initial={{ width: 0 }}
-                          animate={{ width: "78%" }}
-                          transition={{ delay: 1, duration: 1.5 }}
-                        />
-                      </div>
-                    </div>
-                  </div>
-                </motion.div>
-
-                {/* Floating notification */}
-                <motion.div
-                  className="absolute -top-4 -right-4 bg-gradient-to-r from-green-400 to-blue-500 rounded-xl p-4 shadow-lg"
-                  animate={{
-                    y: [0, -10, 0],
-                    rotate: [0, 2, -2, 0],
-                  }}
-                  transition={{
-                    duration: 4,
-                    repeat: Infinity,
-                    ease: "easeInOut",
-                  }}
-                >
-                  <div className="flex items-center space-x-2 text-white">
-                    <div className="w-3 h-3 bg-white rounded-full animate-pulse"></div>
-                    <span className="text-sm font-medium">Live Updates</span>
-                  </div>
-                </motion.div>
-
-                {/* Additional floating elements */}
-                <motion.div
-                  className="absolute -bottom-6 -left-6 bg-gradient-to-r from-yellow-400 to-orange-500 rounded-full p-3 shadow-lg"
-                  animate={{
-                    scale: [1, 1.1, 1],
-                    rotate: [0, 180, 360],
-                  }}
-                  transition={{
-                    duration: 8,
-                    repeat: Infinity,
-                    ease: "linear",
-                  }}
-                >
-                  <Award className="w-6 h-6 text-white" />
-                </motion.div>
-              </div>
-            </motion.div>
+            </div>
           </div>
-        </div>
-      </section >
+        </section>
 
-      {/* Enhanced Features Section */}
-      < section className="py-20 bg-white relative" >
-        <div className="absolute inset-0 bg-gradient-to-r from-blue-50/30 to-purple-50/30"></div>
-        <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-16">
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              className="inline-flex items-center px-4 py-2 bg-primary-100 rounded-full text-primary-700 text-sm font-medium mb-6"
-            >
-              <Zap className="w-4 h-4 mr-2" />
-              Powerful Features
-            </motion.div>
-            <motion.h2
-              className="text-3xl sm:text-4xl lg:text-5xl font-bold text-gray-900 mb-6"
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ delay: 0.2 }}
-            >
-              Everything you need to manage your finances
-            </motion.h2>
-            <motion.p
-              className="text-xl text-gray-600 max-w-3xl mx-auto"
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ delay: 0.3 }}
-            >
-              Professional accounting features designed for businesses of all
-              sizes, with modern design and intelligent automation
-            </motion.p>
-          </div>
+        {/* New Section 1: AI-Powered Financial Intelligence */}
+        <section id="insights-section" className="relative h-screen flex items-center px-4 overflow-hidden border-t border-slate-800/30">
+          <div className="max-w-7xl mx-auto w-full grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
+            {/* Left side is intentionally empty for the 3D Object */}
+            <div className="hidden lg:block relative z-0 h-full w-full"></div>
 
-          {/* Mobile/Tablet: Animated Cards */}
-          <div className="block lg:hidden">
-            <ScrollTriggeredFeatures features={features} />
-          </div>
-
-          {/* Desktop: Enhanced Feature Grid */}
-          <div
-            ref={boxRef}
-            className="hidden lg:grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8"
-          >
-            {features.map((feature, index) => {
-              const Icon = feature.icon;
-              return (
-                <FeatureBox
-                  key={index}
-                  feature={feature}
-                  Icon={Icon}
-                  boxRef={boxRef}
-                />
-              );
-            })}
-          </div>
-        </div>
-      </section >
-
-      {/* Stats Section */}
-      < StatsSection />
-
-      {/* Enhanced Pricing Section */}
-      < section className="py-20 bg-gradient-to-br from-gray-50 to-blue-50 relative overflow-hidden" >
-        <div className="absolute top-0 right-0 w-96 h-96 bg-gradient-to-l from-blue-200 to-transparent rounded-full opacity-20 -translate-y-1/2 translate-x-1/2"></div>
-        <div className="absolute bottom-0 left-0 w-96 h-96 bg-gradient-to-r from-purple-200 to-transparent rounded-full opacity-20 translate-y-1/2 -translate-x-1/2"></div>
-
-        <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-16">
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              className="inline-flex items-center px-4 py-2 bg-gradient-to-r from-primary-100 to-purple-100 rounded-full text-primary-700 text-sm font-medium mb-6"
-            >
-              <DollarSign className="w-4 h-4 mr-2" />
-              Simple Pricing
-            </motion.div>
-            <motion.h2
-              className="text-3xl sm:text-4xl lg:text-5xl font-bold text-gray-900 mb-6"
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ delay: 0.2 }}
-            >
-              Choose the perfect plan for your business
-            </motion.h2>
-            <motion.p
-              className="text-xl text-gray-600"
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ delay: 0.3 }}
-            >
-              Start free and upgrade as you grow
-            </motion.p>
-          </div>
-
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 max-w-5xl mx-auto">
-            {plans.map((plan, index) => (
-              <motion.div
-                key={index}
-                initial={{ opacity: 0, y: 30 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ delay: index * 0.2, duration: 0.6 }}
-                whileHover={{ y: -10, scale: 1.02 }}
-                className={`relative bg-white/80 backdrop-blur-sm rounded-3xl shadow-xl p-8 transition-all duration-300 hover:shadow-2xl border ${plan.popular
-                  ? "ring-2 ring-primary-500 lg:scale-105 border-primary-200"
-                  : "border-gray-200"
-                  }`}
-              >
-                {plan.popular && (
-                  <div className="absolute -top-4 left-1/2 transform -translate-x-1/2">
-                    <div className="bg-gradient-to-r from-primary-500 to-purple-600 text-white px-6 py-2 rounded-full text-sm font-medium flex items-center shadow-lg">
-                      <Star className="w-4 h-4 mr-2 fill-current" />
-                      Most Popular
-                    </div>
-                  </div>
-                )}
-
-                <div className="text-center mb-8">
-                  <h3 className="text-2xl font-bold text-gray-900 mb-2">
-                    {plan.name}
-                  </h3>
-                  <div className="flex items-baseline justify-center mb-4">
-                    <span className="text-5xl font-bold bg-gradient-to-r from-gray-900 to-gray-700 bg-clip-text text-transparent">
-                      {plan.price}
-                    </span>
-                    <span className="text-gray-500 ml-2 text-lg">
-                      /{plan.period}
-                    </span>
-                  </div>
-                  <p className="text-gray-600 text-lg">{plan.description}</p>
-                </div>
+            {/* Right side content */}
+            <div className="z-10 group relative">
+              <div className="absolute -inset-0.5 bg-gradient-to-r from-cyan-500/30 to-blue-600/30 rounded-[2rem] blur opacity-50 group-hover:opacity-100 transition duration-1000 group-hover:duration-200"></div>
+              <div className="relative bg-slate-900/60 backdrop-blur-xl p-10 md:p-12 rounded-[2rem] border border-slate-700/60 shadow-2xl transition-all duration-300 hover:bg-slate-900/80">
+                <h2 className="text-3xl md:text-4xl font-extrabold text-white mb-3 tracking-tight">AI-Powered Financial Intelligence</h2>
+                <p className="text-xl text-cyan-400 font-semibold mb-8">Ask your financial data in plain English.</p>
 
                 <ul className="space-y-4 mb-8">
-                  {plan.features.map((feature, featureIndex) => (
-                    <motion.li
-                      key={featureIndex}
-                      className="flex items-center"
-                      initial={{ opacity: 0, x: -10 }}
-                      whileInView={{ opacity: 1, x: 0 }}
-                      viewport={{ once: true }}
-                      transition={{ delay: index * 0.2 + featureIndex * 0.1 }}
-                    >
-                      <div className="w-6 h-6 bg-gradient-to-r from-green-400 to-green-500 rounded-full flex items-center justify-center mr-3 flex-shrink-0">
-                        <Check className="w-3 h-3 text-white" />
-                      </div>
-                      <span className="text-gray-700 font-medium">
-                        {feature}
-                      </span>
-                    </motion.li>
-                  ))}
+                  <li className="flex items-start gap-4">
+                    <div className="mt-1 flex-shrink-0 w-6 h-6 rounded-full bg-slate-800 border border-cyan-500/50 flex items-center justify-center">
+                      <div className="w-2 h-2 rounded-full bg-cyan-400"></div>
+                    </div>
+                    <span className="text-slate-300 font-medium text-lg">Natural Language Queries</span>
+                  </li>
+                  <li className="flex items-start gap-4">
+                    <div className="mt-1 flex-shrink-0 w-6 h-6 rounded-full bg-slate-800 border border-cyan-500/50 flex items-center justify-center">
+                      <div className="w-2 h-2 rounded-full bg-cyan-400"></div>
+                    </div>
+                    <span className="text-slate-300 font-medium text-lg">Real-Time Ledger Analysis</span>
+                  </li>
+                  <li className="flex items-start gap-4">
+                    <div className="mt-1 flex-shrink-0 w-6 h-6 rounded-full bg-slate-800 border border-cyan-500/50 flex items-center justify-center">
+                      <div className="w-2 h-2 rounded-full bg-cyan-400"></div>
+                    </div>
+                    <span className="text-slate-300 font-medium text-lg">Automatic Debit & Credit Validation</span>
+                  </li>
+                  <li className="flex items-start gap-4">
+                    <div className="mt-1 flex-shrink-0 w-6 h-6 rounded-full bg-slate-800 border border-cyan-500/50 flex items-center justify-center">
+                      <div className="w-2 h-2 rounded-full bg-cyan-400"></div>
+                    </div>
+                    <span className="text-slate-300 font-medium text-lg">Intelligent Expense Tracking</span>
+                  </li>
                 </ul>
 
-                <motion.div
-                  whileHover={{ scale: 1.05 }}
-                  whileTap={{ scale: 0.95 }}
-                >
-                  <Link
-                    to="/register"
-                    className={`w-full py-4 px-6 rounded-xl font-semibold text-center block transition-all duration-300 shadow-lg hover:shadow-xl ${plan.popular
-                      ? "bg-gradient-to-r from-primary-600 to-purple-600 hover:from-primary-700 hover:to-purple-700 text-white"
-                      : "bg-gradient-to-r from-gray-100 to-gray-200 hover:from-gray-200 hover:to-gray-300 text-gray-900"
-                      }`}
-                  >
-                    {plan.cta}
-                  </Link>
-                </motion.div>
-              </motion.div>
+                <div className="p-5 rounded-2xl bg-slate-800/50 border border-slate-700/50 backdrop-blur-sm">
+                  <p className="text-sm text-slate-400 font-medium leading-relaxed">
+                    The system converts user queries into SQL and instantly generates accurate financial insights.
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* New Section 2: Financial Management & Reports */}
+        <section id="workflow-section" className="relative h-screen flex items-center px-4 overflow-hidden border-t border-slate-800/30">
+          <div className="max-w-7xl mx-auto w-full flex flex-col lg:flex-row justify-between items-center relative z-10 gap-8">
+
+            {/* Left Column: Transaction Management */}
+            <div className="group relative w-full lg:w-[450px]">
+              <div className="absolute -inset-0.5 bg-gradient-to-r from-purple-500/20 to-pink-600/20 rounded-[2rem] blur opacity-40 group-hover:opacity-80 transition duration-1000 group-hover:duration-200"></div>
+              <div className="relative bg-slate-900/60 backdrop-blur-xl p-8 md:p-10 rounded-[2rem] border border-slate-700/60 shadow-2xl transition-all duration-300 hover:bg-slate-900/80">
+                <div className="w-14 h-14 bg-slate-800 rounded-2xl border border-slate-700 flex items-center justify-center mb-8 shadow-inner">
+                  <FileText className="w-6 h-6 text-purple-400" />
+                </div>
+                <h3 className="text-2xl font-bold text-white mb-6 tracking-tight">Transaction Management</h3>
+                <ul className="space-y-4 mb-8">
+                  <li className="flex items-center gap-3"><Check className="w-4 h-4 text-emerald-400" /><span className="text-slate-300 font-medium text-base">Double Entry Accounting</span></li>
+                  <li className="flex items-center gap-3"><Check className="w-4 h-4 text-emerald-400" /><span className="text-slate-300 font-medium text-base">Multi-Ledger Support</span></li>
+                  <li className="flex items-center gap-3"><Check className="w-4 h-4 text-emerald-400" /><span className="text-slate-300 font-medium text-base">Real-Time Balance Updates</span></li>
+                  <li className="flex items-center gap-3"><Check className="w-4 h-4 text-emerald-400" /><span className="text-slate-300 font-medium text-base">Automatic Validation</span></li>
+                </ul>
+                <p className="text-sm text-slate-400 mt-auto pt-6 border-t border-slate-800">
+                  Every transaction updates financial records instantly and accurately.
+                </p>
+              </div>
+            </div>
+
+            {/* Right Column: Reports & Insights */}
+            <div className="group relative w-full lg:w-[450px]">
+              <div className="absolute -inset-0.5 bg-gradient-to-r from-blue-500/20 to-cyan-400/20 rounded-[2rem] blur opacity-40 group-hover:opacity-80 transition duration-1000 group-hover:duration-200"></div>
+              <div className="relative bg-slate-900/60 backdrop-blur-xl p-8 md:p-10 rounded-[2rem] border border-slate-700/60 shadow-2xl transition-all duration-300 hover:bg-slate-900/80">
+                <div className="w-14 h-14 bg-slate-800 rounded-2xl border border-slate-700 flex items-center justify-center mb-8 shadow-inner">
+                  <PieChart className="w-6 h-6 text-blue-400" />
+                </div>
+                <h3 className="text-2xl font-bold text-white mb-6 tracking-tight">Financial Reports & Insights</h3>
+                <ul className="space-y-4 mb-8">
+                  <li className="flex items-center gap-3"><Check className="w-4 h-4 text-emerald-400" /><span className="text-slate-300 font-medium text-base">Trial Balance</span></li>
+                  <li className="flex items-center gap-3"><Check className="w-4 h-4 text-emerald-400" /><span className="text-slate-300 font-medium text-base">Income Statement</span></li>
+                  <li className="flex items-center gap-3"><Check className="w-4 h-4 text-emerald-400" /><span className="text-slate-300 font-medium text-base">Balance Sheet</span></li>
+                  <li className="flex items-center gap-3"><Check className="w-4 h-4 text-emerald-400" /><span className="text-slate-300 font-medium text-base">Export & Print Reports</span></li>
+                </ul>
+                <p className="text-sm text-slate-400 mt-auto pt-6 border-t border-slate-800">
+                  Generate professional financial statements anytime with one click.
+                </p>
+              </div>
+            </div>
+
+          </div>
+        </section>
+
+        {/* Dashboard Pinned Section */}
+        <section id="dashboard-section" ref={dashboardContainerRef} className="relative h-[250vh] border-t border-slate-800/30">
+          <div ref={dashboardElementRef} className="h-screen sticky top-0 flex flex-col items-center justify-center overflow-hidden px-4">
+            <h2 ref={dashboardTitleRef} className="text-4xl md:text-5xl font-extrabold mb-10 text-white text-center">Real-time Business Insights</h2>
+
+            <div className="w-full max-w-5xl bg-slate-900/40 backdrop-blur-2xl border border-slate-700 rounded-3xl shadow-[0_0_80px_rgba(0,183,255,0.15)] p-6 sm:p-10 transform-gpu relative z-20 mx-auto">
+              {/* Dashboard mockup header */}
+              <div className="flex justify-between items-center mb-10 border-b border-slate-700/50 pb-6">
+                <div className="flex space-x-2">
+                  <div className="w-3.5 h-3.5 rounded-full bg-slate-700"></div>
+                  <div className="w-3.5 h-3.5 rounded-full bg-slate-700"></div>
+                  <div className="w-3.5 h-3.5 rounded-full bg-slate-700"></div>
+                </div>
+                <div className="text-slate-400 font-semibold uppercase tracking-widest text-xs">FinFlow Analytics</div>
+              </div>
+
+              {/* Dashboard grid */}
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div className="bg-slate-800/50 backdrop-blur-sm border border-slate-700/80 rounded-2xl p-6 hover:bg-slate-800/80 transition-all pointer-events-auto">
+                  <div className="text-slate-400 mb-2 font-medium">Active Ledger Syncs</div>
+                  <div className="text-4xl font-extrabold text-white mb-2">24,103</div>
+                  <div className="flex items-center text-emerald-400 text-sm font-semibold bg-emerald-400/10 w-fit px-2 py-1 rounded-md">
+                    <Check className="w-4 h-4 mr-1" /> Real-time validation
+                  </div>
+                </div>
+                <div className="bg-slate-800/50 backdrop-blur-sm border border-slate-700/80 rounded-2xl p-6 pointer-events-auto">
+                  <div className="text-slate-400 mb-2 font-medium">Total Visitors</div>
+                  <div className="text-4xl font-extrabold text-white mb-2">{stats.visitors.toLocaleString()}</div>
+                  <div className="flex items-center text-cyan-400 text-sm font-semibold bg-cyan-400/10 w-fit px-2 py-1 rounded-md">
+                    Live traffic count
+                  </div>
+                </div>
+                <div className="bg-slate-800/50 backdrop-blur-sm border border-slate-700/80 rounded-2xl p-6 pointer-events-auto">
+                  <div className="text-slate-400 mb-2 font-medium">Total Interactions</div>
+                  <div className="text-4xl font-extrabold text-white mb-2">{stats.clicks.toLocaleString()}</div>
+                  <div className="flex items-center text-cyan-400 text-sm font-semibold bg-cyan-400/10 w-fit px-2 py-1 rounded-md">
+                    Live interaction tracking
+                  </div>
+                </div>
+              </div>
+
+              {/* Dashboard graph mockup */}
+              <div className="mt-6 bg-slate-800/30 backdrop-blur-sm border border-slate-700/50 rounded-2xl h-40 flex items-end overflow-hidden p-6 gap-2">
+                {[30, 45, 25, 60, 45, 80, 50, 95, 65, 80].map((h, i) => (
+                  <div key={i} className="flex-1 bg-gradient-to-t from-cyan-600 to-cyan-400 rounded-t-sm" style={{ height: `${h}%` }}></div>
+                ))}
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* Features Section */}
+        <section id="features-section" className="relative py-32 px-4">
+          <div className="max-w-7xl mx-auto">
+            <div className="text-center mb-24">
+              <span className="text-cyan-400 font-bold uppercase tracking-widest text-sm bg-cyan-400/10 px-4 py-2 rounded-full border border-cyan-400/20">The Core Engine</span>
+              <h2 className="text-4xl md:text-6xl font-extrabold text-white mt-8">Powerful Features</h2>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 pointer-events-none">
+              {features.map((feature, i) => {
+                const Icon = feature.icon;
+                return (
+                  <div key={i} className="feature-flip-card h-[22rem] cursor-pointer pointer-events-auto group" style={{ perspective: '1200px' }}>
+                    <div className="flip-inner relative w-full h-full transition-transform duration-700" style={{ transformStyle: 'preserve-3d' }}>
+                      {/* Front Side */}
+                      <div className="absolute inset-0 bg-slate-900/60 backdrop-blur-xl border border-slate-700 hover:border-cyan-500/50 rounded-3xl p-8 flex flex-col justify-center items-center shadow-lg transition-colors" style={{ backfaceVisibility: 'hidden' }}>
+                        <div className="w-20 h-20 rounded-2xl bg-slate-800 border border-slate-700 flex items-center justify-center mb-6 shadow-inner group-hover:bg-cyan-900/50 transition-colors">
+                          <Icon className="w-10 h-10 text-cyan-400" />
+                        </div>
+                        <h3 className="text-2xl font-bold text-white text-center">{feature.title}</h3>
+                      </div>
+                      {/* Back Side */}
+                      <div className="absolute inset-0 bg-cyan-900/80 backdrop-blur-xl border border-cyan-400 rounded-3xl p-8 flex items-center justify-center text-center shadow-[0_0_30px_rgba(0,183,255,0.3)]" style={{ backfaceVisibility: 'hidden', transform: 'rotateY(180deg)' }}>
+                        <p className="text-gray-100 text-xl font-medium leading-relaxed">{feature.description}</p>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        </section>
+
+        {/* Interactive Marquee */}
+        <section ref={marqueeContainerRef} className="relative py-20 overflow-hidden bg-gradient-to-r from-transparent via-cyan-900/10 to-transparent border-y border-slate-800/50 my-20">
+          <div className="w-max pr-[5vw] whitespace-nowrap opacity-50 select-none pointer-events-none" ref={marqueeTextRef}>
+            <h1 className="text-[12vw] font-black italic text-white uppercase tracking-tighter mix-blend-screen">
+              SMART FINANCIAL SYSTEM • NEXT GEN ACCOUNTING • REAL-TIME INSIGHTS • AUTOMATED REPORT GENERATION
+            </h1>
+          </div>
+        </section>
+
+        {/* Testimonials */}
+        <section id="testimonials-section" className="relative py-32 overflow-hidden bg-slate-900/50 backdrop-blur-sm border-t border-slate-800" ref={testimonialsRef}>
+          <h2 className="text-4xl md:text-5xl text-center font-extrabold text-white mb-20 px-8 lg:px-20">What our clients say</h2>
+          <div className="flex w-max px-8 lg:px-20 gap-8 pb-10" ref={testimonialsContainerRef}>
+            {testimonials.map((t, i) => (
+              <div key={i} className="testimonial-card w-[85vw] md:w-[35vw] xl:w-[25vw] flex-shrink-0 bg-slate-800/80 backdrop-blur-2xl border border-slate-700/50 rounded-[2.5rem] p-10 pointer-events-auto hover:bg-slate-800 transition-colors shadow-2xl">
+                <div className="flex items-center mb-8 gap-1">
+                  {[...Array(t.rating)].map((_, j) => <Star key={j} className="w-6 h-6 text-yellow-500 fill-current" />)}
+                </div>
+                <p className="text-gray-300 text-xl font-medium leading-relaxed mb-10 min-h-[6rem]">"{t.content}"</p>
+                <div className="flex items-center pt-8 border-t border-slate-700/50">
+                  <img src={t.avatar} className="w-16 h-16 rounded-full mr-5 object-cover border-2 border-cyan-500" alt={t.name} />
+                  <div>
+                    <h4 className="font-bold text-white text-xl">{t.name}</h4>
+                    <p className="text-sm font-semibold text-cyan-400 uppercase tracking-wider mt-1">{t.role}</p>
+                  </div>
+                </div>
+              </div>
             ))}
           </div>
-        </div>
-      </section >
+        </section>
 
-      {/* Testimonials Section */}
-      < TestimonialsSection />
-
-      {/* Enhanced CTA Banner */}
-      < section className="py-20 bg-gradient-to-r from-gray-900 via-blue-900 to-purple-900 relative overflow-hidden" >
-        <div className="absolute inset-0 bg-black/50"></div>
-        <div
-          className="absolute inset-0 opacity-20"
-          style={{
-            backgroundImage: "url('/CTA_banner.png')",
-            backgroundSize: "cover",
-            backgroundPosition: "center",
-          }}
-        ></div>
-
-        {/* Animated particles */}
-        <div className="absolute inset-0">
-          {[...Array(20)].map((_, i) => (
-            <motion.div
-              key={i}
-              className="absolute w-2 h-2 bg-white rounded-full opacity-30"
-              style={{
-                left: `${Math.random() * 100}%`,
-                top: `${Math.random() * 100}%`,
-              }}
-              animate={{
-                y: [0, -20, 0],
-                opacity: [0.3, 0.8, 0.3],
-              }}
-              transition={{
-                duration: 3 + Math.random() * 2,
-                repeat: Infinity,
-                delay: Math.random() * 2,
-              }}
-            />
-          ))}
-        </div>
-
-        <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-          <motion.h2
-            className="text-4xl sm:text-5xl lg:text-6xl font-bold text-white mb-6"
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-          >
-            Ready to transform your business finances?
-          </motion.h2>
-          <motion.p
-            className="text-xl text-primary-100 mb-10 max-w-3xl mx-auto"
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ delay: 0.2 }}
-          >
-            Join thousands of businesses that trust FinanceFlow for their
-            accounting needs. Start your journey to better financial management
-            today.
-          </motion.p>
-          <motion.div
-            className="flex flex-col sm:flex-row gap-6 justify-center"
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ delay: 0.4 }}
-          >
-            <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
-              <Link
-                to="/register"
-                className="bg-white text-primary-600 hover:bg-gray-100 font-semibold py-4 px-8 rounded-xl transition-colors flex items-center justify-center shadow-2xl hover:shadow-3xl group"
-              >
-                Start Your Free Trial
-                <ArrowRight className="w-5 h-5 ml-2 group-hover:translate-x-1 transition-transform" />
-              </Link>
-            </motion.div>
-            <motion.div
-              className="mt-4"
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-            >
-              <Link
-                to="/login"
-                className=" border-2 border-white text-white hover:bg-white hover:text-primary-600 font-semibold py-4 px-8 rounded-xl transition-all duration-300 shadow-lg hover:shadow-xl"
-              >
-                Sign In
-              </Link>
-            </motion.div>
-          </motion.div>
-
-          {/* Trust indicators */}
-          <motion.div
-            className="mt-12 flex items-center justify-center space-x-8 text-white/60"
-            initial={{ opacity: 0 }}
-            whileInView={{ opacity: 1 }}
-            viewport={{ once: true }}
-            transition={{ delay: 0.6 }}
-          >
-            <div className="flex items-center">
-              <Shield className="w-5 h-5 mr-2" />
-              <span className="text-sm">Bank-grade security</span>
-            </div>
-            <div className="flex items-center">
-              <Users className="w-5 h-5 mr-2" />
-              <span className="text-sm">10,000+ users</span>
-            </div>
-            <div className="flex items-center">
-              <Globe className="w-5 h-5 mr-2" />
-              <span className="text-sm">50+ countries</span>
-            </div>
-          </motion.div>
-        </div>
-      </section >
-
-      {/* Enhanced Footer */}
-      < footer className="bg-gradient-to-r from-gray-900 to-gray-800 text-gray-300 py-16" >
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-8 mb-12">
-            <div>
-              <div className="flex items-center mb-6">
-                <div className="w-24 h-10 t-to-r flex items-center justify-center">
-                  {/* <Building2 className="w-6 h-6 text-white" /> */}
-                  <img
-                    src="/final.png"
-                    alt="Logo"
-                    className="h-12 w-full"
-                    style={{ marginTop: "18px" }}
-                  />
-                </div>
-                <span className="text-2xl font-bold text-white">
-                  Smart Financial
-                </span>
-              </div>
-              <p className="text-gray-400 mb-6">
-                Professional accounting software for modern businesses.
-                Streamline your finances with intelligent automation.
-              </p>
-              <div className="flex space-x-4">
-                {/* Social media icons - using simple divs for demonstration */}
-                <div className="w-10 h-10 bg-gray-700 rounded-lg flex items-center justify-center hover:bg-primary-600 transition-colors cursor-pointer">
-                  <span className="text-white text-sm">f</span>
-                </div>
-                <div className="w-10 h-10 bg-gray-700 rounded-lg flex items-center justify-center hover:bg-primary-600 transition-colors cursor-pointer">
-                  <span className="text-white text-sm">t</span>
-                </div>
-                <div className="w-10 h-10 bg-gray-700 rounded-lg flex items-center justify-center hover:bg-primary-600 transition-colors cursor-pointer">
-                  <span className="text-white text-sm">in</span>
-                </div>
-              </div>
-            </div>
-
-            <div>
-              <h4 className="font-semibold text-white mb-6 text-lg">Product</h4>
-              <ul className="space-y-3">
-                <li>
-                  <a
-                    href="#"
-                    className="hover:text-white transition-colors flex items-center group"
-                  >
-                    <ChevronDown className="w-4 h-4 mr-2 rotate-90 group-hover:translate-x-1 transition-transform" />
-                    Features
-                  </a>
-                </li>
-                <li>
-                  <a
-                    href="#"
-                    className="hover:text-white transition-colors flex items-center group"
-                  >
-                    <ChevronDown className="w-4 h-4 mr-2 rotate-90 group-hover:translate-x-1 transition-transform" />
-                    Pricing
-                  </a>
-                </li>
-                <li>
-                  <a
-                    href="#"
-                    className="hover:text-white transition-colors flex items-center group"
-                  >
-                    <ChevronDown className="w-4 h-4 mr-2 rotate-90 group-hover:translate-x-1 transition-transform" />
-                    Security
-                  </a>
-                </li>
-                <li>
-                  <a
-                    href="#"
-                    className="hover:text-white transition-colors flex items-center group"
-                  >
-                    <ChevronDown className="w-4 h-4 mr-2 rotate-90 group-hover:translate-x-1 transition-transform" />
-                    Integrations
-                  </a>
-                </li>
-              </ul>
-            </div>
-
-            <div>
-              <h4 className="font-semibold text-white mb-6 text-lg">Company</h4>
-              <ul className="space-y-3">
-                <li>
-                  <a
-                    href="#"
-                    className="hover:text-white transition-colors flex items-center group"
-                  >
-                    <ChevronDown className="w-4 h-4 mr-2 rotate-90 group-hover:translate-x-1 transition-transform" />
-                    About
-                  </a>
-                </li>
-                <li>
-                  <a
-                    href="#"
-                    className="hover:text-white transition-colors flex items-center group"
-                  >
-                    <ChevronDown className="w-4 h-4 mr-2 rotate-90 group-hover:translate-x-1 transition-transform" />
-                    Contact
-                  </a>
-                </li>
-                <li>
-                  <a
-                    href="#"
-                    className="hover:text-white transition-colors flex items-center group"
-                  >
-                    <ChevronDown className="w-4 h-4 mr-2 rotate-90 group-hover:translate-x-1 transition-transform" />
-                    Support
-                  </a>
-                </li>
-                <li>
-                  <a
-                    href="#"
-                    className="hover:text-white transition-colors flex items-center group"
-                  >
-                    <ChevronDown className="w-4 h-4 mr-2 rotate-90 group-hover:translate-x-1 transition-transform" />
-                    Careers
-                  </a>
-                </li>
-              </ul>
-            </div>
-
-            <div>
-              <h4 className="font-semibold text-white mb-6 text-lg">Legal</h4>
-              <ul className="space-y-3">
-                <li>
-                  <a
-                    href="#"
-                    className="hover:text-white transition-colors flex items-center group"
-                  >
-                    <ChevronDown className="w-4 h-4 mr-2 rotate-90 group-hover:translate-x-1 transition-transform" />
-                    Privacy
-                  </a>
-                </li>
-                <li>
-                  <a
-                    href="#"
-                    className="hover:text-white transition-colors flex items-center group"
-                  >
-                    <ChevronDown className="w-4 h-4 mr-2 rotate-90 group-hover:translate-x-1 transition-transform" />
-                    Terms
-                  </a>
-                </li>
-                <li>
-                  <a
-                    href="#"
-                    className="hover:text-white transition-colors flex items-center group"
-                  >
-                    <ChevronDown className="w-4 h-4 mr-2 rotate-90 group-hover:translate-x-1 transition-transform" />
-                    Cookies
-                  </a>
-                </li>
-                <li>
-                  <a
-                    href="#"
-                    className="hover:text-white transition-colors flex items-center group"
-                  >
-                    <ChevronDown className="w-4 h-4 mr-2 rotate-90 group-hover:translate-x-1 transition-transform" />
-                    GDPR
-                  </a>
-                </li>
-              </ul>
-            </div>
-          </div>
-
-          <div className="border-t border-gray-700 pt-8">
-            <div className="flex flex-col md:flex-row justify-between items-center">
-              <p className="text-gray-400 mb-4 md:mb-0">
-                © 2025 Smart Financial by Khushi Vijay. All rights reserved. Developed by Usama Nadeem
-              </p>
-              <div className="flex items-center space-x-4 text-sm text-gray-400">
-                <span>🌍 English</span>
-                <span>💱 PKR/USD</span>
-                <span className="flex items-center">
-                  <div className="w-2 h-2 bg-green-400 rounded-full mr-2 animate-pulse"></div>
-                  All systems operational
-                </span>
+        {/* CTA Banner */}
+        <section id="cta-section" ref={ctaRef} className="relative py-48 text-center px-4 overflow-hidden border-t border-cyan-900/30">
+          <div className="absolute inset-0 bg-gradient-to-b from-transparent to-slate-900 pointer-events-none z-0"></div>
+          <div className="max-w-4xl mx-auto relative z-10">
+            <h2 className="text-5xl md:text-7xl font-black text-white mb-8 leading-tight">
+              {/* Parent CTA timeline controls the trigger */}
+              <CustomScrambleText timeline={ctaTimeline} text="Ready to transform your finances?" className="text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 via-blue-400 to-purple-500 block" />
+            </h2>
+            <div ref={ctaContentRef}>
+              <p className="text-2xl text-slate-300 mb-14 font-medium">Join thousands of businesses experiencing the future of accounting today.</p>
+              <div className="flex flex-col sm:flex-row justify-center gap-6 pointer-events-auto">
+                <Link to="/register" className="px-10 py-5 bg-white text-slate-900 rounded-2xl font-black text-xl hover:bg-slate-200 hover:scale-105 transition-all shadow-[0_0_40px_rgba(255,255,255,0.3)] w-full sm:w-auto text-center">
+                  Start Free Trial
+                </Link>
+                <Link to="/login" className="px-10 py-5 bg-slate-800/80 backdrop-blur border-2 border-slate-600 rounded-2xl font-black text-xl text-white hover:bg-slate-700 transition-all w-full sm:w-auto text-center hover:scale-105">
+                  Sign In
+                </Link>
               </div>
             </div>
           </div>
-        </div>
-      </footer >
-    </div >
+        </section>
+
+        {/* Footer */}
+        <footer className="bg-slate-800 text-slate-400 py-16 px-4 border-t border-slate-800/50 pointer-events-auto relative z-10">
+          <div className="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-4 gap-12 mb-16">
+            <div className="col-span-1 md:col-span-2">
+              <div className="flex items-center gap-3 mb-6">
+                <img src="/final.png" alt="Logo" className="h-10 w-auto opacity-80" />
+                <span className="text-2xl font-black text-white tracking-tight">Smart Financial</span>
+              </div>
+              <p className="max-w-sm text-slate-500 font-medium leading-relaxed">The premium financial operating system engineered for scalability, precision, and modern design.</p>
+            </div>
+            <div>
+              <h4 className="font-bold text-white mb-6 uppercase tracking-wider text-sm">Product</h4>
+              <ul className="pl-0 space-y-4">
+                <li><a href="#" className="hover:text-cyan-400 transition-colors">Features</a></li>
+                <li><a href="#" className="hover:text-cyan-400 transition-colors">Pricing</a></li>
+                <li><a href="#" className="hover:text-cyan-400 transition-colors">Security</a></li>
+              </ul>
+            </div>
+            <div>
+              <h4 className="font-bold text-white mb-6 uppercase tracking-wider text-sm">Company</h4>
+              <ul className="pl-0 space-y-4">
+                <li><a href="#" className="hover:text-cyan-400 transition-colors">About Us</a></li>
+                <li><a href="#" className="hover:text-cyan-400 transition-colors">Contact</a></li>
+                <li><a href="#" className="hover:text-cyan-400 transition-colors">Careers</a></li>
+              </ul>
+            </div>
+          </div>
+          <div className="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center pt-8 border-t border-slate-800/50">
+            <p>© 2026 Smart Financial. All rights reserved.</p>
+            <div className="flex items-center gap-6 mt-4 md:mt-0 text-sm font-semibold">
+              <span className="flex items-center"><Globe className="w-4 h-4 mr-2" /> English</span>
+              <span className="flex items-center">
+                <div className="w-2 h-2 bg-emerald-500 rounded-full mr-2 shadow-[0_0_10px_rgba(16,185,129,1)] animate-pulse"></div>
+                All systems operational
+              </span>
+            </div>
+          </div>
+        </footer>
+
+      </div>
+    </div>
   );
-};
-
-export default LandingPage;
+}

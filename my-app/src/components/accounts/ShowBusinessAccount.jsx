@@ -14,7 +14,9 @@ import {
   Wallet,
   PiggyBank,
   CreditCard,
-  Eye
+  Eye,
+  TrendingUp,
+  BarChart3
 } from 'lucide-react';
 
 const ShowBusinessAccount = () => {
@@ -127,11 +129,11 @@ const ShowBusinessAccount = () => {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-emerald-900 via-teal-900 to-cyan-900">
+      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-indigo-900">
         <Navbar />
         <div className="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
           <div className="flex items-center justify-center h-64">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-emerald-400"></div>
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-cyan-400"></div>
           </div>
         </div>
       </div>
@@ -139,106 +141,89 @@ const ShowBusinessAccount = () => {
   }
 
   return (
-    <div className="min-h-screen relative overflow-hidden">
-      {/* Enhanced Accounting/Ledger Background */}
+    <div
+      className="min-h-screen relative overflow-hidden"
+      style={{
+        minHeight: "100vh",
+        width: "100vw",
+      }}
+    >
+      {/* Enhanced Professional Background */}
       <div className="absolute inset-0">
-        {/* Primary gradient background - Green/Teal theme for accounting */}
-        <div className="absolute inset-0 bg-gradient-to-br from-emerald-900 via-teal-900 to-cyan-900"></div>
+        {/* Primary gradient background */}
+        <div className="absolute inset-0 bg-gradient-to-br from-slate-900 via-blue-900 to-indigo-900"></div>
 
         {/* Overlay gradients for depth */}
-        <div className="absolute inset-0 bg-gradient-to-t from-green-800/30 via-transparent to-teal-700/20"></div>
-        <div className="absolute inset-0 bg-gradient-to-r from-cyan-800/20 via-transparent to-emerald-700/20"></div>
+        <div className="absolute inset-0 bg-gradient-to-t from-purple-900/30 via-transparent to-blue-800/20"></div>
+        <div className="absolute inset-0 bg-gradient-to-r from-indigo-800/20 via-transparent to-cyan-800/20"></div>
 
-        {/* Ledger paper pattern */}
-        <div className="absolute inset-0 opacity-5">
+        {/* Professional grid pattern */}
+        <div className="absolute inset-0 opacity-10">
           <div className="absolute inset-0" style={{
             backgroundImage: `
-              repeating-linear-gradient(
-                0deg,
-                rgba(255,255,255,0.3) 0px,
-                rgba(255,255,255,0.3) 1px,
-                transparent 1px,
-                transparent 40px
-              ),
-              repeating-linear-gradient(
-                90deg,
-                rgba(255,255,255,0.1) 0px,
-                rgba(255,255,255,0.1) 1px,
-                transparent 1px,
-                transparent 60px
-              )
+              linear-gradient(90deg, rgba(255,255,255,0.1) 1px, transparent 1px),
+              linear-gradient(0deg, rgba(255,255,255,0.1) 1px, transparent 1px)
             `,
-            backgroundSize: '60px 40px'
+            backgroundSize: '50px 50px'
           }}></div>
         </div>
 
-        {/* Accounting elements */}
+        {/* Animated business elements */}
         <div className="absolute inset-0 overflow-hidden">
-          {/* Financial symbols */}
-          <div className="absolute top-20 left-10 text-4xl text-green-400/15 animate-pulse">💰</div>
-          <div className="absolute top-40 right-20 text-3xl text-emerald-400/15 animate-bounce">📋</div>
-          <div className="absolute bottom-40 left-32 text-5xl text-teal-400/15 animate-pulse">📊</div>
-          <div className="absolute bottom-20 right-40 text-3xl text-cyan-400/15 animate-bounce">🧾</div>
-          <div className="absolute top-1/3 left-1/4 text-2xl text-green-300/15 animate-pulse">💳</div>
-          <div className="absolute top-2/3 right-1/3 text-4xl text-emerald-300/15 animate-bounce">🏦</div>
-          <div className="absolute top-1/4 right-1/4 text-2xl text-teal-300/15 animate-pulse">📈</div>
-
-          {/* Calculator/Accounting elements */}
-          <div className="absolute top-1/2 left-10 w-6 h-6 border border-green-400/20 rounded animate-pulse"></div>
-          <div className="absolute bottom-1/3 right-20 w-8 h-8 border border-teal-400/20 rounded-lg animate-bounce"></div>
-
-          {/* Spreadsheet grid pattern */}
-          <div className="absolute top-1/4 left-1/3 w-32 h-24 opacity-10">
-            <div className="grid grid-cols-4 grid-rows-3 gap-1 h-full">
-              {[...Array(12)].map((_, i) => (
-                <div key={i} className="bg-white/20 rounded animate-pulse" style={{ animationDelay: `${i * 0.1}s` }}></div>
-              ))}
-            </div>
+          {/* Floating financial icons */}
+          <div className="absolute top-20 left-10 text-blue-400/20 animate-pulse flex items-center justify-center">
+            <Wallet className="w-10 h-10" />
+          </div>
+          <div className="absolute top-40 right-20 text-cyan-400/20 animate-bounce flex items-center justify-center">
+            <TrendingUp className="w-8 h-8" />
+          </div>
+          <div className="absolute bottom-40 left-32 text-purple-400/20 animate-pulse flex items-center justify-center">
+            <BarChart3 className="w-12 h-12" />
+          </div>
+          <div className="absolute bottom-20 right-40 text-indigo-400/20 animate-bounce flex items-center justify-center">
+            <TrendingUp className="w-8 h-8" />
+          </div>
+          <div className="absolute top-1/2 left-1/4 text-teal-400/20 animate-pulse flex items-center justify-center">
+            <Wallet className="w-6 h-6" />
+          </div>
+          <div className="absolute top-1/3 right-1/3 text-violet-400/20 animate-bounce flex items-center justify-center">
+            <BarChart3 className="w-10 h-10" />
           </div>
 
-          {/* Balance scale visual */}
-          <svg className="absolute top-1/3 right-1/4 w-16 h-16 text-emerald-400/10" viewBox="0 0 24 24" fill="currentColor">
-            <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z" />
-          </svg>
+          {/* Subtle geometric shapes */}
+          <div className="absolute top-1/4 right-10 w-32 h-32 border border-white/10 rounded-full animate-pulse"></div>
+          <div className="absolute bottom-1/4 left-10 w-24 h-24 border border-cyan-400/20 rounded-lg rotate-45 animate-spin" style={{ animationDuration: '20s' }}></div>
+          <div className="absolute top-1/2 right-1/4 w-20 h-20 bg-gradient-to-r from-purple-500/10 to-blue-500/10 rounded-full animate-pulse"></div>
 
-          {/* Floating ledger lines */}
+          {/* Network connection lines */}
           <svg className="absolute inset-0 w-full h-full" style={{ filter: 'blur(0.5px)' }}>
             <defs>
-              <linearGradient id="ledgerGradient" x1="0%" y1="0%" x2="100%" y2="0%">
-                <stop offset="0%" style={{ stopColor: '#10b981', stopOpacity: 0.1 }} />
-                <stop offset="50%" style={{ stopColor: '#14b8a6', stopOpacity: 0.15 }} />
+              <linearGradient id="networkGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" style={{ stopColor: '#3b82f6', stopOpacity: 0.1 }} />
+                <stop offset="50%" style={{ stopColor: '#8b5cf6', stopOpacity: 0.2 }} />
                 <stop offset="100%" style={{ stopColor: '#06b6d4', stopOpacity: 0.1 }} />
               </linearGradient>
             </defs>
-            <g>
-              <path
-                d="M50,150 L350,150 M50,200 L350,200 M50,250 L350,250"
-                stroke="url(#ledgerGradient)"
-                strokeWidth="1"
-                className="animate-pulse"
-              />
-              <path
-                d="M700,300 L1000,300 M700,350 L1000,350 M700,400 L1000,400"
-                stroke="rgba(16, 185, 129, 0.1)"
-                strokeWidth="1"
-                className="animate-pulse"
-                style={{ animationDelay: '1s' }}
-              />
-            </g>
+            <path
+              d="M100,100 L300,200 L600,150 L900,300 L1200,200"
+              stroke="url(#networkGradient)"
+              strokeWidth="2"
+              fill="none"
+              className="animate-pulse"
+            />
+            <path
+              d="M200,400 L500,300 L800,450 L1100,350"
+              stroke="rgba(59, 130, 246, 0.2)"
+              strokeWidth="1"
+              fill="none"
+              className="animate-pulse"
+              style={{ animationDelay: '1s' }}
+            />
           </svg>
-
-          {/* Credit/Debit columns visual */}
-          <div className="absolute bottom-1/4 left-1/2 transform -translate-x-1/2">
-            <div className="flex space-x-4 opacity-10">
-              <div className="text-green-400 text-xs font-mono animate-pulse">DEBIT</div>
-              <div className="w-px h-12 bg-green-400/30"></div>
-              <div className="text-red-400 text-xs font-mono animate-pulse" style={{ animationDelay: '0.5s' }}>CREDIT</div>
-            </div>
-          </div>
         </div>
 
-        {/* Professional overlay for readability */}
-        <div className="absolute inset-0 bg-black/25"></div>
+        {/* Subtle overlay for content readability */}
+        <div className="absolute inset-0 bg-black/20"></div>
       </div>
 
       {/* Content */}

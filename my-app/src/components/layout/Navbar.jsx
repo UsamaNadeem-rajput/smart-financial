@@ -112,13 +112,13 @@ const Navbar = () => {
   const isMobile = () => window.innerWidth < 640;
 
   return (
-    <nav className="bg-white shadow-sm border-b border-gray-200 ">
+    <nav className="bg-gradient-to-br from-slate-900 via-blue-950 to-indigo-950 shadow-sm border-b border-slate-800 text-white">
       <div className="max-w-screen-2xl mx-auto px-3 sm:px-6 lg:px-8">
-        <div className="flex justify-between h-16">
+        <div className="flex justify-between h-20">
           {/* Logo and main navigation */}
           <div className="flex">
             <div>
-              <img src="/final.png" onClick={() => navigate("/")} alt="Logo" className="h-16 w-auto mr-2 cursor-pointer " />
+              <img src="/final.png" onClick={() => navigate("/")} alt="Logo" className="h-16 w-auto mt-2 mr-2 cursor-pointer " />
             </div>
 
             {selectedBusiness && (
@@ -138,7 +138,7 @@ const Navbar = () => {
                       >
                         <button
                           type="button"
-                          className=" inline-flex items-center px-1 pt-4 text-[14px] underline font-medium text-gray-500 hover:text-gray-700 cursor-pointer border-b-2 border-transparent hover:border-gray-300 transition-colors duration-200 bg-transparent"
+                          className="inline-flex items-center px-1 text-[14px] font-medium text-slate-300 hover:text-white cursor-pointer border-b-2 border-transparent hover:border-slate-300 transition-colors duration-200 bg-transparent h-[4.5rem]"
                           onClick={() => handleDropdownToggle(item.name)}
                           aria-haspopup="true"
                           aria-expanded={openDropdown === item.name}
@@ -187,9 +187,9 @@ const Navbar = () => {
                     <Link
                       key={item.name}
                       to={item.href}
-                      className={`inline-flex items-center px-1 pt-1 text-[14px] font-medium border-b-2 ${isActive(item.href)
-                        ? "border-primary-500 text-primary-600"
-                        : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
+                      className={`inline-flex items-center px-1 h-[4.5rem] text-[14px] font-medium border-b-2 ${isActive(item.href)
+                        ? "border-cyan-400 text-cyan-400"
+                        : "border-transparent text-slate-300 hover:text-white hover:border-slate-300"
                         } transition-colors duration-200`}
                     >
                       <Icon className="w-4 h-4 mr-2" />
@@ -204,7 +204,7 @@ const Navbar = () => {
 
           <div className="hidden sm:ml-6 sm:flex sm:items-center sm:space-x-4">
             {selectedBusiness && (
-              <div className="flex items-center space-x-2 px-3 py-1 bg-primary-50 rounded-lg border border-primary-100">
+              <div className="flex items-center space-x-2 px-3 py-1 bg-slate-800 rounded-lg border border-slate-700">
                 {selectedBusiness.logo_url ? (
                   <img
                     src={`${import.meta.env.VITE_BACKEND_URL}${selectedBusiness.logo_url}`}
@@ -212,25 +212,25 @@ const Navbar = () => {
                     className="h-6 w-6 object-contain rounded bg-white"
                   />
                 ) : (
-                  <Building2 className="w-4 h-4 text-primary-600" />
+                  <Building2 className="w-4 h-4 text-cyan-400" />
                 )}
-                <span className="text-sm font-medium text-primary-900">
+                <span className="text-sm font-medium text-white">
                   {selectedBusiness.business_name}
                 </span>
               </div>
             )}
 
             <div className="flex items-center space-x-4">
-              <Link to="/profile" className="flex items-center space-x-2 text-sm text-gray-700 hover:text-primary-600 font-medium transition-colors bg-gray-50 px-3 py-1.5 rounded-full border border-gray-200 hover:border-primary-200">
-                <div className="bg-primary-100 p-1 rounded-full">
-                  <User className="w-4 h-4 text-primary-600" />
+              <Link to="/profile" className="flex items-center space-x-2 text-sm text-slate-300 hover:text-white font-medium transition-colors bg-slate-800 px-3 py-1.5 rounded-full border border-slate-700 hover:border-slate-600">
+                <div className="bg-slate-700 p-1 rounded-full">
+                  <User className="w-4 h-4 text-cyan-400" />
                 </div>
                 <span>Welcome, {user}</span>
               </Link>
 
               <button
                 onClick={handleLogout}
-                className="inline-flex items-center px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-md text-gray-500 hover:text-gray-700 focus:outline-none transition ease-in-out duration-150"
+                className="inline-flex items-center px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-md text-red-400 hover:text-red-300 focus:outline-none transition ease-in-out duration-150"
               >
                 <LogOut className="w-4 h-4 mr-1" />
                 Logout
