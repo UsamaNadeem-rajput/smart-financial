@@ -137,6 +137,7 @@ serverRouter.use('/api/income-report', require('./routers/incomeReport'));
 
 serverRouter.use('/api/edit-transaction', require('./routers/editTransaction'));
 serverRouter.use('/api/balance-sheet', require('./routers/balanceSheet'));
+serverRouter.use('/api/ai', require('./routers/aiRoutes'));
 
 serverRouter.use('/api/profile', require('./routers/profile'));
 serverRouter.use('/api/history', require('./routers/history'));

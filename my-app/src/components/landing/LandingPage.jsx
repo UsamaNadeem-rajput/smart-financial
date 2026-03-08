@@ -558,7 +558,7 @@ export default function LandingPage() {
       {/* Nav */}
       <nav className="fixed w-full top-0 z-50 shadow-lg border-b border-slate-800 backdrop-blur-xl bg-gradient-to-br from-slate-900 via-blue-950/80 to-indigo-950/80 text-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-3 pb-3">
-          <div className="flex justify-between items-center h-10">
+          <div className="flex justify-between items-center h-12">
             <div className="flex items-center">
               <img src="/final.png" alt="Logo" className="h-14 w-auto drop-shadow-lg" />
             </div>

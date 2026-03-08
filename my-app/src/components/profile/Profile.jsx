@@ -2,8 +2,9 @@ import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
 import { Spinner, Alert, Modal, Table } from 'react-bootstrap';
+import Navbar from '../layout/Navbar';
 import { motion, AnimatePresence } from 'framer-motion';
-import { User, Mail, History, Building2, Wallet, FileText, ChevronRight, Shield, Key } from 'lucide-react';
+import { User, Mail, History, Building2, Wallet, FileText, ChevronRight, Shield, Key, Fingerprint, Lock, Eye, Activity } from 'lucide-react';
 
 export default function Profile() {
     const [profile, setProfile] = useState(null);
@@ -74,99 +75,187 @@ export default function Profile() {
     }
 
     return (
-        <div className="min-h-[calc(100vh-64px)] bg-gradient-to-br from-primary-50 via-white to-primary-50 py-10 px-4 sm:px-6 lg:px-8">
-            <motion.div
-                className="max-w-3xl mx-auto"
-                variants={containerVariants}
-                initial="hidden"
-                animate="visible"
-            >
-                <motion.div variants={itemVariants} className="text-center mb-10">
-                    <h2 className="text-3xl font-bold text-gray-900 mb-2">My Profile</h2>
-                    <p className="text-gray-500">Manage your personal information and check deleted records.</p>
-                </motion.div>
+        <div className="min-h-screen relative overflow-hidden bg-gray-50 flex flex-col">
+            {/* Enhanced Professional Background */}
+            <div className="absolute inset-0 z-0">
+                {/* Primary gradient background */}
+                <div className="absolute inset-0 bg-gradient-to-br from-slate-900 via-blue-900 to-indigo-900"></div>
 
-                {profile && (
-                    <motion.div variants={itemVariants} className="bg-white rounded-2xl shadow-xl overflow-hidden border border-gray-100 mb-8 relative">
-                        {/* Decorative background element */}
-                        <div className="absolute top-0 right-0 w-64 h-64 bg-gradient-to-br from-primary-100 to-transparent rounded-bl-full opacity-30 pointer-events-none"></div>
+                {/* Overlay gradients for depth */}
+                <div className="absolute inset-0 bg-gradient-to-t from-purple-900/30 via-transparent to-blue-800/20"></div>
+                <div className="absolute inset-0 bg-gradient-to-r from-indigo-800/20 via-transparent to-cyan-800/20"></div>
 
-                        <div className="p-8 relative z-10 font-sans">
-                            {/* Header Section */}
-                            <div className="flex items-center justify-between pb-8">
-                                <div className="flex items-center gap-4">
-                                    <div className="w-20 h-20 bg-gray-200 rounded-full flex items-center justify-center overflow-hidden relative">
-                                        <span className="text-3xl text-gray-600 font-medium">{profile.full_name?.charAt(0).toUpperCase()}</span>
-                                        {/* Little edit icon placeholder as seen in image */}
-                                        <div className="absolute bottom-0 right-0 bg-white rounded-full p-1 border border-gray-200">
-                                            <User className="w-3 h-3 text-gray-400" />
+                {/* Professional grid pattern */}
+                <div className="absolute inset-0 opacity-10">
+                    <div
+                        className="absolute inset-0"
+                        style={{
+                            backgroundImage: `
+                                linear-gradient(90deg, rgba(255,255,255,0.1) 1px, transparent 1px),
+                                linear-gradient(0deg, rgba(255,255,255,0.1) 1px, transparent 1px)
+                            `,
+                            backgroundSize: "50px 50px",
+                        }}
+                    ></div>
+                </div>
+
+                {/* Animated transaction display elements (Custom Profile Icons) */}
+                <div className="absolute inset-0 overflow-hidden">
+                    {/* Floating transaction display icons */}
+                    <div className="absolute top-20 left-10 text-blue-400/20 animate-pulse flex items-center justify-center">
+                        <Fingerprint className="w-10 h-10" />
+                    </div>
+                    <div className="absolute top-40 right-20 text-cyan-400/20 animate-bounce flex items-center justify-center">
+                        <Shield className="w-8 h-8" />
+                    </div>
+                    <div className="absolute bottom-40 left-32 text-purple-400/20 animate-pulse flex items-center justify-center">
+                        <User className="w-12 h-12" />
+                    </div>
+                    <div className="absolute bottom-20 right-40 text-indigo-400/20 animate-bounce flex items-center justify-center">
+                        <Lock className="w-8 h-8" />
+                    </div>
+                    <div className="absolute top-1/2 left-1/4 text-teal-400/20 animate-pulse flex items-center justify-center">
+                        <Eye className="w-6 h-6" />
+                    </div>
+                    <div className="absolute top-1/3 right-1/3 text-violet-400/20 animate-bounce flex items-center justify-center">
+                        <Activity className="w-10 h-10" />
+                    </div>
+
+                    {/* Subtle geometric shapes */}
+                    <div className="absolute top-1/4 right-10 w-32 h-32 border border-white/10 rounded-full animate-pulse"></div>
+                    <div className="absolute bottom-1/4 left-10 w-24 h-24 border border-cyan-400/20 rounded-lg rotate-45 animate-spin" style={{ animationDuration: "20s" }}></div>
+                    <div className="absolute top-1/2 right-1/4 w-20 h-20 bg-gradient-to-r from-purple-500/10 to-blue-500/10 rounded-full animate-pulse"></div>
+
+                    {/* Network connection lines */}
+                    <svg className="absolute inset-0 w-full h-full" style={{ filter: "blur(0.5px)" }}>
+                        <defs>
+                            <linearGradient id="networkGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                                <stop offset="0%" style={{ stopColor: "#3b82f6", stopOpacity: 0.1 }} />
+                                <stop offset="50%" style={{ stopColor: "#8b5cf6", stopOpacity: 0.2 }} />
+                                <stop offset="100%" style={{ stopColor: "#06b6d4", stopOpacity: 0.1 }} />
+                            </linearGradient>
+                        </defs>
+                        <path
+                            d="M100,100 L300,200 L600,150 L900,300 L1200,200"
+                            stroke="url(#networkGradient)"
+                            strokeWidth="2"
+                            fill="none"
+                            className="animate-pulse"
+                        />
+                        <path
+                            d="M200,400 L500,300 L800,450 L1100,350"
+                            stroke="rgba(59, 130, 246, 0.2)"
+                            strokeWidth="1"
+                            fill="none"
+                            className="animate-pulse"
+                            style={{ animationDelay: "1s" }}
+                        />
+                    </svg>
+                </div>
+
+                {/* Subtle overlay for content readability */}
+                <div className="absolute inset-0 bg-black/20"></div>
+            </div>
+
+            <div className="relative z-10 w-full flex flex-col min-h-screen">
+                <Navbar />
+
+                <div className="flex-grow py-10 px-4 sm:px-6 lg:px-8">
+                    <motion.div
+                        className="max-w-3xl mx-auto w-full relative z-10"
+                        variants={containerVariants}
+                        initial="hidden"
+                        animate="visible"
+                    >
+                        <motion.div variants={itemVariants} className="text-center mb-10">
+                            <h2 className="text-4xl font-extrabold text-white mb-3">My Profile</h2>
+                            <p className="text-gray-300 text-lg">Manage your personal information and check deleted records.</p>
+                        </motion.div>
+
+                        {profile && (
+                            <motion.div variants={itemVariants} className="bg-white/10 backdrop-blur-md rounded-2xl shadow-2xl overflow-hidden border border-white/20 mb-8 relative">
+                                {/* Decorative background element */}
+                                <div className="absolute top-0 right-0 w-64 h-64 bg-gradient-to-br from-blue-400/10 to-transparent rounded-bl-full opacity-50 pointer-events-none"></div>
+
+                                <div className="p-8 relative z-10 font-sans">
+                                    {/* Header Section */}
+                                    <div className="flex items-center justify-between pb-8">
+                                        <div className="flex items-center gap-4">
+                                            <div className="w-20 h-20 bg-white/20 backdrop-blur-sm rounded-full flex items-center justify-center overflow-hidden relative border border-white/30">
+                                                <span className="text-3xl text-white font-medium">{profile.full_name?.charAt(0).toUpperCase()}</span>
+                                                {/* Little edit icon placeholder as seen in image */}
+                                                <div className="absolute bottom-0 right-0 bg-white/20 backdrop-blur-sm rounded-full p-1 border border-white/30">
+                                                    <User className="w-3 h-3 text-white" />
+                                                </div>
+                                            </div>
+                                            <div>
+                                                <h3 className="text-xl font-medium text-white">{profile.full_name}</h3>
+                                                <p className="text-gray-300 text-base">{profile.email}</p>
+                                            </div>
                                         </div>
                                     </div>
-                                    <div>
-                                        <h3 className="text-xl font-medium text-gray-800">{profile.full_name}</h3>
-                                        <p className="text-gray-500 text-base">{profile.email}</p>
+
+                                    {/* Details List */}
+                                    <div className="flex flex-col">
+                                        {/* Name Row */}
+                                        <div className="flex justify-between items-center py-5 border-t border-white/20">
+                                            <span className="text-gray-300 font-medium">Name</span>
+                                            <span className="text-white">{profile.full_name}</span>
+                                        </div>
+
+                                        {/* Username Row */}
+                                        <div className="flex justify-between items-center py-5 border-t border-white/20">
+                                            <span className="text-gray-300 font-medium">Username</span>
+                                            <span className="text-white">@{profile.username}</span>
+                                        </div>
+
+                                        {/* Email Row */}
+                                        <div className="flex justify-between items-center py-5 border-t border-white/20">
+                                            <span className="text-gray-300 font-medium">Email account</span>
+                                            <span className="text-white">{profile.email}</span>
+                                        </div>
+
+                                        {/* Login Method Row */}
+                                        <div className="flex justify-between items-center py-5 border-t border-white/20">
+                                            <span className="text-gray-300 font-medium">Login Method</span>
+                                            <span className="text-white capitalize">{profile.provider === 'google' ? 'Google' : 'Email'}</span>
+                                        </div>
+
+                                        {/* Activity History Row */}
+                                        <div className="flex justify-between items-center py-5 border-t border-white/20">
+                                            <div className="flex items-center text-gray-300 font-medium">
+                                                <History className="w-4 h-4 mr-2" />
+                                                Activity History
+                                            </div>
+                                            <button
+                                                onClick={fetchHistory}
+                                                className="text-cyan-400 hover:text-cyan-300 font-medium text-sm focus:outline-none transition-colors"
+                                            >
+                                                View History &gt;
+                                            </button>
+                                        </div>
+
+                                        {/* Account Security / Forgot Password Row */}
+                                        <div className="flex justify-between items-center py-5 border-t border-b border-white/20">
+                                            <div className="flex items-center text-gray-300 font-medium">
+                                                <Key className="w-4 h-4 mr-2" />
+                                                Account Security
+                                            </div>
+                                            <button
+                                                onClick={() => navigate('/forgot-password')}
+                                                className="text-cyan-400 hover:text-cyan-300 font-medium text-sm focus:outline-none transition-colors"
+                                            >
+                                                Forgot Password?
+                                            </button>
+                                        </div>
                                     </div>
                                 </div>
-                            </div>
-
-                            {/* Details List */}
-                            <div className="flex flex-col">
-                                {/* Name Row */}
-                                <div className="flex justify-between items-center py-5 border-t border-gray-100">
-                                    <span className="text-gray-600 font-medium">Name</span>
-                                    <span className="text-gray-500">{profile.full_name}</span>
-                                </div>
-
-                                {/* Username Row */}
-                                <div className="flex justify-between items-center py-5 border-t border-gray-100">
-                                    <span className="text-gray-600 font-medium">Username</span>
-                                    <span className="text-gray-500">@{profile.username}</span>
-                                </div>
-
-                                {/* Email Row */}
-                                <div className="flex justify-between items-center py-5 border-t border-gray-100">
-                                    <span className="text-gray-600 font-medium">Email account</span>
-                                    <span className="text-gray-500">{profile.email}</span>
-                                </div>
-
-                                {/* Login Method Row */}
-                                <div className="flex justify-between items-center py-5 border-t border-gray-100">
-                                    <span className="text-gray-600 font-medium">Login Method</span>
-                                    <span className="text-gray-500 capitalize">{profile.provider === 'google' ? 'Google' : 'Email'}</span>
-                                </div>
-
-                                {/* Activity History Row */}
-                                <div className="flex justify-between items-center py-5 border-t border-gray-100">
-                                    <div className="flex items-center text-gray-600 font-medium">
-                                        <History className="w-4 h-4 mr-2" />
-                                        Activity History
-                                    </div>
-                                    <button
-                                        onClick={fetchHistory}
-                                        className="text-blue-500 hover:text-blue-600 font-medium text-sm focus:outline-none transition-colors"
-                                    >
-                                        View History &gt;
-                                    </button>
-                                </div>
-
-                                {/* Account Security / Forgot Password Row */}
-                                <div className="flex justify-between items-center py-5 border-t border-b border-gray-100">
-                                    <div className="flex items-center text-gray-600 font-medium">
-                                        <Key className="w-4 h-4 mr-2" />
-                                        Account Security
-                                    </div>
-                                    <button
-                                        onClick={() => navigate('/forgot-password')}
-                                        className="text-blue-500 hover:text-blue-600 font-medium text-sm focus:outline-none transition-colors"
-                                    >
-                                        Forgot Password?
-                                    </button>
-                                </div>
-                            </div>
-                        </div>
+                            </motion.div>
+                        )}
                     </motion.div>
-                )}
-            </motion.div>
+
+                </div>
+            </div>
 
             {/* Enhanced History Modal */}
             <Modal show={showHistoryModal} onHide={() => setShowHistoryModal(false)} size="xl" centered>

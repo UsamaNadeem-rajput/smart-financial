@@ -20,7 +20,7 @@ import IncomeReport from './components/reports/IncomeReport';
 import TrialBalance from './components/reports/TrialBalance';
 import BalanceSheet from './components/reports/BalanceSheet';
 import Profile from './components/profile/Profile';
-
+import FloatingChatbot from './components/chat/FloatingChatbot';
 
 import './index.css';
 import 'bootstrap/dist/css/bootstrap.min.css';
@@ -55,6 +55,7 @@ function App() {
             <Route path="/balance-sheet" element={<PrivateRoute><BalanceSheet /></PrivateRoute>} />
             <Route path="/transaction-edit/:transactionId" element={<PrivateRoute><TransactionEdit /></PrivateRoute>} />
           </Routes>
+          <FloatingChatbot />
         </div >
       </Router >
     </BusinessProvider >
