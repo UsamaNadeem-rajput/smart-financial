@@ -1,39 +1,80 @@
 from flask import Flask, request, jsonify
 from flask_cors import CORS
-import os
+import sys
 
-# Aapki existing files (Make sure ye ai_engine folder mein hon)
+sys.stdout = sys.stderr
+
 from parser import FinanceParser
 from query_builder import SQLGenerator
 
 app = Flask(__name__)
 CORS(app)
 
-# AI Models ko globally load karein taake response fast ho
+# spaCy ek baar load hoga — har request par nahi
 ai_parser = FinanceParser()
 
 @app.route('/generate-sql', methods=['POST'])
-def generate_sql():
+def ask_ai():
     try:
         data = request.get_json()
         user_query = data.get('query', '')
         business_id = data.get('business_id', 1)
 
-        # 1. Intent aur Entities extract karein
+        if not user_query:
+            return jsonify({"error": "No query provided"}), 400
+
         parsed_data = ai_parser.parse_query(user_query)
-        
-        # 2. SQL Query generate karein
+
+        # FAQ shortcircuit — koi SQL nahi banta
+        if parsed_data.get("intent") == "faq":
+            faq_key = parsed_data.get("faq_key")
+            from metadata import FAQ_KNOWLEDGE
+            answer = FAQ_KNOWLEDGE.get(
+                faq_key,
+                "Sorry, I don't have information on that topic."
+            )
+            return jsonify({
+                "status":     "success",
+                "sql":        None,
+                "intent":     "faq",
+                "faq_answer": answer,
+                "filters":    parsed_data.get("filters", {})
+            })
+
+        sql = None
         generator = SQLGenerator(business_id=business_id)
-        sql = generator.generate_sql(parsed_data)
-        
+
+        try:
+            sql = generator.generate_sql(parsed_data)
+        except Exception as gen_error:
+            import traceback
+            traceback.print_exc()
+
+        if not sql:
+            return jsonify({
+                "status":  "success",
+                "sql":     None,
+                "intent":  parsed_data.get("intent"),
+                "filters": parsed_data.get("filters", {}),
+                "message": "I couldn't generate a report for that."
+            })
+
         return jsonify({
-            "status": "success",
-            "sql": sql,
-            "intent": parsed_data.get('intent')
+            "status":  "success",
+            "sql":     sql,
+            "intent":  parsed_data.get("intent"),
+            # filters return karo — aiController suggestions ke liye use karta hai
+            "filters": parsed_data.get("filters", {})
         })
+
     except Exception as e:
-        return jsonify({"status": "error", "message": str(e)}), 500
+        import traceback
+        traceback.print_exc()
+        return jsonify({
+            "error":   "Internal AI Engine Error",
+            "details": str(e)
+        }), 500
 
 if __name__ == "__main__":
-    port = int(os.environ.get("PORT", 5000))
-    app.run(host='0.0.0.0', port=port)
+    print("Smart Financial AI — Ready on port 7860")
+    app.run(host='0.0.0.0', port=7860)

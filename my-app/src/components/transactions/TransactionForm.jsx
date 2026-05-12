@@ -485,8 +485,8 @@ export default function TransectionForm() {
                         />
                         {showSuggestionsIdx === idx && suggestions.length > 0 && (
                           <ul
-                            className="list-group position-absolute w-100"
-                            style={{ zIndex: 10, maxHeight: "150px", overflowY: "auto" }}
+                            className="list-group position-absolute shadow"
+                            style={{ zIndex: 10, maxHeight: "150px", overflowY: "auto", minWidth: "100%", width: "max-content", maxWidth: "85vw" }}
                           >
                             {suggestions.map((s, sidx) => (
                               <li
@@ -494,7 +494,7 @@ export default function TransectionForm() {
                                 className={`list-group-item list-group-item-action${highlightedSuggestion === sidx ? ' active' : ''}`}
                                 onMouseDown={() => handleSuggestionClick(idx, s.account_name, s.account_id)}
                               >
-                                <div className="d-flex justify-content-between align-items-center">
+                                <div className="d-flex flex-column flex-sm-row justify-content-between align-items-start align-items-sm-center">
                                   <span>{s.account_name}</span>
                                   <small className="text-muted">
                                     Balance: ${(s.balance || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
@@ -540,7 +540,7 @@ export default function TransectionForm() {
               </table>
 
               {/* Totals */}
-              <div className="d-flex justify-content-end gap-3 mt-4">
+              <div className="d-flex flex-wrap justify-content-end gap-3 mt-4">
                 <div className="d-flex align-items-center">
                   <label className="me-2">Debit Total:</label>
                   <input
@@ -574,9 +574,9 @@ export default function TransectionForm() {
                     Recalculate Balances
                   </button>
                 </div>
-                <div>
+                <div className="d-flex flex-wrap gap-2">
                   <button
-                    className="btn btn-success me-2"
+                    className="btn btn-success"
                     onClick={handleSaveAndNew}
                     disabled={isSubmitDisabled || !allAccountNamesFilled || !allAccountsValid || isLoading}
                   >
@@ -590,7 +590,7 @@ export default function TransectionForm() {
                     )}
                   </button>
                   <button
-                    className="btn btn-primary me-2"
+                    className="btn btn-primary"
                     onClick={handleSaveAndClose}
                     disabled={isSubmitDisabled || !allAccountNamesFilled || !allAccountsValid || isLoading}
                   >

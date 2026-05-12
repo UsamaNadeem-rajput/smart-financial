@@ -1,4 +1,3 @@
-// module.exports = router;
 // Express API for income report functionality
 const express = require('express');
 const pool = require('../db');
@@ -20,12 +19,10 @@ router.use((req, res, next) => {
     res.status(200).end();
     return;
   }
-
   next();
 });
 
-// GET /api/income-report/:business_id?fromMonth=YYYY-MM&toMonth=YYYY-MM
-// Returns month-wise income and expense ledger balances
+// GET /api/income-report/:business_id
 router.get('/:business_id', async (req, res) => {
   const { business_id } = req.params;
   const { fromMonth, toMonth, onDate, fromDate: fromDateQuery, toDate: toDateQuery } = req.query;
@@ -34,53 +31,29 @@ router.get('/:business_id', async (req, res) => {
     return res.status(400).json({ error: 'Business ID is required' });
   }
 
-  if (!onDate && !(fromDateQuery && toDateQuery) && !(fromMonth && toMonth)) {
-    return res.status(400).json({ error: 'Provide either onDate (YYYY-MM-DD), fromDate/toDate (YYYY-MM-DD), or fromMonth/toMonth (YYYY-MM)' });
-  }
-
-  // Validate date format
+  // Date Logic validation
+  let fromDate;
+  let toDateStr;
   if (onDate) {
-    if (!/^\d{4}-\d{2}-\d{2}$/.test(onDate)) {
-      return res.status(400).json({ error: 'onDate must be in YYYY-MM-DD format' });
-    }
-  }
-  if (fromDateQuery || toDateQuery) {
-    if (!/^\d{4}-\d{2}-\d{2}$/.test(fromDateQuery || '') || !/^\d{4}-\d{2}-\d{2}$/.test(toDateQuery || '')) {
-      return res.status(400).json({ error: 'fromDate and toDate must be in YYYY-MM-DD format' });
-    }
-    if (fromDateQuery > toDateQuery) {
-      return res.status(400).json({ error: 'fromDate must be before or equal to toDate' });
-    }
-  }
-  if (!onDate && !(fromDateQuery && toDateQuery)) {
-    if (!/^\d{4}-\d{2}$/.test(fromMonth || '') || !/^\d{4}-\d{2}$/.test(toMonth || '')) {
-      return res.status(400).json({ error: 'fromMonth and toMonth must be in YYYY-MM format' });
-    }
+    fromDate = onDate;
+    toDateStr = onDate;
+  } else if (fromDateQuery && toDateQuery) {
+    fromDate = fromDateQuery;
+    toDateStr = toDateQuery;
+  } else {
+    const f = `${fromMonth}-01`;
+    const t = new Date(`${toMonth}-01`);
+    t.setMonth(t.getMonth() + 1);
+    t.setDate(0);
+    fromDate = f;
+    toDateStr = `${toMonth}-${String(t.getDate()).padStart(2, '0')}`;
   }
 
   let conn;
   try {
     conn = await pool.getConnection();
 
-    let fromDate;
-    let toDateStr;
-    if (onDate) {
-      fromDate = onDate;
-      toDateStr = onDate;
-    } else if (fromDateQuery && toDateQuery) {
-      fromDate = fromDateQuery;
-      toDateStr = toDateQuery;
-    } else {
-      const f = `${fromMonth}-01`;
-      const t = new Date(`${toMonth}-01`);
-      t.setMonth(t.getMonth() + 1);
-      t.setDate(0);
-      fromDate = f;
-      toDateStr = `${toMonth}-${String(t.getDate()).padStart(2, '0')}`;
-    }
-
-    // UPDATED QUERY: Uses SUM() and GROUP BY directly in SQL
-    // Filters for Type 1 (Income) and Type 2 (Expense) inside the query
+    // 1. Fetch Main Ledgers (Income:1, Expense:2, COGS:14) within Date Range
     const [accountRows] = await conn.execute(
       `SELECT 
         a.account_id,
@@ -98,63 +71,119 @@ router.get('/:business_id', async (req, res) => {
          AND DATE(tr.date) <= ?
          AND tr.is_deleted = 0
          AND a.is_deleted = 0
-         AND (COALESCE(t.type_id, a.type_id) IN (1, 2)) -- Only fetch Income (1) and Expense (2)
+         AND (COALESCE(t.type_id, a.type_id) IN (1, 2, 14))
        GROUP BY a.account_id, a.account_name, t.type_id, t.type_name, a.type_id
        ORDER BY type_id, a.account_name`,
       [business_id, fromDate, toDateStr]
     );
 
-    // Calculate balances per ledger from SQL results
+    // 2. Fetch OPENING Inventory (< fromDate)
+    const [openingInvRows] = await conn.execute(
+      `SELECT COALESCE(SUM(
+        CASE WHEN te.type = 'debit' THEN te.amount ELSE 0 END -
+        CASE WHEN te.type = 'credit' THEN te.amount ELSE 0 END
+      ), 0) as balance
+       FROM transactions tr
+       INNER JOIN transaction_entries te ON tr.transaction_id = te.transaction_id
+       INNER JOIN accounts a ON te.account_id = a.account_id
+       WHERE tr.business_id = ?
+         AND DATE(tr.date) < ?
+         AND tr.is_deleted = 0
+         AND a.is_deleted = 0
+         AND LOWER(a.account_name) LIKE '%inventory%'`,
+      [business_id, fromDate]
+    );
+    const openingInventory = Number(openingInvRows[0]?.balance || 0);
+
+    // 3. Fetch CLOSING Inventory (<= toDateStr)
+    const [closingInvRows] = await conn.execute(
+      `SELECT COALESCE(SUM(
+        CASE WHEN te.type = 'debit' THEN te.amount ELSE 0 END -
+        CASE WHEN te.type = 'credit' THEN te.amount ELSE 0 END
+      ), 0) as balance
+       FROM transactions tr
+       INNER JOIN transaction_entries te ON tr.transaction_id = te.transaction_id
+       INNER JOIN accounts a ON te.account_id = a.account_id
+       WHERE tr.business_id = ?
+         AND DATE(tr.date) <= ?
+         AND tr.is_deleted = 0
+         AND a.is_deleted = 0
+         AND LOWER(a.account_name) LIKE '%inventory%'`,
+      [business_id, toDateStr]
+    );
+    const closingInventory = Number(closingInvRows[0]?.balance || 0);
+
+    // Categories Arrays
     const incomeData = [];
     const expenseData = [];
+    const cogsData = [];
 
-    // Process each aggregated ledger row
+    // 4. Process Each Ledger (STRICT PROFESSIONAL RULE - NO Math.abs)
     accountRows.forEach(row => {
       const typeId = Number(row.type_id);
 
-      // Strict Mode Logic (Same as original)
-      // Only include pure Income (1) and Expense (2) types
       let isIncome = [1].includes(typeId) || ['Income'].includes(row.type_name);
       let isExpense = [2].includes(typeId) || ['Expense'].includes(row.type_name);
+      let isCOGS = [14].includes(typeId) || ['Cost Of Goods Sold'].includes(row.type_name);
 
-      // Fallback Logic (Same as original)
-      if (!isIncome && !isExpense) {
-        if ([1].includes(typeId)) isIncome = true;
-        else if ([2].includes(typeId)) isExpense = true;
-      }
+      if (!isIncome && !isExpense && !isCOGS) return;
 
-      if (!isIncome && !isExpense) return;
-
-      // Get totals directly from SQL columns
       const totalDebits = Number(row.total_debit || 0);
       const totalCredits = Number(row.total_credit || 0);
 
-      if (Math.abs(totalDebits) > 0 || Math.abs(totalCredits) > 0) {
+      // Sirf wo ledgers push karein jin mein koi activity hui ho
+      if (totalDebits > 0 || totalCredits > 0) {
+
         let balance = 0;
+
+        // STRICT ACCOUNTING LOGIC
         if (isIncome) {
-          balance = totalCredits - totalDebits;
-        } else if (isExpense) {
-          balance = totalDebits - totalCredits;
+          balance = totalCredits - totalDebits; // Income Rule
+        } else if (isExpense || isCOGS) {
+          balance = totalDebits - totalCredits; // Expense & COGS Rule
         }
 
         const entry = {
           ledger_id: row.account_id,
           ledger_name: row.account_name,
-          balance: balance
+          balance: balance // Agar user ne galat entry ki hogi, to ye balance Negative (-) mein jayega
         };
 
-        if (isIncome) {
-          incomeData.push(entry);
-        } else if (isExpense) {
-          expenseData.push(entry);
-        }
+        if (isIncome) incomeData.push(entry);
+        else if (isExpense) expenseData.push(entry);
+        else if (isCOGS) cogsData.push(entry);
       }
     });
 
-    // Calculate totals
-    const incomeTotal = incomeData.reduce((sum, entry) => sum + Math.abs(entry.balance), 0);
-    const expenseTotal = expenseData.reduce((sum, entry) => sum + Math.abs(entry.balance), 0);
-    const netProfitLoss = incomeTotal - expenseTotal;
+    // 5. Calculate Totals (Sub-totals)
+    const incomeTotal = incomeData.reduce((sum, entry) => sum + entry.balance, 0);
+    const expenseTotal = expenseData.reduce((sum, entry) => sum + entry.balance, 0);
+    const totalPurchases = cogsData.reduce((sum, entry) => sum + entry.balance, 0);
+
+    // 6. THE SMART COGS SWITCH (Perpetual vs Periodic Logic)
+    // Check kar raha hai ke kya user ne specifically "Cost Of Goods Sold" naam ka koi ledger banaya hai
+    const hasDirectCOGSLedger = cogsData.some(entry =>
+      entry.ledger_name.trim().toLowerCase() === 'cost of goods sold'
+    );
+
+    let calculatedCOGS = 0;
+    let finalOpeningInventory = openingInventory;
+    let finalClosingInventory = closingInventory;
+
+    if (hasDirectCOGSLedger) {
+      // PERPETUAL SYSTEM (Bypass inventory formula)
+      calculatedCOGS = totalPurchases;
+      // UI ke visual math ko theek rakhne ke liye inventory ko zero bheja ja raha hai
+      finalOpeningInventory = 0;
+      finalClosingInventory = 0;
+    } else {
+      // PERIODIC SYSTEM (Apply standard formula)
+      calculatedCOGS = openingInventory + totalPurchases - closingInventory;
+    }
+
+    // 7. Final Profit Calculations
+    const grossProfit = incomeTotal - calculatedCOGS;
+    const netProfitLoss = grossProfit - expenseTotal;
 
     res.json({
       success: true,
@@ -165,11 +194,16 @@ router.get('/:business_id', async (req, res) => {
         expense: expenseTotal,
         netProfitLoss: netProfitLoss
       },
+      merchandisingData: {
+        openingInventory: finalOpeningInventory,
+        closingInventory: finalClosingInventory,
+        cogsData,
+        totalPurchases,
+        calculatedCOGS,
+        grossProfit
+      },
       dateRange: {
-        fromMonth,
-        toMonth,
-        onDate: onDate || null,
-        fromDate: fromDate,
+        fromDate,
         toDate: toDateStr
       }
     });

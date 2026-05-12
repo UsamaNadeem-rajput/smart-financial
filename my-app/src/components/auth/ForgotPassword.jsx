@@ -40,8 +40,74 @@ export default function ForgotPassword() {
   };
 
   return (
-    <div className="max-w-lg mx-auto p-4">
-      <h2 className="text-xl font-bold mb-4">Forgot password</h2>
+    <div
+      className="min-h-screen relative overflow-hidden flex items-center justify-center p-4 bg-slate-900"
+      style={{
+        minHeight: "100vh",
+        width: "100%"
+      }}
+    >
+      {/* Enhanced Professional Background */}
+      <div className="absolute inset-0 z-0 pointer-events-none">
+        {/* Primary gradient background */}
+        <div className="absolute inset-0 bg-gradient-to-br from-slate-900 via-blue-900 to-indigo-900"></div>
+
+        {/* Overlay gradients for depth */}
+        <div className="absolute inset-0 bg-gradient-to-t from-purple-900/30 via-transparent to-blue-800/20"></div>
+        <div className="absolute inset-0 bg-gradient-to-r from-indigo-800/20 via-transparent to-cyan-800/20"></div>
+
+        {/* Professional grid pattern */}
+        <div className="absolute inset-0 opacity-10">
+          <div className="absolute inset-0" style={{
+            backgroundImage: `
+              linear-gradient(90deg, rgba(255,255,255,0.1) 1px, transparent 1px),
+              linear-gradient(0deg, rgba(255,255,255,0.1) 1px, transparent 1px)
+            `,
+            backgroundSize: '50px 50px'
+          }}></div>
+        </div>
+
+        {/* Animated elements */}
+        <div className="absolute inset-0 overflow-hidden">
+          {/* Subtle geometric shapes */}
+          <div className="absolute top-1/4 right-10 w-32 h-32 border border-white/10 rounded-full animate-pulse"></div>
+          <div className="absolute bottom-1/4 left-10 w-24 h-24 border border-cyan-400/20 rounded-lg rotate-45 animate-spin" style={{ animationDuration: '20s' }}></div>
+          <div className="absolute top-1/2 right-1/4 w-20 h-20 bg-gradient-to-r from-purple-500/10 to-blue-500/10 rounded-full animate-pulse"></div>
+
+          {/* Network connection lines */}
+          <svg className="absolute inset-0 w-full h-full" style={{ filter: 'blur(0.5px)' }}>
+            <defs>
+              <linearGradient id="networkGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" style={{ stopColor: '#3b82f6', stopOpacity: 0.1 }} />
+                <stop offset="50%" style={{ stopColor: '#8b5cf6', stopOpacity: 0.2 }} />
+                <stop offset="100%" style={{ stopColor: '#06b6d4', stopOpacity: 0.1 }} />
+              </linearGradient>
+            </defs>
+            <path
+              d="M100,100 L300,200 L600,150 L900,300 L1200,200"
+              stroke="url(#networkGradient)"
+              strokeWidth="2"
+              fill="none"
+              className="animate-pulse"
+            />
+            <path
+              d="M200,400 L500,300 L800,450 L1100,350"
+              stroke="rgba(59, 130, 246, 0.2)"
+              strokeWidth="1"
+              fill="none"
+              className="animate-pulse"
+              style={{ animationDelay: '1s' }}
+            />
+          </svg>
+        </div>
+
+        {/* Subtle overlay for content readability */}
+        <div className="absolute inset-0 bg-black/20"></div>
+      </div>
+
+      {/* Content */}
+      <div className="relative z-10 w-full max-w-lg bg-white/10 backdrop-blur-md shadow-2xl rounded-2xl p-8 border border-white/20">
+        <h2 className="text-2xl font-bold text-white mb-6 text-center">Forgot password</h2>
       {stage === 'email' ? (
         <form onSubmit={sendEmail}>
           <input value={email} onChange={e => setEmail(e.target.value)} type="email" placeholder="Enter your email" required className="input-field"/>
@@ -57,5 +123,6 @@ export default function ForgotPassword() {
       )}
       {message && <div className="mt-3 text-sm">{message}</div>}
     </div>
+  </div>
   );
 }

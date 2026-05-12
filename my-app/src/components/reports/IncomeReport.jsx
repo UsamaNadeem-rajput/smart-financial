@@ -8,6 +8,23 @@ import autoTable from 'jspdf-autotable';
 
 const currency = (n) => new Intl.NumberFormat('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(Number(n || 0));
 
+// HTML escape helper to prevent XSS in document.write templates
+const escapeHtml = (str) => {
+  if (str == null) return '';
+  return String(str)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+};
+
+// Validate that a data URL is a safe image data URL
+const safeDataUrl = (url) => {
+  if (!url || !url.startsWith('data:image/')) return null;
+  return url;
+};
+
 // Helper to convert image URL to data URL using proxy endpoint (bypasses CORS for print/PDF)
 async function getImageAsDataUrl(logoPath, backendUrl) {
   try {
@@ -41,12 +58,17 @@ const IncomeReport = () => {
   const [incomeData, setIncomeData] = useState([]);
   const [expenseData, setExpenseData] = useState([]);
   const [totals, setTotals] = useState({ income: 0, expense: 0, netProfitLoss: 0 });
+  // NEW: Merchandising data state
+  const [merchandisingData, setMerchandisingData] = useState({
+    openingInventory: 0, closingInventory: 0, cogsData: [],
+    totalPurchases: 0, calculatedCOGS: 0, grossProfit: 0
+  });
   const [currentDate, setCurrentDate] = useState('');
   const [hasGenerated, setHasGenerated] = useState(false);
   const reportRef = useRef(null);
 
   // Range selection states
-  const [rangeType, setRangeType] = useState(''); // 'date', 'month', or 'year'
+  const [rangeType, setRangeType] = useState('date'); // 'date', 'month', or 'year'
   const [fromMonth, setFromMonth] = useState('');
   const [toMonth, setToMonth] = useState('');
   const [selectedYear, setSelectedYear] = useState('');
@@ -104,6 +126,11 @@ const IncomeReport = () => {
       setIncomeData(data.income || []);
       setExpenseData(data.expense || []);
       setTotals(data.totals || { income: 0, expense: 0, netProfitLoss: 0 });
+      // NEW: Set merchandising data
+      setMerchandisingData(data.merchandisingData || {
+        openingInventory: 0, closingInventory: 0, cogsData: [],
+        totalPurchases: 0, calculatedCOGS: 0, grossProfit: 0
+      });
       setHasGenerated(true);
     } catch (e) {
       console.error('Income Report Error:', e);
@@ -111,6 +138,10 @@ const IncomeReport = () => {
       setIncomeData([]);
       setExpenseData([]);
       setTotals({ income: 0, expense: 0, netProfitLoss: 0 });
+      setMerchandisingData({
+        openingInventory: 0, closingInventory: 0, cogsData: [],
+        totalPurchases: 0, calculatedCOGS: 0, grossProfit: 0
+      });
     } finally {
       setLoading(false);
     }
@@ -162,10 +193,9 @@ const IncomeReport = () => {
     return date.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
   };
   const formatMonth = (monthStr) => {
-    const date = new Date(monthStr);
+    const date = new Date(monthStr + '-01T12:00:00');
     return date.toLocaleDateString('en-US', { year: 'numeric', month: 'long' });
   };
-
   const businessName = selectedBusiness?.business_name || selectedBusiness?.businessName || 'Business';
 
   const groupedIncome = incomeData;
@@ -186,6 +216,11 @@ const IncomeReport = () => {
   const handlePrint = async () => {
     const printWindow = window.open("", "", "height=800,width=900");
 
+    if (!printWindow) {
+      setError('Unable to open print window. Please allow popups for this site and try again.');
+      return;
+    }
+
     const logoPath = selectedBusiness?.logo_url;
     let logoDataUrl = null;
     if (logoPath) {
@@ -195,7 +230,7 @@ const IncomeReport = () => {
     printWindow.document.write(`
       <html>
         <head>
-          <title>Income Statement - ${businessName}</title>
+          <title>Merchandising Income Statement - ${escapeHtml(businessName)}</title>
           <style>
             * { margin: 0; padding: 0; box-sizing: border-box; }
             body { font-family: 'Segoe UI', Arial, sans-serif; padding: 20px; color: #333; }
@@ -236,16 +271,16 @@ const IncomeReport = () => {
         <body>
           <div class="print-header">
             <div class="logo-container">
-              ${logoDataUrl ? `<img src="${logoDataUrl}" class="logo" alt="Logo" id="printLogo" />` : '<div style="font-size: 24px; color: #4169e1; font-weight: bold;">SF</div>'}
+              ${safeDataUrl(logoDataUrl) ? `<img src="${safeDataUrl(logoDataUrl)}" class="logo" alt="Logo" id="printLogo" />` : '<div style="font-size: 24px; color: #4169e1; font-weight: bold;">SF</div>'}
             </div>
             <div class="header-center">
-              <div class="business-name">${businessName}</div>
-              <div class="report-title">Income Statement</div>
-              <div class="date-range">${getFormattedRangeLabel()}</div>
+              <div class="business-name">${escapeHtml(businessName)}</div>
+              <div class="report-title">Merchandising Income Statement</div>
+              <div class="date-range">${escapeHtml(getFormattedRangeLabel())}</div>
             </div>
             <div class="header-right">
               <div>Printed on:</div>
-              <div>${currentDate}</div>
+              <div>${escapeHtml(currentDate)}</div>
             </div>
           </div>
           
@@ -254,9 +289,33 @@ const IncomeReport = () => {
             <table>
               <thead><tr><th>Account</th><th class="amount">Amount (PKR)</th></tr></thead>
               <tbody>
-                ${groupedIncome.map(ledger => `<tr><td>${ledger.ledger_name}</td><td class="amount">${currency(Math.abs(ledger.balance))}</td></tr>`).join('')}
+                ${groupedIncome.map(ledger => `<tr><td>${escapeHtml(ledger.ledger_name)}</td><td class="amount">${currency(Math.abs(ledger.balance))}</td></tr>`).join('')}
                 <tr class="total-row"><td><strong>Total Income</strong></td><td class="amount"><strong>${currency(Math.abs(totals.income))}</strong></td></tr>
               </tbody>
+            </table>
+          </div>
+          
+          <!-- NEW: Cost of Goods Sold Section -->
+          <div class="section">
+            <div class="section-title">Cost of Goods Sold</div>
+            <table>
+              <thead><tr><th>Account</th><th class="amount">Amount (PKR)</th></tr></thead>
+              <tbody>
+                <tr><td>Opening Inventory</td><td class="amount">${currency(merchandisingData.openingInventory)}</td></tr>
+                ${merchandisingData.cogsData.map(ledger => `<tr><td>${escapeHtml(ledger.ledger_name)}</td><td class="amount">${currency(Math.abs(ledger.balance))}</td></tr>`).join('')}
+                <tr style="color: #dc2626;"><td>Less: Closing Inventory</td><td class="amount">(${currency(merchandisingData.closingInventory)})</td></tr>
+                <tr class="total-row"><td><strong>Cost of Goods Sold</strong></td><td class="amount"><strong>${currency(merchandisingData.calculatedCOGS)}</strong></td></tr>
+              </tbody>
+            </table>
+          </div>
+          
+          <!-- NEW: Gross Profit Row -->
+          <div class="section">
+            <table>
+              <tr style="background-color: #1e40af; color: white; font-weight: bold;">
+                <td style="background-color: #1e40af; color: white;"><strong>Gross Profit</strong></td>
+                <td class="amount" style="background-color: #1e40af; color: white;"><strong>${currency(merchandisingData.grossProfit)}</strong></td>
+              </tr>
             </table>
           </div>
           
@@ -265,7 +324,7 @@ const IncomeReport = () => {
             <table>
               <thead><tr><th>Account</th><th class="amount">Amount (PKR)</th></tr></thead>
               <tbody>
-                ${groupedExpense.map(ledger => `<tr><td>${ledger.ledger_name}</td><td class="amount">${currency(Math.abs(ledger.balance))}</td></tr>`).join('')}
+                ${groupedExpense.map(ledger => `<tr><td>${escapeHtml(ledger.ledger_name)}</td><td class="amount">${currency(Math.abs(ledger.balance))}</td></tr>`).join('')}
                 <tr class="total-row"><td><strong>Total Expenses</strong></td><td class="amount"><strong>${currency(Math.abs(totals.expense))}</strong></td></tr>
               </tbody>
             </table>
@@ -297,8 +356,11 @@ const IncomeReport = () => {
     }
 
     printWindow.focus();
+    // Close the window only after the print dialog is dismissed
+    printWindow.onafterprint = () => {
+      printWindow.close();
+    };
     printWindow.print();
-    printWindow.close();
   };
 
   const handleSavePDF = async () => {
@@ -347,7 +409,7 @@ const IncomeReport = () => {
     doc.setFontSize(12);
     doc.setFont(undefined, "normal");
     doc.setTextColor(65, 105, 225);
-    doc.text("Income Statement", pageWidth / 2, headerY + 7, { align: "center" });
+    doc.text("Merchandising Income Statement", pageWidth / 2, headerY + 7, { align: "center" });
 
     doc.setFontSize(9);
     doc.setTextColor(100, 100, 100);
@@ -380,6 +442,46 @@ const IncomeReport = () => {
       ]],
       body: incomeRows,
       headStyles: { fillColor: [65, 105, 225], textColor: 255 },
+      columnStyles: { 1: { halign: 'right' } },
+      margin: { left: 10, right: 10 },
+    });
+
+    y = doc.lastAutoTable.finalY + 10;
+
+    // === NEW: COST OF GOODS SOLD TABLE ===
+    doc.setFont(undefined, "bold");
+    doc.text("Cost of Goods Sold", 10, y);
+    y += 3;
+
+    const cogsRows = [];
+    cogsRows.push(['Opening Inventory', currency(merchandisingData.openingInventory)]);
+    merchandisingData.cogsData.forEach(l => {
+      cogsRows.push([l.ledger_name, currency(Math.abs(l.balance))]);
+    });
+    cogsRows.push([{ content: 'Less: Closing Inventory', styles: { textColor: [220, 38, 38] } }, { content: `(${currency(merchandisingData.closingInventory)})`, styles: { halign: 'right', textColor: [220, 38, 38] } }]);
+    cogsRows.push([{ content: 'Cost of Goods Sold', styles: { fontStyle: 'bold', fillColor: [232, 240, 254] } }, { content: currency(merchandisingData.calculatedCOGS), styles: { fontStyle: 'bold', fillColor: [232, 240, 254], halign: 'right' } }]);
+
+    autoTable(doc, {
+      startY: y,
+      head: [[
+        { content: '', styles: { halign: 'left' } },
+        { content: 'Amount (PKR)', styles: { halign: 'right' } }
+      ]],
+      body: cogsRows,
+      headStyles: { fillColor: [65, 105, 225], textColor: 255 },
+      columnStyles: { 1: { halign: 'right' } },
+      margin: { left: 10, right: 10 },
+    });
+
+    y = doc.lastAutoTable.finalY + 5;
+
+    // === NEW: GROSS PROFIT ROW ===
+    autoTable(doc, {
+      startY: y,
+      body: [[
+        { content: 'Gross Profit', styles: { fontStyle: 'bold', fillColor: [30, 64, 175], textColor: 255 } },
+        { content: currency(merchandisingData.grossProfit), styles: { fontStyle: 'bold', fillColor: [30, 64, 175], textColor: 255, halign: 'right' } }
+      ]],
       columnStyles: { 1: { halign: 'right' } },
       margin: { left: 10, right: 10 },
     });
@@ -474,7 +576,7 @@ const IncomeReport = () => {
         <div className="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
           <div className="px-4 py-6 sm:px-0">
             <div className="flex items-center justify-between mb-6">
-              <h1 className="text-2xl font-semibold text-white">Income Statement</h1>
+              <h1 className="text-2xl font-semibold text-white">Merchandising Income Statement</h1>
               <button
                 className="text-sm text-primary-600 hover:text-primary-800"
                 onClick={() => navigate(-1)}
@@ -665,7 +767,7 @@ const IncomeReport = () => {
 
 
                   <h2 className="text-xl font-bold text-gray-900 mb-2">{businessName}</h2>
-                  <h3 className="text-lg font-semibold text-gray-700 mb-2">Income Statement</h3>
+                  <h3 className="text-lg font-semibold text-gray-700 mb-2">Merchandising Income Statement</h3>
                   <p className="text-sm text-gray-600">
                     {rangeType === 'year' && `Year: ${selectedYear}`}
                     {rangeType === 'month' && `Month: ${formatMonth(fromMonth)} to ${formatMonth(toMonth)}`}
@@ -721,6 +823,72 @@ const IncomeReport = () => {
                   )}
                 </div>
 
+                {/* NEW: Cost of Goods Sold Table */}
+                <div className="bg-white p-6">
+                  <h3 className="text-lg font-semibold text-gray-900 mb-4">Cost of Goods Sold</h3>
+                  <div className="overflow-x-auto">
+                    <table className="min-w-full divide-y divide-gray-200 border border-gray-300">
+                      <thead className="bg-gray-50">
+                        <tr>
+                          <th colSpan="2" className="px-4 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider border-r border-gray-300">
+                          </th>
+                          <th className="px-4 py-3 text-right text-xs font-medium text-gray-700 uppercase tracking-wider">
+                            Rs-(PKR)
+                          </th>
+                        </tr>
+                      </thead>
+                      <tbody className="bg-white divide-y divide-gray-200">
+                        {/* Opening Inventory */}
+                        <tr>
+                          <td colSpan="2" className="px-4 py-2 text-sm text-gray-900 border-r border-gray-300">
+                            Opening Inventory
+                          </td>
+                          <td className="px-4 py-2 text-sm text-right text-gray-700">
+                            {currency(merchandisingData.openingInventory)}
+                          </td>
+                        </tr>
+                        {/* COGS line items (Purchases, Freight-in, etc.) */}
+                        {merchandisingData.cogsData.map((ledger) => (
+                          <tr key={`cogs-${ledger.ledger_id}`}>
+                            <td colSpan="2" className="px-4 py-2 text-sm text-gray-900 border-r border-gray-300">
+                              {ledger.ledger_name}
+                            </td>
+                            <td className="px-4 py-2 text-sm text-right text-gray-700">
+                              {currency(Math.abs(ledger.balance))}
+                            </td>
+                          </tr>
+                        ))}
+                        {/* Less: Closing Inventory */}
+                        <tr>
+                          <td colSpan="2" className="px-4 py-2 text-sm text-red-600 border-r border-gray-300">
+                            Less: Closing Inventory
+                          </td>
+                          <td className="px-4 py-2 text-sm text-right text-red-600">
+                            ({currency(merchandisingData.closingInventory)})
+                          </td>
+                        </tr>
+                        {/* Total COGS */}
+                        <tr className="bg-gray-100 border-t-2 border-gray-400 font-bold">
+                          <td colSpan="2" className="px-4 py-3 text-sm text-gray-900 border-r border-gray-300">
+                            Cost of Goods Sold
+                          </td>
+                          <td className="px-4 py-3 text-sm text-right text-gray-900">
+                            {currency(merchandisingData.calculatedCOGS)}
+                          </td>
+                        </tr>
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+
+                {/* NEW: Gross Profit Row */}
+                <div className="bg-white p-6">
+                  <div className="flex justify-between items-center bg-blue-800 text-white rounded-lg px-6 py-4">
+                    <span className="text-lg font-bold">Gross Profit</span>
+                    <span className="text-lg font-bold">{currency(merchandisingData.grossProfit)}</span>
+                  </div>
+                </div>
+
                 {/* Expense Table */}
                 <div className="bg-white p-6">
                   <h3 className="text-lg font-semibold text-gray-900 mb-4">Expense</h3>
@@ -766,13 +934,13 @@ const IncomeReport = () => {
                 </div>
 
                 {/* Net Profit/Loss */}
-                <div className="bg-white shadow sm:rounded-lg p-6">
-                  <div className="flex justify-between items-center border-t-2 border-gray-400 pt-4">
-                    <span className="text-lg font-bold text-gray-900">
+                <div className="bg-white p-6">
+                  <div className={`flex justify-between items-center rounded-lg px-6 py-4 ${totals.netProfitLoss >= 0 ? 'bg-green-700' : 'bg-red-700'} text-white`}>
+                    <span className="text-lg font-bold">
                       {totals.netProfitLoss >= 0 ? 'Net Profit' : 'Net Loss'}
                     </span>
-                    <span className={`text-lg font-bold ${totals.netProfitLoss >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-                      {currency(totals.netProfitLoss)}
+                    <span className="text-lg font-bold">
+                      {currency(Math.abs(totals.netProfitLoss))}
                     </span>
                   </div>
                 </div>

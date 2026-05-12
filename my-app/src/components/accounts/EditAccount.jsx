@@ -12,7 +12,7 @@ const EditAccount = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [accountTypes, setAccountTypes] = useState([]);
   const [user, setUser] = useState(null);
-  
+
   const [formData, setFormData] = useState({
     account_name: '',
     type_id: '',
@@ -31,36 +31,36 @@ const EditAccount = () => {
     //   const authResponse = await axios.get('http://localhost:5000/api/check-auth', {
     //     withCredentials: true
     //   });
-      
+
     //   if (authResponse.data.user) {
     //     setUser(authResponse.data.user);
-        if (!selectedBusiness) {
-          navigate('/list');
-          return;
-        }
-        
-        // Check if account data is passed from the previous page
-        if (location.state?.account) {
-          const account = location.state.account;
-          setFormData({
-            account_name: account.account_name || '',
-            type_id: account.type_id || '',
-            description: account.description || '',
-            // status: account.status || 'active'
-          });
-        } else {
-          // If no account data, redirect back
-          navigate('/showbusinessaccount');
-        }
-        
-        fetchAccountTypes();
+    if (!selectedBusiness) {
+      navigate('/list');
+      return;
+    }
+
+    // Check if account data is passed from the previous page
+    if (location.state?.account) {
+      const account = location.state.account;
+      setFormData({
+        account_name: account.account_name || '',
+        type_id: account.type_id || '',
+        description: account.description || '',
+        // status: account.status || 'active'
+      });
+    } else {
+      // If no account data, redirect back
+      navigate('/showbusinessaccount');
+    }
+
+    fetchAccountTypes();
     //   } else {
     //     navigate('/login');
     //   }
     // } catch (error) {
     //   console.error('Authentication check failed:', error);
     //   navigate('/login');
-    };
+  };
 
   const fetchAccountTypes = async () => {
     try {
@@ -108,22 +108,22 @@ const EditAccount = () => {
 
   const validateForm = () => {
     const newErrors = {};
-    
+
     if (!formData.account_name.trim()) {
       newErrors.account_name = 'Account name is required';
     }
-    
+
     if (!formData.type_id) {
       newErrors.type_id = 'Account type is required';
     }
-    
+
     return newErrors;
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setIsLoading(true);
-    
+
     const newErrors = validateForm();
     if (Object.keys(newErrors).length > 0) {
       setErrors(newErrors);
@@ -140,7 +140,7 @@ const EditAccount = () => {
       await axios.put(`${import.meta.env.VITE_BACKEND_URL}/api/accounts/${accountId}`, formData, {
         withCredentials: true
       });
-      
+
       navigate('/showbusinessaccount');
     } catch (error) {
       console.error('Failed to update account:', error);
@@ -204,29 +204,29 @@ const EditAccount = () => {
                   <optgroup label="Income">
                     <option value="1">Income</option>
                   </optgroup>
-                  
+
                   {/* Assets */}
                   <optgroup label="Assets">
                     <option value="4">Fixed Assets</option>
                     <option value="5">Current Assets</option>
                   </optgroup>
-                  
+
                   {/* Liability */}
                   <optgroup label="Liability">
                     <option value="7">Current Liability</option>
                     <option value="8">Non-Current Liabilities</option>
                   </optgroup>
-                  
+
                   {/* Equity */}
                   <optgroup label="Equity">
                     <option value="9">Equity</option>
                   </optgroup>
-                  
+
                   {/* Expense */}
                   <optgroup label="Expense">
                     <option value="2">Expense</option>
                   </optgroup>
-                  
+
                   {/* Others */}
                   <optgroup label="Others">
                     <option value="11">Other Assets</option>

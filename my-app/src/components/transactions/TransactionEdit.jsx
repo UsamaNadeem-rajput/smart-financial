@@ -224,14 +224,77 @@ export default function TransactionEdit() {
   };
 
   return (
-    <div className="min-h-screen relative">
-      <Navbar />
-      <div className="container mt-4">
-        <h2>Edit Transaction</h2>
+    <div
+      className="min-h-screen relative overflow-hidden bg-slate-900"
+      style={{
+        minHeight: "100vh",
+        width: "100%",
+        overflowX: "hidden"
+      }}
+    >
+      {/* BACKGROUND LAYER */}
+      <div className="fixed inset-0 z-0 pointer-events-none overflow-hidden">
+        {/* Primary gradient background */}
+        <div className="absolute inset-0 bg-gradient-to-br from-slate-900 via-blue-900 to-indigo-900"></div>
 
+        {/* Overlay gradients for depth */}
+        <div className="absolute inset-0 bg-gradient-to-t from-purple-900/30 via-transparent to-blue-800/20"></div>
+        <div className="absolute inset-0 bg-gradient-to-r from-indigo-800/20 via-transparent to-cyan-800/20"></div>
 
+        {/* Professional grid pattern */}
+        <div className="absolute inset-0 opacity-10">
+          <div className="absolute inset-0" style={{
+            backgroundImage: `
+              linear-gradient(90deg, rgba(255,255,255,0.1) 1px, transparent 1px),
+              linear-gradient(0deg, rgba(255,255,255,0.1) 1px, transparent 1px)
+            `,
+            backgroundSize: '50px 50px'
+          }}></div>
+        </div>
 
-        <table className="table table-striped table-hover table-bordered border-secondary mt-3">
+        {/* Animated elements */}
+        <div className="absolute inset-0 overflow-hidden">
+          <div className="absolute top-1/4 right-10 w-32 h-32 border border-white/10 rounded-full animate-pulse"></div>
+          <div className="absolute bottom-1/4 left-10 w-24 h-24 border border-cyan-400/20 rounded-lg rotate-45 animate-spin" style={{ animationDuration: '20s' }}></div>
+          <div className="absolute top-1/2 right-1/4 w-20 h-20 bg-gradient-to-r from-purple-500/10 to-blue-500/10 rounded-full animate-pulse"></div>
+
+          <svg className="absolute inset-0 w-full h-full" style={{ filter: 'blur(0.5px)' }}>
+            <defs>
+              <linearGradient id="networkGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" style={{ stopColor: '#3b82f6', stopOpacity: 0.1 }} />
+                <stop offset="50%" style={{ stopColor: '#8b5cf6', stopOpacity: 0.2 }} />
+                <stop offset="100%" style={{ stopColor: '#06b6d4', stopOpacity: 0.1 }} />
+              </linearGradient>
+            </defs>
+            <path
+              d="M100,100 L300,200 L600,150 L900,300 L1200,200"
+              stroke="url(#networkGradient)"
+              strokeWidth="2"
+              fill="none"
+              className="animate-pulse"
+            />
+            <path
+              d="M200,400 L500,300 L800,450 L1100,350"
+              stroke="rgba(59, 130, 246, 0.2)"
+              strokeWidth="1"
+              fill="none"
+              className="animate-pulse"
+              style={{ animationDelay: '1s' }}
+            />
+          </svg>
+        </div>
+
+        <div className="absolute inset-0 bg-black/20"></div>
+      </div>
+
+      {/* CONTENT LAYER */}
+      <div className="relative z-10 w-full min-h-screen pb-10">
+        <Navbar />
+        <div className="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
+          <div className="bg-white/95 backdrop-blur-sm shadow sm:rounded-2xl p-6 border border-white/20 mb-10">
+            <h2 className="text-2xl font-bold text-gray-800 mb-6">Edit Transaction</h2>
+
+            <table className="table table-striped table-hover table-bordered border-secondary mt-3">
           <thead className="table-dark">
             <tr>
               <th>Ledger Name</th>
@@ -240,126 +303,128 @@ export default function TransactionEdit() {
               <th className="text-center" style={{ width: "80px" }}>Remove</th>
             </tr>
           </thead>
-          <tbody>
-            {rows.map((row, idx) => (
-              <tr key={idx}>
-                <td style={{ position: "relative" }}>
-                  <input
-                    type="text"
-                    className="form-control"
-                    value={row.accountName}
-                    onChange={(e) => handleAccountNameChange(idx, e.target.value)}
-                    onKeyDown={(e) => handleAccountNameKeyDown(idx, e)}
-                    onFocus={() => { if (row.accountName) setShowSuggestionsIdx(idx); }}
-                    onBlur={() => setTimeout(() => { setShowSuggestionsIdx(null); setHighlightedSuggestion(-1); }, 200)}
-                    autoComplete="off"
-                  />
-                  {showSuggestionsIdx === idx && suggestions.length > 0 && (
-                    <ul
-                      className="list-group position-absolute w-100"
-                      style={{ zIndex: 10, maxHeight: "200px", overflowY: "auto", top: "100%" }}
+                <tbody>
+                  {rows.map((row, idx) => (
+                    <tr key={idx}>
+                      <td style={{ position: "relative" }}>
+                        <input
+                          type="text"
+                          className="form-control"
+                          value={row.accountName}
+                          onChange={(e) => handleAccountNameChange(idx, e.target.value)}
+                          onKeyDown={(e) => handleAccountNameKeyDown(idx, e)}
+                          onFocus={() => { if (row.accountName) setShowSuggestionsIdx(idx); }}
+                          onBlur={() => setTimeout(() => { setShowSuggestionsIdx(null); setHighlightedSuggestion(-1); }, 200)}
+                          autoComplete="off"
+                        />
+                        {showSuggestionsIdx === idx && suggestions.length > 0 && (
+                          <ul
+                      className="list-group position-absolute shadow"
+                      style={{ zIndex: 10, maxHeight: "200px", overflowY: "auto", minWidth: "100%", width: "max-content", maxWidth: "85vw", top: "100%" }}
                     >
-                      {suggestions.map((s, sidx) => (
-                        <li
-                          key={s.account_id}
-                          className={`list-group-item list-group-item-action ${highlightedSuggestion === sidx ? 'active' : ''}`}
-                          onMouseDown={() => handleSuggestionClick(idx, s)}
-                          style={{ cursor: "pointer" }}
+                            {suggestions.map((s, sidx) => (
+                              <li
+                                key={s.account_id}
+                                className={`list-group-item list-group-item-action ${highlightedSuggestion === sidx ? 'active' : ''}`}
+                                onMouseDown={() => handleSuggestionClick(idx, s)}
+                                style={{ cursor: "pointer" }}
+                              >
+                                <div className="d-flex flex-column flex-sm-row justify-content-between align-items-start align-items-sm-center">
+                                  <span>{s.account_name}</span>
+                                  <small className={highlightedSuggestion === sidx ? 'text-white' : 'text-muted'}>
+                                    Balance: ${(s.balance || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                                  </small>
+                                </div>
+                              </li>
+                            ))}
+                          </ul>
+                        )}
+                        {row.accountName && !row.accountId && showSuggestionsIdx !== idx && (
+                          <div className="text-danger small mt-1">Choose a valid ledger</div>
+                        )}
+                      </td>
+                      <td>
+                        <input
+                          type="text"
+                          className="form-control"
+                          value={formatNumberWithCommas(row.debit)}
+                          onChange={(e) => handleDebitChange(idx, e.target.value)}
+                          onKeyDown={(e) => handleDebitKeyDown(idx, e)}
+                          disabled={row.credit !== ''}
+                        />
+                      </td>
+                      <td>
+                        <input
+                          type="text"
+                          className="form-control"
+                          value={formatNumberWithCommas(row.credit)}
+                          onChange={(e) => handleCreditChange(idx, e.target.value)}
+                          onKeyDown={(e) => handleCreditKeyDown(idx, e)}
+                          disabled={row.debit !== ''}
+                        />
+                      </td>
+                      <td className="text-center align-middle">
+                        <button
+                          type="button"
+                          className="btn btn-link btn-sm text-danger"
+                          onClick={() => removeRow(idx)}
+                          title="Remove row"
                         >
-                          <div className="d-flex justify-content-between align-items-center">
-                            <span>{s.account_name}</span>
-                            <small className={highlightedSuggestion === sidx ? 'text-white' : 'text-muted'}>
-                              Balance: ${(s.balance || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-                            </small>
-                          </div>
-                        </li>
-                      ))}
-                    </ul>
-                  )}
-                  {row.accountName && !row.accountId && showSuggestionsIdx !== idx && (
-                    <div className="text-danger small mt-1">Choose a valid ledger</div>
-                  )}
-                </td>
-                <td>
-                  <input
-                    type="text"
-                    className="form-control"
-                    value={formatNumberWithCommas(row.debit)}
-                    onChange={(e) => handleDebitChange(idx, e.target.value)}
-                    onKeyDown={(e) => handleDebitKeyDown(idx, e)}
-                    disabled={row.credit !== ''}
-                  />
-                </td>
-                <td>
-                  <input
-                    type="text"
-                    className="form-control"
-                    value={formatNumberWithCommas(row.credit)}
-                    onChange={(e) => handleCreditChange(idx, e.target.value)}
-                    onKeyDown={(e) => handleCreditKeyDown(idx, e)}
-                    disabled={row.debit !== ''}
-                  />
-                </td>
-                <td className="text-center align-middle">
-                  <button
-                    type="button"
-                    className="btn btn-link btn-sm text-danger"
-                    onClick={() => removeRow(idx)}
-                    title="Remove row"
-                  >
-                    <i className="fas fa-times"></i>
-                  </button>
-                </td>
-              </tr>
-            ))}
-          </tbody>
+                          <i className="fas fa-times"></i>
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
         </table>
 
-        <div className="mt-2 text-end">
-          <button className="btn btn-outline-secondary btn-sm" onClick={addRow}>
-            + Add Row
-          </button>
-        </div>
+            <div className="mt-2 text-end">
+              <button className="btn btn-outline-secondary btn-sm" onClick={addRow}>
+                + Add Row
+              </button>
+            </div>
 
-        <div className="d-flex justify-content-end gap-3 mt-4">
-          <div className="d-flex align-items-center">
-            <label className="me-2 fw-bold">Debit Total:</label>
-            <input
-              type="text"
-              className="form-control text-end"
-              value={formatNumberWithCommas(debitTotal)}
-              readOnly
-              style={{ width: "150px" }}
-            />
-          </div>
-          <div className="d-flex align-items-center">
-            <label className="me-2 fw-bold">Credit Total:</label>
-            <input
-              type="text"
-              className="form-control text-end"
-              value={formatNumberWithCommas(creditTotal)}
-              readOnly
-              style={{ width: "150px" }}
-            />
-          </div>
-        </div>
+            <div className="d-flex flex-wrap justify-content-end gap-3 mt-4">
+              <div className="d-flex align-items-center">
+                <label className="me-2 fw-bold">Debit Total:</label>
+                <input
+                  type="text"
+                  className="form-control text-end"
+                  value={formatNumberWithCommas(debitTotal)}
+                  readOnly
+                  style={{ width: "150px" }}
+                />
+              </div>
+              <div className="d-flex align-items-center">
+                <label className="me-2 fw-bold">Credit Total:</label>
+                <input
+                  type="text"
+                  className="form-control text-end"
+                  value={formatNumberWithCommas(creditTotal)}
+                  readOnly
+                  style={{ width: "150px" }}
+                />
+              </div>
+            </div>
 
-        <div className="mt-5 d-flex gap-2">
-          <button
-            className="btn btn-primary px-4"
-            onClick={handleSave}
-            disabled={isSubmitDisabled || isLoading}
-          >
-            {isLoading ? (
-              <>
-                <span className="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
-                Saving...
-              </>
-            ) : "Save Changes"}
-          </button>
-          <button className="btn btn-secondary px-4" onClick={() => navigate(-1)}>
-            Cancel
-          </button>
+            <div className="mt-5 d-flex gap-2">
+              <button
+                className="btn btn-primary px-4"
+                onClick={handleSave}
+                disabled={isSubmitDisabled || isLoading}
+              >
+                {isLoading ? (
+                  <>
+                    <span className="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+                    Saving...
+                  </>
+                ) : "Save Changes"}
+              </button>
+              <button className="btn btn-secondary px-4" onClick={() => navigate(-1)}>
+                Cancel
+              </button>
+            </div>
+          </div>
         </div>
       </div>
     </div>

@@ -265,7 +265,7 @@ const Navbar = () => {
                   return (
                     <div key={item.name} className="relative">
                       <button
-                        className="flex items-center w-full pl-3 pr-4 py-2 text-base font-medium text-gray-600 hover:text-gray-900 hover:bg-gray-50"
+                        className="flex items-center w-full pl-3 pr-4 py-2 text-base font-medium text-slate-200 hover:text-white hover:bg-slate-800/50"
                         onClick={() => handleDropdownToggle(item.name)}
                       >
                         <Icon className="w-5 h-5 mr-3" />
@@ -276,7 +276,7 @@ const Navbar = () => {
                       </button>
                       <div
                         className={`${openDropdown === item.name ? "block" : "hidden"
-                          } bg-white border shadow-lg rounded-md z-50`}
+                          } bg-slate-800 border border-slate-700 shadow-lg rounded-md z-50`}
                       >
                         {item.children.map((child) => {
                           if (child.onClick) {
@@ -288,7 +288,7 @@ const Navbar = () => {
                                   setIsMobileMenuOpen(false);
                                   child.onClick(e);
                                 }}
-                                className="w-full text-left block px-6 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                                className="w-full text-left block px-6 py-2 text-sm text-slate-300 hover:bg-slate-700 hover:text-white"
                               >
                                 <child.icon className="w-4 h-4 mr-2 inline-block" />
                                 {child.name}
@@ -299,7 +299,7 @@ const Navbar = () => {
                             <Link
                               key={child.name}
                               to={child.href}
-                              className="block px-6 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                              className="block px-6 py-2 text-sm text-slate-300 hover:bg-slate-700 hover:text-white"
                               onClick={() => {
                                 setOpenDropdown(null);
                                 setIsMobileMenuOpen(false);
@@ -319,8 +319,8 @@ const Navbar = () => {
                     key={item.name}
                     to={item.href}
                     className={`block pl-3 pr-4 py-2 text-base font-medium ${isActive(item.href)
-                      ? "text-primary-700 bg-primary-50 border-r-4 border-primary-500"
-                      : "text-gray-600 hover:text-gray-900 hover:bg-gray-50"
+                      ? "text-white bg-slate-800/50 border-r-4 border-cyan-400"
+                      : "text-slate-300 hover:text-white hover:bg-slate-800/50"
                       }`}
                     onClick={() => setIsMobileMenuOpen(false)}
                   >
@@ -333,19 +333,29 @@ const Navbar = () => {
               })}
 
           </div>
-          <div className="pt-4 pb-3 border-t border-gray-200">
+          <div className="pt-4 pb-3 border-t border-slate-700/50">
             {selectedBusiness && (
               <div className="flex items-center px-4 py-2">
-                <Building2 className="w-5 h-5 text-primary-600 mr-2" />
-                <span className="text-sm font-medium text-gray-900">
+                <Building2 className="w-5 h-5 text-cyan-400 mr-2" />
+                <span className="text-sm font-medium text-white">
                   {selectedBusiness.business_name}
                 </span>
               </div>
             )}
             <div className="mt-3 space-y-1">
+              <Link
+                to="/profile"
+                className="block px-4 py-2 text-base font-medium text-slate-300 hover:text-white hover:bg-slate-800/50 w-full text-left"
+                onClick={() => setIsMobileMenuOpen(false)}
+              >
+                <div className="flex items-center">
+                  <User className="w-5 h-5 mr-3" />
+                  Profile ({user})
+                </div>
+              </Link>
               <button
                 onClick={handleLogout}
-                className="block px-4 py-2 text-base font-medium text-gray-500 hover:text-gray-800 hover:bg-gray-100 w-full text-left"
+                className="block px-4 py-2 text-base font-medium text-red-400 hover:text-red-300 hover:bg-slate-800/50 w-full text-left"
               >
                 <div className="flex items-center">
                   <LogOut className="w-5 h-5 mr-3" />

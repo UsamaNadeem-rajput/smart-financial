@@ -54,6 +54,7 @@ function App() {
             <Route path="/trial-balance" element={<PrivateRoute><TrialBalance /></PrivateRoute>} />
             <Route path="/balance-sheet" element={<PrivateRoute><BalanceSheet /></PrivateRoute>} />
             <Route path="/transaction-edit/:transactionId" element={<PrivateRoute><TransactionEdit /></PrivateRoute>} />
+
           </Routes>
           <FloatingChatbot />
         </div >

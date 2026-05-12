@@ -127,14 +127,6 @@ const List = () => {
 
         {/* Animated business elements */}
         <div className="absolute inset-0 overflow-hidden">
-          {/* Floating building icons */}
-          <div className="absolute top-20 left-10 text-4xl text-blue-400/20 animate-pulse">🏢</div>
-          <div className="absolute top-40 right-20 text-3xl text-cyan-400/20 animate-bounce">📊</div>
-          <div className="absolute bottom-40 left-32 text-5xl text-purple-400/20 animate-pulse">💼</div>
-          <div className="absolute bottom-20 right-40 text-3xl text-indigo-400/20 animate-bounce">📈</div>
-          <div className="absolute top-1/2 left-1/4 text-2xl text-teal-400/20 animate-pulse">🏪</div>
-          <div className="absolute top-1/3 right-1/3 text-4xl text-violet-400/20 animate-bounce">🏭</div>
-
           {/* Subtle geometric shapes */}
           <div className="absolute top-1/4 right-10 w-32 h-32 border border-white/10 rounded-full animate-pulse"></div>
           <div className="absolute bottom-1/4 left-10 w-24 h-24 border border-cyan-400/20 rounded-lg rotate-45 animate-spin" style={{ animationDuration: '20s' }}></div>

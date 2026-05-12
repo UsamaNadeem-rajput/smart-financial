@@ -87,7 +87,7 @@ const CreateNewAccount = () => {
       "Other Assets": ["Prepaid Expense", "Deferred Tax Asset"],
       "Other Incomes": ["Dividend Income", "Interest Income", "Rent Income (non-core)", "Gain on Sale of Asset", "Miscellaneous Income", "Recovery of Bad Debts"],
       "Other Expenses": ["Loss on Sale of Assets"],
-      "Cost Of Goods Sold": ["Raw Materials", "Direct Labor"],
+      "Cost Of Goods Sold": ["Purchases", "Raw Materials", "Direct Labor", "Cost Of Goods Sold"],
       "Equity": ["Capital (for sole proprietorship)", "Drawings", "Share Capital", "Share Premium", "Retained Earnings", "Reserves", "Revaluation Surplus"],
     };
 

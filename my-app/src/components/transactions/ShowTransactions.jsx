@@ -662,15 +662,6 @@ export default function TransactionEntryTable() {
                 min={fromDate}
               />
             </div>
-            <div className="col-md-3 d-flex align-items-end">
-              <button
-                className="btn btn-primary w-100"
-                onClick={handleView}
-                disabled={!fromDate || !toDate || !selectedBusiness?.business_id}
-              >
-                View
-              </button>
-            </div>
           </div>
 
           <div className="mb-3 d-flex gap-2">
@@ -679,6 +670,13 @@ export default function TransactionEntryTable() {
             </button>
             <button className="btn btn-success" onClick={handleSavePDF}>
               Save as PDF
+            </button>
+            <button
+              className="btn btn-primary w-48"
+              onClick={handleView}
+              disabled={!fromDate || !toDate || !selectedBusiness?.business_id}
+            >
+              View
             </button>
           </div>
 
@@ -699,6 +697,7 @@ export default function TransactionEntryTable() {
             </div>
 
             {entries.length > 0 ? (
+              <div className="table-responsive overflow-x-auto">
               <table className="table table-bordered">
                 <thead className="table-dark">
                   <tr>
@@ -784,6 +783,7 @@ export default function TransactionEntryTable() {
                   </tr>
                 </tbody>
               </table>
+              </div>
             ) : (
               hasViewed ? null : null
             )}
