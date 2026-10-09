@@ -30,4 +30,6 @@ Branch: `ui-stitch-migration`
   - "Review" / "Later" buttons in the floating AI suggestion card: Rendered inert (visual demonstration of AI suggestions).
   - Pricing plan buttons ("Choose Starter", "Choose Growth", "Talk to us"): Wired to `/register` or `/list` based on auth state (the backend currently has no separate plan checkout endpoint).
 - **Decisions / Questions for User**:
-  - None for Landing Page. All functionality, routes, and styles verified.
+  - Content and branding replaced Stitch's generic "Ledgerly" placeholder text with real Smart Financial AI project information: `/final.png` logo, Multi-Business Management, Double-Entry journals, Chart of Accounts, Trial Balance, Income Statement, Balance Sheet, and Roman Urdu / English AI financial copilot.
+  - All styling, layout, responsive behavior, and Stitch design fidelity remain 100% matched.
+
