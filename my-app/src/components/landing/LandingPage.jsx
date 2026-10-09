@@ -1,581 +1,337 @@
-import React, { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import * as THREE from 'three';
 import gsap from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
-import { TextPlugin } from 'gsap/TextPlugin';
 import { useGSAP } from '@gsap/react';
 import {
-  User, Menu, X, ArrowRight, Shield, Globe, Users, Play, Building2,
-  BarChart3, Calculator, FileText, PieChart, Star, Check, ChevronDown, Award, TrendingUp
+  User, Menu, X, ArrowRight, Check, Play, ArrowUpRight, Camera, Scale, Users, Sparkles
 } from 'lucide-react';
 import { ref, runTransaction, onValue } from "firebase/database";
 import { db } from "../Visister/firebase";
 
-gsap.registerPlugin(ScrollTrigger, TextPlugin, useGSAP);
+gsap.registerPlugin(ScrollTrigger, useGSAP);
 
-/* --- 1. Custom Scramble Text Component --- */
-const CustomScrambleText = ({ text, className, timeline, position = "<" }) => {
-  const textRef = useRef(null);
-
-  useGSAP(() => {
-    const letters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789@#$%&*";
-    const targetText = text;
-    const el = textRef.current;
-
-    const startScramble = () => {
-      let iterations = 0;
-      const interval = setInterval(() => {
-        if (!el) {
-          clearInterval(interval);
-          return;
-        }
-        el.innerText = targetText.split("")
-          .map((letter, index) => {
-            if (index < iterations) {
-              return targetText[index];
-            }
-            if (targetText[index] === " ") return " ";
-            return letters[Math.floor(Math.random() * letters.length)];
-          })
-          .join("");
-        if (iterations >= targetText.length) {
-          clearInterval(interval);
-        }
-        iterations += 1 / 3;
-      }, 30);
-    };
-
-    if (timeline) {
-      // Add a clean zero-duration animation to the timeline that triggers the scramble
-      timeline.add(() => startScramble(), position);
-    } else {
-      // Fallback to basic scroll trigger if no timeline provided
-      ScrollTrigger.create({
-        trigger: el,
-        start: "top 85%",
-        onEnter: startScramble
-      });
-    }
-  }, [text, timeline, position]);
-
-  return <span ref={textRef} className={className}>{"\u00A0"}</span>;
-};
-
-/* --- 2. Three.js Background Component --- */
-const Background3D = ({ mainContentRef }) => {
-  const canvasRef = useRef(null);
-  const containerRef = useRef(null);
+/* --- 1. Three.js 3D Hero Canvas Component --- */
+const Hero3D = () => {
+  const canvasContainerRef = useRef(null);
 
   useGSAP(() => {
-    if (!canvasRef.current) return;
-    const canvas = canvasRef.current;
-    const scene = new THREE.Scene();
+    if (!canvasContainerRef.current) return;
+    const container = canvasContainerRef.current;
+    const isMobile = window.innerWidth < 900;
+    const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    if (prefersReducedMotion) return;
 
-    const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
-    camera.position.z = 5;
+    let scene, camera, renderer;
+    let slabGroup, barMeshes = [], orbitCards = [];
+    let pointLight, rimLight;
+    let mouseX = 0, mouseY = 0, targetMouseX = 0, targetMouseY = 0;
+    let isHeroInView = true;
+    let animId;
 
-    const renderer = new THREE.WebGLRenderer({
-      canvas: canvas,
-      alpha: true,
-      antialias: true,
-      powerPreference: "high-performance"
-    });
-    renderer.setSize(window.innerWidth, window.innerHeight);
-    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.5)); // Optimized pixel ratio
+    function createCardTexture(title, subtitle, tag, isLime) {
+      const canvas = document.createElement('canvas');
+      canvas.width = 512;
+      canvas.height = 320;
+      const ctx = canvas.getContext('2d');
 
-    // Main grouping
-    const floatingGroup = new THREE.Group();
-    scene.add(floatingGroup);
-
-    const bookGroup = new THREE.Group();
-    floatingGroup.add(bookGroup);
-
-    // --- Procedural Textures ---
-    const createLeatherTexture = (text, isFront, isBack) => {
-      const cvs = document.createElement('canvas');
-      cvs.width = 1024;
-      cvs.height = 1024;
-      const ctx = cvs.getContext('2d');
-
-      // Rich blue gradient for realism (Navy to Midnight Blue)
-      const grad = ctx.createRadialGradient(512, 512, 200, 512, 512, 800);
-      grad.addColorStop(0, '#1e3a8a'); // Lighter navy center
-      grad.addColorStop(1, '#0f172a'); // Darker edges (vignette)
-
-      ctx.fillStyle = grad;
-      ctx.fillRect(0, 0, 1024, 1024);
-
-      // Noise for leather bump/roughness and color variation
-      for (let i = 0; i < 40000; i++) {
-        // Add subtle dark and light spots for leather grain
-        ctx.fillStyle = Math.random() > 0.5 ? 'rgba(0,0,0,0.3)' : 'rgba(255,255,255,0.05)';
-        ctx.fillRect(Math.random() * 1024, Math.random() * 1024, 2, 2);
+      function roundRect(c, x, y, w, h, r) {
+        c.beginPath();
+        c.moveTo(x + r, y);
+        c.lineTo(x + w - r, y);
+        c.quadraticCurveTo(x + w, y, x + w, y + r);
+        c.lineTo(x + w, y + h - r);
+        c.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
+        c.lineTo(x + r, y + h);
+        c.quadraticCurveTo(x, y + h, x, y + h - r);
+        c.lineTo(x, y + r);
+        c.quadraticCurveTo(x, y + r, x, y);
+        c.closePath();
       }
-      for (let i = 0; i < 15000; i++) {
-        // Deep pores
-        ctx.fillStyle = 'rgba(0,0,0,0.4)';
-        ctx.beginPath();
-        ctx.arc(Math.random() * 1024, Math.random() * 1024, Math.random() * 1.5 + 0.5, 0, Math.PI * 2);
+
+      roundRect(ctx, 10, 10, 492, 300, 28);
+      if (isLime) {
+        ctx.fillStyle = '#CCFF00';
         ctx.fill();
+        ctx.strokeStyle = '#0F1E14';
+        ctx.lineWidth = 6;
+        ctx.stroke();
+
+        ctx.fillStyle = '#0F1E14';
+        ctx.font = 'bold 36px "DM Sans", sans-serif';
+        ctx.fillText(title, 40, 100);
+        ctx.font = '500 24px "DM Sans", sans-serif';
+        ctx.fillText(subtitle, 40, 150);
+
+        ctx.fillStyle = '#0F1E14';
+        ctx.font = 'bold 20px "DM Sans", sans-serif';
+        ctx.fillText(tag, 40, 250);
+      } else {
+        ctx.fillStyle = 'rgba(21, 39, 27, 0.92)';
+        ctx.fill();
+        ctx.strokeStyle = 'rgba(200, 241, 53, 0.35)';
+        ctx.lineWidth = 4;
+        ctx.stroke();
+
+        ctx.fillStyle = '#FFFFFF';
+        ctx.font = 'bold 34px "DM Sans", sans-serif';
+        ctx.fillText(title, 40, 100);
+        ctx.fillStyle = 'rgba(255, 255, 255, 0.75)';
+        ctx.font = '500 22px "DM Sans", sans-serif';
+        ctx.fillText(subtitle, 40, 150);
+
+        ctx.fillStyle = '#C8F135';
+        ctx.font = 'bold 20px "DM Sans", sans-serif';
+        ctx.fillText(tag, 40, 250);
       }
 
-      // Text
-      if (text) {
-        ctx.save();
-        ctx.textAlign = 'center';
-        ctx.textBaseline = 'middle';
-
-        if (isFront) {
-          // Premium Cyan/Silver gradient for text
-          const textGrad = ctx.createLinearGradient(200, 350, 800, 550);
-          textGrad.addColorStop(0, '#00e5ff');
-          textGrad.addColorStop(0.5, '#4facfe');
-          textGrad.addColorStop(1, '#00f2fe');
-
-          ctx.fillStyle = textGrad;
-          ctx.font = 'bold 85px sans-serif';
-          // Realistic engraved inner shadow effect
-          ctx.shadowColor = 'rgba(0, 0, 0, 0.8)';
-          ctx.shadowBlur = 4;
-          ctx.shadowOffsetX = 2;
-          ctx.shadowOffsetY = 2;
-          ctx.fillText("Smart Financial", 512, 400);
-          ctx.fillText("System", 512, 500);
-        } else {
-          ctx.font = '40px sans-serif';
-          ctx.fillStyle = '#94a3b8';
-          ctx.fillText("Developed by", 512, 450);
-          ctx.font = 'bold 50px sans-serif';
-          ctx.fillStyle = '#cbd5e1';
-          ctx.fillText("Usama Nadeem", 512, 520);
-        }
-        ctx.restore();
-      }
-      return new THREE.CanvasTexture(cvs);
-    };
-
-    const createPagesTexture = () => {
-      const cvs = document.createElement('canvas');
-      cvs.width = 64;
-      cvs.height = 512;
-      const ctx = cvs.getContext('2d');
-
-      // Realistic paper stack edge with shading
-      const paperGrad = ctx.createLinearGradient(0, 0, 64, 0);
-      paperGrad.addColorStop(0, '#e2e0c8'); // Darker near cover
-      paperGrad.addColorStop(0.5, '#fdfcf0'); // Lighter center
-      paperGrad.addColorStop(1, '#e2e0c8'); // Darker near cover
-
-      ctx.fillStyle = paperGrad;
-      ctx.fillRect(0, 0, 64, 512);
-
-      // Subtle page lines
-      ctx.fillStyle = 'rgba(0,0,0,0.06)';
-      for (let i = 0; i < 512; i += 4) {
-        ctx.fillRect(0, i, 64, 1);
-      }
-      const tex = new THREE.CanvasTexture(cvs);
-      tex.wrapS = THREE.RepeatWrapping;
-      tex.wrapT = THREE.RepeatWrapping;
-      tex.repeat.set(1, 10);
-      return tex;
-    };
-
-    const baseLeatherTexture = createLeatherTexture('', false, false);
-    const frontLeatherTexture = createLeatherTexture('Smart Financial\nSystem', true, false);
-    const backLeatherTexture = createLeatherTexture('Developed by Usama Nadeem', false, true);
-    const pagesTexture = createPagesTexture();
-
-    const leatherMaterial = new THREE.MeshStandardMaterial({
-      color: 0xffffff, // White color so the texture map dictates the final color
-      map: baseLeatherTexture,
-      roughness: 0.7,
-      metalness: 0.15,
-      bumpMap: baseLeatherTexture,
-      bumpScale: 0.008,
-      transparent: true,
-      opacity: 1
-    });
-
-    const frontLeatherMaterial = new THREE.MeshStandardMaterial({
-      color: 0xffffff,
-      map: frontLeatherTexture,
-      roughness: 0.6, // Slightly smoother for premium feel
-      metalness: 0.2,
-      bumpMap: frontLeatherTexture,
-      bumpScale: 0.008,
-      transparent: true,
-      opacity: 1
-    });
-
-    const backLeatherMaterial = new THREE.MeshStandardMaterial({
-      color: 0xffffff,
-      map: backLeatherTexture,
-      roughness: 0.6,
-      metalness: 0.2,
-      bumpMap: backLeatherTexture,
-      bumpScale: 0.008,
-      transparent: true,
-      opacity: 1
-    });
-
-    const pagesMaterial = new THREE.MeshStandardMaterial({
-      color: 0xffffff,
-      roughness: 0.9,
-      map: pagesTexture,
-      transparent: true,
-      opacity: 1
-    });
-
-    const frontCoverMaterials = [
-      leatherMaterial, leatherMaterial, leatherMaterial, leatherMaterial, frontLeatherMaterial, leatherMaterial
-    ];
-    const backCoverMaterials = [
-      leatherMaterial, leatherMaterial, leatherMaterial, leatherMaterial, leatherMaterial, backLeatherMaterial
-    ];
-
-    // --- Book Geometry Construction ---
-    const coverWidth = 2.2;
-    const coverHeight = 3.0;
-    const coverThick = 0.06;
-    const pagesThick = 0.35;
-    const pagesWidth = 2.0;
-    const pagesHeight = 2.85;
-
-    // Spine
-    const spineGeo = new THREE.BoxGeometry(coverThick * 2, coverHeight, pagesThick + coverThick * 2);
-    const spineMesh = new THREE.Mesh(spineGeo, leatherMaterial);
-    spineMesh.position.set(-coverWidth / 2 - coverThick / 2, 0, 0);
-    bookGroup.add(spineMesh);
-
-    // Back Cover
-    const backCoverGeo = new THREE.BoxGeometry(coverWidth, coverHeight, coverThick);
-    const backCoverMesh = new THREE.Mesh(backCoverGeo, backCoverMaterials);
-    backCoverMesh.position.set(0, 0, -pagesThick / 2 - coverThick / 2);
-    bookGroup.add(backCoverMesh);
-
-    // Pages Block
-    const pagesGeo = new THREE.BoxGeometry(pagesWidth, pagesHeight, pagesThick);
-    const pagesMesh = new THREE.Mesh(pagesGeo, pagesMaterial);
-    pagesMesh.position.set(0.1, 0, 0); // slightly right to avoid clipping spine
-    bookGroup.add(pagesMesh);
-
-    // Front Cover (with pivot)
-    const frontCoverGroup = new THREE.Group();
-    // Position the pivot at the front-left edge of the spine
-    frontCoverGroup.position.set(-coverWidth / 2, 0, pagesThick / 2 + coverThick / 2);
-
-    const frontCoverGeo = new THREE.BoxGeometry(coverWidth, coverHeight, coverThick);
-    const frontCoverMesh = new THREE.Mesh(frontCoverGeo, frontCoverMaterials);
-    // Shift mesh so its left edge aligns with the pivot
-    frontCoverMesh.position.set(coverWidth / 2, 0, 0);
-    frontCoverGroup.add(frontCoverMesh);
-
-    bookGroup.add(frontCoverGroup);
-
-    // --- Ambient Particles ---
-    const particlesGeometry = new THREE.BufferGeometry();
-    const particleCount = 500; // Optimized limit
-    const posArray = new Float32Array(particleCount * 3);
-    for (let i = 0; i < particleCount * 3; i++) {
-      posArray[i] = (Math.random() - 0.5) * 20;
+      const texture = new THREE.CanvasTexture(canvas);
+      texture.needsUpdate = true;
+      return texture;
     }
-    particlesGeometry.setAttribute('position', new THREE.BufferAttribute(posArray, 3));
 
-    const getParticleMaterial = () => {
-      const particleCanvas = document.createElement('canvas');
-      particleCanvas.width = 32;
-      particleCanvas.height = 32;
-      const ctx = particleCanvas.getContext('2d');
-      const grad = ctx.createRadialGradient(16, 16, 0, 16, 16, 16);
-      grad.addColorStop(0, 'rgba(0, 183, 255, 1)');
-      grad.addColorStop(1, 'rgba(0, 183, 255, 0)');
-      ctx.fillStyle = grad;
-      ctx.fillRect(0, 0, 32, 32);
-      const particleTexture = new THREE.CanvasTexture(particleCanvas);
-      return new THREE.PointsMaterial({
-        size: 0.08,
-        map: particleTexture,
-        transparent: true,
-        opacity: 0.8,
-        blending: THREE.AdditiveBlending,
-        depthWrite: false
-      });
-    }
-    const particlesMaterial = getParticleMaterial();
-    const particlesMesh = new THREE.Points(particlesGeometry, particlesMaterial);
-    scene.add(particlesMesh);
+    try {
+      scene = new THREE.Scene();
+      camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 100);
+      camera.position.set(0, 0, 12);
 
-    // --- Lighting ---
-    const ambientLight = new THREE.AmbientLight(0xffffff, 1.2);
-    scene.add(ambientLight);
-    const directionalLight = new THREE.DirectionalLight(0xffffff, 2.5);
-    directionalLight.position.set(5, 5, 5);
-    scene.add(directionalLight);
-    const pointLight = new THREE.PointLight(0x00d4ff, 3, 10);
-    pointLight.position.set(-2, 2, 2);
-    floatingGroup.add(pointLight);
-
-    // --- Interaction & Animation Loop ---
-    let mouseX = 0, mouseY = 0, targetX = 0, targetY = 0;
-    const windowHalfX = window.innerWidth / 2;
-    const windowHalfY = window.innerHeight / 2;
-
-    const onMouseMove = (event) => {
-      mouseX = (event.clientX - windowHalfX);
-      mouseY = (event.clientY - windowHalfY);
-    };
-    document.addEventListener('mousemove', onMouseMove);
-
-    const clock = new THREE.Clock();
-    let animationFrameId;
-
-    const tick = () => {
-      const elapsedTime = clock.getElapsedTime();
-
-      // Gentle floating effect
-      bookGroup.position.y = Math.sin(elapsedTime * 2) * 0.1;
-
-      // Mouse tilt effect (smooth interpolation)
-      targetX = mouseX * 0.0005;
-      targetY = mouseY * 0.0005;
-      bookGroup.rotation.x = gsap.utils.interpolate(bookGroup.rotation.x, targetY, 0.05);
-      bookGroup.rotation.z = gsap.utils.interpolate(bookGroup.rotation.z, targetX, 0.05);
-
-      particlesMesh.rotation.y = -0.05 * elapsedTime;
-      particlesMesh.position.y = -window.scrollY * 0.0015;
-
-      renderer.render(scene, camera);
-      animationFrameId = window.requestAnimationFrame(tick);
-    };
-    tick();
-
-    // --- GSAP SCROLL ANIMATIONS FOR THE 3D BOOK ---
-    const allMaterials = [
-      leatherMaterial, frontLeatherMaterial, backLeatherMaterial, pagesMaterial
-    ];
-
-    let mm = gsap.matchMedia();
-    let timer;
-
-    timer = setTimeout(() => {
-    // --- DESKTOP / TABLET TIMELINE ---
-    mm.add("(min-width: 992px)", () => {
-      // Initial State (Hero)
-      floatingGroup.position.set(3.5, 0, 0);
-      floatingGroup.scale.set(1.4, 1.4, 1.4);
-      floatingGroup.rotation.y = 0;
-      frontCoverGroup.rotation.y = 0;
-
-      const masterBookTl = gsap.timeline({
-        scrollTrigger: {
-          trigger: mainContentRef.current,
-          start: 'top top',
-          end: () => `+=${window.innerHeight * 4.2}`,
-          scrub: 1.5,
-          fastScrollEnd: true,
-          invalidateOnRefresh: true,
-        }
-      });
-
-      // 1. Journey to Insights Section (Left/Top)
-      masterBookTl.to(floatingGroup.position, { x: -3.5, y: 0, z: 0, ease: "power1.inOut", duration: 1 }, 0);
-      masterBookTl.to(floatingGroup.scale, { x: 1.4, y: 1.4, z: 1.4, ease: "power1.inOut", duration: 1 }, 0);
-
-      // 2. Journey to Workflow Section (Center) & Flip 180
-      masterBookTl.to(floatingGroup.position, { x: 0, y: 0, z: -0.5, ease: "power1.inOut", duration: 1 }, 1);
-      masterBookTl.to(floatingGroup.rotation, { y: Math.PI, ease: "power1.inOut", duration: 0.5 }, 1.5);
-      masterBookTl.to(floatingGroup.scale, { x: 1.1, y: 1.1, z: 1.1, ease: "power1.inOut", duration: 1 }, 1);
-
-      // 3. Journey to Dashboard Section (Center) & Flip back to front
-      masterBookTl.to(floatingGroup.position, { x: 0, y: -0.5, z: 0.5, ease: "power1.inOut", duration: 1 }, 2);
-      masterBookTl.to(floatingGroup.rotation, { y: 0, ease: "power1.inOut", duration: 1 }, 2);
-      masterBookTl.to(floatingGroup.scale, { x: 1.2, y: 1.2, z: 1.2, ease: "power1.inOut", duration: 1 }, 2);
-
-      // 4. Open the Book Cover naturally AND Expand
-      masterBookTl.to(frontCoverGroup.rotation, { y: Math.PI * 0.8, ease: "power3.inOut", duration: 1.5 }, 3);
-      masterBookTl.to(floatingGroup.position, { x: 1.5, y: 0, z: 1.5, ease: "power3.inOut", duration: 1.5 }, 3);
-      masterBookTl.to(floatingGroup.scale, { x: 3.5, y: 3.5, z: 3.5, ease: "power3.inOut", duration: 1.5 }, 3);
-
-      // 5. Fade out
-      masterBookTl.to(allMaterials, { opacity: 0, ease: "power2.inOut", duration: 0.5 }, 4.2);
-      masterBookTl.to(particlesMaterial, { opacity: 0, ease: "power2.inOut", duration: 0.5 }, 4.2);
-    });
-
-    // --- MOBILE TIMELINE ---
-    mm.add("(max-width: 991px)", () => {
-      // Initial State (Hero)
-      floatingGroup.position.set(0, 0, 0); // Bilkul center main
-      floatingGroup.scale.set(1.15, 1.15, 1.15);
-      floatingGroup.rotation.y = 0;
-      frontCoverGroup.rotation.y = 0;
-
-      const masterBookTl = gsap.timeline({
-        scrollTrigger: {
-          trigger: mainContentRef.current,
-          start: 'top top',
-          end: () => `+=${window.innerHeight * 3.2}`, // Mobile scroll distance matches the actual page height
-          scrub: 1.5,
-          fastScrollEnd: true,
-          invalidateOnRefresh: true,
-        }
-      });
-
-      // Time 0 to 0.5: As user scrolls, book moves up until it reaches just below navbar
-      masterBookTl.to(floatingGroup.position, {
-        y: 1.5,
-        ease: "none",
-        duration: 0.5
-      }, 0);
-
-      // Time 0.5 to 1.0: Scroll animation triggers, book rotates 180 and drops completely under Section 2 box
-      masterBookTl.to(floatingGroup.position, {
-        y: -7.0,
-        z: -0.5,
-        ease: "power2.inOut",
-        duration: 0.5
-      }, 0.5);
-
-      masterBookTl.to(floatingGroup.rotation, {
-        y: Math.PI,
-        ease: "power2.inOut",
-        duration: 0.5
-      }, 0.5);
-
-      // Time 1.0 to 2.0: Wait under box, naturally scroll up with the page until it reaches just below navbar again
-      masterBookTl.to(floatingGroup.position, {
-        y: 1.5,
-        ease: "none",
-        duration: 1.0
-      }, 1.0);
-
-      // Time 2.0 to 2.5: Next animation triggers, book drops into final position and straightens
-      masterBookTl.to(floatingGroup.position, {
-        y: -1.0,
-        z: 0.5,
-        ease: "power2.inOut",
-        duration: 0.5
-      }, 2.0);
-
-      masterBookTl.to(floatingGroup.rotation, {
-        y: 0,
-        ease: "power2.inOut",
-        duration: 0.5
-      }, 2.0);
-
-      masterBookTl.to(floatingGroup.scale, {
-        x: 1.1, y: 1.1, z: 1.1,
-        ease: "power1.inOut",
-        duration: 0.5
-      }, 2.0);
-
-      // Time 2.5 to 3.2: Book stays closed and expands at the bottom
-      masterBookTl.to(floatingGroup.position, {
-        x: 0,
-        y: 0,
-        z: 1.5,
-        ease: "power3.inOut",
-        duration: 0.7
-      }, 2.5);
-
-      masterBookTl.to(floatingGroup.scale, {
-        x: 2.9, y: 2.9, z: 2.9,
-        ease: "power3.inOut",
-        duration: 0.7
-      }, 2.5);
-    });
-    }, 100);
-
-
-    const handleResize = () => {
-      camera.aspect = window.innerWidth / window.innerHeight;
-      camera.updateProjectionMatrix();
+      renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
       renderer.setSize(window.innerWidth, window.innerHeight);
-      renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.5));
-    };
-    window.addEventListener('resize', handleResize);
+      renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+      renderer.toneMapping = THREE.ACESFilmicToneMapping;
+      renderer.toneMappingExposure = 1.1;
+      container.appendChild(renderer.domElement);
 
-    return () => {
-      clearTimeout(timer);
-      document.removeEventListener('mousemove', onMouseMove);
-      window.removeEventListener('resize', handleResize);
-      window.cancelAnimationFrame(animationFrameId);
-      renderer.dispose();
+      const ambientLight = new THREE.AmbientLight(0xffffff, 0.85);
+      scene.add(ambientLight);
 
-      baseLeatherTexture.dispose();
-      frontLeatherTexture.dispose();
-      backLeatherTexture.dispose();
-      pagesTexture.dispose();
+      pointLight = new THREE.PointLight(0xC8F135, 3.2, 25);
+      pointLight.position.set(4, 3, 4);
+      scene.add(pointLight);
 
-      leatherMaterial.dispose();
-      frontLeatherMaterial.dispose();
-      backLeatherMaterial.dispose();
-      pagesMaterial.dispose();
+      rimLight = new THREE.PointLight(0xF3F4EC, 2.0, 30);
+      rimLight.position.set(-5, -4, -3);
+      scene.add(rimLight);
 
-      spineGeo.dispose();
-      backCoverGeo.dispose();
-      pagesGeo.dispose();
-      frontCoverGeo.dispose();
+      slabGroup = new THREE.Group();
+      scene.add(slabGroup);
 
-      particlesGeometry.dispose();
-      particlesMaterial.dispose();
-    };
-  }, { scope: containerRef });
+      const slabGeo = new THREE.BoxGeometry(6.4, 4.2, 0.28);
+      const slabMat = new THREE.MeshPhysicalMaterial({
+        color: 0x0F1E14,
+        metalness: 0.1,
+        roughness: 0.25,
+        clearcoat: 0.6,
+        clearcoatRoughness: 0.15,
+        reflectivity: 0.5
+      });
+      const slabMesh = new THREE.Mesh(slabGeo, slabMat);
+      slabGroup.add(slabMesh);
+
+      const faceGeo = new THREE.PlaneGeometry(6.1, 3.9);
+      const faceMat = new THREE.MeshBasicMaterial({
+        color: 0x15271B
+      });
+      const faceMesh = new THREE.Mesh(faceGeo, faceMat);
+      faceMesh.position.z = 0.15;
+      slabGroup.add(faceMesh);
+
+      const barWidth = 0.52;
+      const barHeights = [1.2, 1.8, 1.5, 2.2, 2.0, 3.1];
+      const startX = -2.0;
+      const spacingX = 0.8;
+
+      for (let i = 0; i < 6; i++) {
+        const isLast = (i === 5);
+        const targetH = barHeights[i];
+        const barGeo = new THREE.BoxGeometry(barWidth, targetH, 0.25);
+        barGeo.translate(0, targetH / 2, 0);
+
+        const barMat = new THREE.MeshStandardMaterial({
+          color: isLast ? 0xC8F135 : 0x223D2C,
+          emissive: isLast ? 0xC8F135 : 0x0A140E,
+          emissiveIntensity: isLast ? 0.35 : 0.1,
+          roughness: 0.3,
+          metalness: 0.2
+        });
+
+        const barMesh = new THREE.Mesh(barGeo, barMat);
+        barMesh.position.set(startX + (i * spacingX), -1.4, 0.2);
+        barMesh.scale.y = 0.001;
+        slabGroup.add(barMesh);
+        barMeshes.push(barMesh);
+      }
+
+      slabGroup.position.set(isMobile ? 0 : 2.2, isMobile ? -0.8 : -0.2, 0);
+      slabGroup.rotation.set(-0.15, -0.35, 0.05);
+
+      const cardData = [
+        { title: "Invoice #1042", subtitle: "Studio Nova • Rs. 145,000", tag: "PAID IN FULL", isLime: true, orbitR: 5.2, speed: 0.45, yOffset: 1.6, scale: 0.9 },
+        { title: "Bank Feed Sync", subtitle: "Meezan • 24 Transactions", tag: "RECONCILED", isLime: false, orbitR: 4.6, speed: -0.38, yOffset: -1.8, scale: 0.8 },
+        { title: "Receipt Captured", subtitle: "AWS Cloud • Rs. 18,900", tag: "AUTO-TAGGED", isLime: false, orbitR: 5.8, speed: 0.55, yOffset: -0.4, scale: 0.75 },
+        { title: "Vendor Bill", subtitle: "Kite Labs • Rs. 420,000", tag: "PENDING SIGN-OFF", isLime: false, orbitR: 6.2, speed: -0.48, yOffset: 2.1, scale: 0.85 },
+        { title: "FBR Tax Reserve", subtitle: "Q1 Advance • Ready", tag: "GST AUDITED", isLime: true, orbitR: 4.9, speed: 0.32, yOffset: 0.8, scale: 0.7 },
+        { title: "Multi-Currency", subtitle: "USD Wire • $3,200.00", tag: "SETTLED", isLime: false, orbitR: 5.5, speed: -0.6, yOffset: -1.2, scale: 0.78 }
+      ];
+
+      const cardCount = isMobile ? 3 : cardData.length;
+
+      for (let i = 0; i < cardCount; i++) {
+        const data = cardData[i];
+        const cardTexture = createCardTexture(data.title, data.subtitle, data.tag, data.isLime);
+        const cardGeo = new THREE.PlaneGeometry(2.4, 1.5);
+        const cardMat = new THREE.MeshBasicMaterial({
+          map: cardTexture,
+          transparent: true,
+          opacity: 0.9,
+          side: THREE.DoubleSide
+        });
+
+        const cardMesh = new THREE.Mesh(cardGeo, cardMat);
+        cardMesh.scale.setScalar(data.scale);
+        cardMesh.userData = {
+          angle: (i / cardCount) * Math.PI * 2,
+          radius: data.orbitR,
+          speed: data.speed,
+          yOffset: data.yOffset,
+          baseScale: data.scale
+        };
+
+        scene.add(cardMesh);
+        orbitCards.push(cardMesh);
+      }
+
+      // Mouse Parallax
+      const handleMouseMove = (e) => {
+        const normX = (e.clientX / window.innerWidth) * 2 - 1;
+        const normY = -(e.clientY / window.innerHeight) * 2 + 1;
+        targetMouseX = normX;
+        targetMouseY = normY;
+      };
+      window.addEventListener('mousemove', handleMouseMove, { passive: true });
+
+      const handleResize = () => {
+        if (!camera || !renderer) return;
+        camera.aspect = window.innerWidth / window.innerHeight;
+        camera.updateProjectionMatrix();
+        renderer.setSize(window.innerWidth, window.innerHeight);
+      };
+      window.addEventListener('resize', handleResize);
+
+      const clock = new THREE.Clock();
+
+      const animateLoop = () => {
+        animId = requestAnimationFrame(animateLoop);
+        if (!renderer || !scene || !camera || !isHeroInView) return;
+
+        const elapsedTime = clock.getElapsedTime();
+
+        mouseX += (targetMouseX - mouseX) * 0.05;
+        mouseY += (targetMouseY - mouseY) * 0.05;
+
+        const driftX = isMobile ? Math.sin(elapsedTime * 0.8) * 0.2 : mouseX;
+        const driftY = isMobile ? Math.cos(elapsedTime * 0.6) * 0.15 : mouseY;
+
+        if (slabGroup) {
+          slabGroup.position.y = (isMobile ? -0.8 : -0.2) + Math.sin(elapsedTime * 1.2) * 0.15;
+          slabGroup.rotation.y = -0.35 + (driftX * 0.14);
+          slabGroup.rotation.x = -0.15 - (driftY * 0.14);
+          slabGroup.rotation.z = 0.05 + Math.sin(elapsedTime * 0.7) * 0.02;
+        }
+
+        orbitCards.forEach((card) => {
+          const u = card.userData;
+          u.angle += u.speed * 0.015;
+          card.position.x = slabGroup.position.x + Math.cos(u.angle) * u.radius;
+          card.position.z = Math.sin(u.angle) * (u.radius * 0.6);
+          card.position.y = slabGroup.position.y + u.yOffset + Math.sin(elapsedTime * 1.5 + u.angle) * 0.15;
+
+          const depthNorm = (card.position.z + 4) / 8;
+          card.scale.setScalar(u.baseScale * (0.85 + depthNorm * 0.3));
+          card.material.opacity = 0.55 + Math.max(0, depthNorm) * 0.45;
+          card.lookAt(camera.position);
+        });
+
+        if (pointLight) {
+          pointLight.intensity = 2.8 + Math.sin(elapsedTime * 2.0) * 0.7;
+        }
+
+        renderer.render(scene, camera);
+      };
+      animateLoop();
+
+      // GSAP Bars Elastic Entrance
+      const introTl = gsap.timeline({ defaults: { ease: "power3.out" } });
+      if (camera) {
+        introTl.from(camera.position, { z: 18, y: 1.5, duration: 2.4, ease: "power2.out" }, 0);
+      }
+
+      barMeshes.forEach((bar, idx) => {
+        introTl.to(bar.scale, {
+          y: 1,
+          duration: 1.8,
+          ease: "elastic.out(1, 0.45)",
+          delay: idx * 0.08
+        }, 0.6);
+      });
+
+      // View check
+      ScrollTrigger.create({
+        trigger: "#hero-section",
+        start: "top bottom",
+        end: "bottom top",
+        onEnter: () => { isHeroInView = true; },
+        onLeave: () => { isHeroInView = false; },
+        onEnterBack: () => { isHeroInView = true; },
+        onLeaveBack: () => { isHeroInView = false; }
+      });
+
+      return () => {
+        window.removeEventListener('mousemove', handleMouseMove);
+        window.removeEventListener('resize', handleResize);
+        cancelAnimationFrame(animId);
+        if (renderer && renderer.domElement && container.contains(renderer.domElement)) {
+          container.removeChild(renderer.domElement);
+          renderer.dispose();
+        }
+      };
+
+    } catch (err) {
+      console.warn('WebGL init fallback:', err);
+      const fallback = document.getElementById('hero-static-fallback');
+      if (fallback) fallback.classList.remove('hidden');
+    }
+  }, { scope: canvasContainerRef });
 
   return (
-    <div ref={containerRef} className="fixed inset-0 pointer-events-none z-0 bg-gradient-to-br from-slate-900 via-blue-950 to-indigo-950">
-      <div className="absolute inset-0 pointer-events-none bg-gradient-to-t from-blue-600/10 via-transparent to-purple-600/10"></div>
-      <div className="absolute inset-0 pointer-events-none bg-gradient-to-r from-cyan-500/10 via-transparent to-pink-500/10"></div>
-      <canvas ref={canvasRef} id="webgl-canvas" className="w-full h-full relative z-10 pointer-events-auto" />
-    </div>
+    <div
+      aria-hidden="true"
+      id="hero-canvas-container"
+      ref={canvasContainerRef}
+      className="absolute inset-0 w-full h-full z-0 pointer-events-none"
+    />
   );
 };
 
-/* --- 3. Main Landing Page Component --- */
+/* --- 2. Main Landing Page Component --- */
 export default function LandingPage() {
-  const container = useRef(null);
-  const mainContentRef = useRef(null);
-  const heroTitleRef = useRef(null);
-  const dashboardContainerRef = useRef(null);
-  const dashboardElementRef = useRef(null);
-  const dashboardTitleRef = useRef(null);
-  const marqueeContainerRef = useRef(null);
-  const marqueeTextRef = useRef(null);
-  const testimonialsRef = useRef(null);
-  const testimonialsContainerRef = useRef(null);
-  const ctaRef = useRef(null);
-  const ctaContentRef = useRef(null);
-
-  const [ctaTimeline, setCtaTimeline] = useState(null);
+  const containerRef = useRef(null);
   const navigate = useNavigate();
   const [user, setUser] = useState(null);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [stats, setStats] = useState({ visitors: 0, clicks: 0 });
 
-  const features = [
-    { icon: Building2, title: "Multi-Business Management", description: "Manage multiple businesses from one dashboard with ease and precision" },
-    { icon: BarChart3, title: "Chart of Accounts", description: "Organize your finances with a comprehensive chart of accounts system" },
-    { icon: Calculator, title: "Double-Entry Accounting", description: "Professional accounting with automatic balance validation and accuracy" },
-    { icon: FileText, title: "Transaction Management", description: "Track all your financial transactions with detailed records and insights" },
-    { icon: PieChart, title: "Financial Reports", description: "Generate insightful reports to understand your business performance" },
-    { icon: Shield, title: "Secure & Reliable", description: "Your financial data is protected with enterprise-grade security protocols" },
-  ];
-
-  const testimonials = [
-    { name: "Sarah Johnson", role: "CEO, Tech Startup", content: "FinanceFlow transformed how we handle our accounting. The interface is intuitive and the features are exactly what we needed.", avatar: "https://images.unsplash.com/photo-1494790108755-2616b612b47c?w=64&h=64&fit=crop&crop=face", rating: 5 },
-    { name: "Michael Chen", role: "Small Business Owner", content: "The multi-business management feature is a game-changer. I can handle all my ventures from one place effortlessly.", avatar: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=64&h=64&fit=crop&crop=face", rating: 5 },
-    { name: "Emily Rodriguez", role: "Freelance Consultant", content: "Simple, powerful, and reliable. FinanceFlow handles everything I need without the complexity of enterprise software.", avatar: "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=64&h=64&fit=crop&crop=face", rating: 5 }
-  ];
-
-  // Auth & Tracking
+  // Auth & Tracking (Unchanged logic)
   useEffect(() => {
     const fetchUser = async () => {
       try {
         const res = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/login/session`, { withCredentials: true });
         setUser(res.data.username);
-      } catch { setUser(null); }
+      } catch {
+        setUser(null);
+      }
     };
     fetchUser();
 
@@ -592,7 +348,7 @@ export default function LandingPage() {
     let lastClickTime = 0;
     const handleGlobalClick = () => {
       const now = Date.now();
-      if (now - lastClickTime > 1000) { // Sirf tab count karo jab pichle click ko 1 sec ho chuka ho
+      if (now - lastClickTime > 1000) {
         lastClickTime = now;
         const clicksRef = ref(db, 'site_stats/clicks');
         runTransaction(clicksRef, (currentCount) => (currentCount || 0) + 1).catch(console.error);
@@ -618,503 +374,1293 @@ export default function LandingPage() {
     }
   };
 
-  // Main GSAP Animations
+  // GSAP DOM Animations (Stitch design specification)
   useGSAP(() => {
-    // 1. Hero Typewriter
-    gsap.to(heroTitleRef.current, {
-      duration: 2.5,
-      repeat: -1,
-      yoyo: true,
-      text: { value: " simple & powerful", delimiter: "" },
-      ease: "none",
-      delay: 0.5
-    });
+    const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    const isMobile = window.innerWidth < 900;
 
-    // 2. Pinned Dashboard Element (Only on desktop/tablet)
-    let mm = gsap.matchMedia();
-    mm.add("(min-width: 768px)", () => {
-      ScrollTrigger.create({
-        trigger: dashboardContainerRef.current,
-        start: "top top",
-        end: "+=150%", // pin for 150% of viewport height scroll
-        pin: dashboardElementRef.current,
-        scrub: 1,
-      });
-    });
+    if (!prefersReducedMotion) {
+      const introTl = gsap.timeline({ defaults: { ease: "power3.out" } });
 
-    // 2.5 Dashboard Title Animation
-    gsap.fromTo(dashboardTitleRef.current,
-      { y: 50, opacity: 0 },
-      {
-        y: 0,
+      introTl.to("#hero-badge", { opacity: 1, duration: 0.8 }, 0.4);
+
+      introTl.to(".reveal-word", {
+        y: "0%",
+        duration: 1.0,
+        stagger: 0.12,
+        ease: "power4.out"
+      }, 0.7);
+
+      introTl.to("#hero-highlight-bg", {
+        scaleX: 1,
+        duration: 0.7,
+        ease: "power2.inOut"
+      }, 1.4);
+
+      introTl.to("#hero-desc", { opacity: 1, y: 0, duration: 0.8 }, 1.5);
+      introTl.to("#hero-cta-group", { opacity: 1, y: 0, duration: 0.8 }, 1.7);
+      introTl.to("#hero-microcopy", { opacity: 1, duration: 0.6 }, 1.9);
+
+      introTl.to("#hero-ai-chip", {
         opacity: 1,
+        y: 0,
+        duration: 1.0,
+        ease: "back.out(1.7)"
+      }, 1.9);
+
+      introTl.to("#hero-metric-chip", {
+        opacity: 1,
+        y: 0,
+        duration: 1.0,
+        ease: "back.out(1.7)"
+      }, 2.0);
+
+      introTl.to("#scroll-cue", { opacity: 1, duration: 0.8 }, 2.4);
+
+      const counterObj = { val: 0 };
+      introTl.to(counterObj, {
+        val: 4892000,
+        duration: 2.2,
+        ease: "power2.out",
+        onUpdate: () => {
+          const el = document.getElementById('cash-counter');
+          if (el) el.innerText = Math.floor(counterObj.val).toLocaleString('en-US');
+        }
+      }, 1.0);
+
+      // Hero Scroll Pin & Parallax (Desktop)
+      if (!isMobile) {
+        const heroScrollTl = gsap.timeline({
+          scrollTrigger: {
+            trigger: "#hero-section",
+            start: "top top",
+            end: "+=150%",
+            pin: true,
+            scrub: 1.2,
+            anticipatePin: 1
+          }
+        });
+
+        heroScrollTl.to("#hero-headline, #hero-desc, #hero-cta-group, #hero-badge, #scroll-cue", {
+          opacity: 0,
+          y: -80,
+          stagger: 0.05,
+          ease: "none"
+        }, 0);
+
+        heroScrollTl.to("#hero-ai-chip, #hero-metric-chip", {
+          opacity: 0,
+          scale: 0.85,
+          y: 40,
+          ease: "none"
+        }, 0);
+      }
+
+      // Features section highlight & cards
+      gsap.to("#features-highlight-bg", {
+        scaleX: 1,
+        duration: 0.8,
         ease: "power2.out",
         scrollTrigger: {
-          trigger: dashboardContainerRef.current,
-          start: "top 60%", // Start animating in when the dashboard container is 60% down the screen
-          end: "top 20%",
-          scrub: 1
-        }
-      }
-    );
-
-    // 3. Pinned Left-to-Right Scrolling Marquee
-    const getMarqueeScroll = () => {
-      if (!marqueeTextRef.current) return 0;
-      return -(marqueeTextRef.current.scrollWidth - window.innerWidth);
-    };
-
-    gsap.fromTo(marqueeTextRef.current,
-      { x: 0 },
-      {
-        x: getMarqueeScroll,
-        ease: "none",
-        scrollTrigger: {
-          trigger: marqueeContainerRef.current,
-          start: "center center",
-          end: () => `+=${Math.abs(getMarqueeScroll())}`,
-          pin: true,
-          scrub: 1,
-          invalidateOnRefresh: true
-        }
-      }
-    );
-
-    // 4. Features Flip Cards
-    gsap.utils.toArray('.feature-flip-card').forEach((card) => {
-      const inner = card.querySelector('.flip-inner');
-
-      card.addEventListener('mouseenter', () => gsap.to(inner, { rotateY: 180, duration: 0.6, ease: 'power2.out', overwrite: "auto" }));
-      card.addEventListener('mouseleave', () => gsap.to(inner, { rotateY: 0, duration: 0.6, ease: 'power2.out', overwrite: "auto" }));
-
-      ScrollTrigger.create({
-        trigger: card,
-        start: "top 75%",
-        onEnter: () => {
-          gsap.to(inner, { rotateY: 180, duration: 0.6, ease: 'power2.out' });
-          gsap.delayedCall(1.2, () => gsap.to(inner, { rotateY: 0, duration: 0.6, ease: 'power2.out' }));
+          trigger: "#features",
+          start: "top 75%"
         }
       });
-    });
 
-    // 5. Testimonials Animations
-    // 5a. Entrance Animation (Fade Up)
-    gsap.from('.testimonial-card', {
-      y: 50,
-      opacity: 0,
-      duration: 1,
-      delay: 0.5,
-      stagger: 0.5,
-      ease: "power2.out",
-      scrollTrigger: {
-        trigger: testimonialsRef.current,
-        start: "top 70%", // Start animating when the section is 70% into view
-      }
-    });
-
-    // 5b. Horizontal Scroll (Pinned)
-    const totalTestimonialsWidth = testimonialsContainerRef.current.scrollWidth - window.innerWidth + 80; // slight offset
-    if (totalTestimonialsWidth > 0) {
-      gsap.to(testimonialsContainerRef.current, {
-        x: -totalTestimonialsWidth,
-        ease: "none",
+      gsap.from(".feature-card", {
+        y: 60,
+        opacity: 0,
+        rotateX: 12,
+        duration: 0.85,
+        stagger: 0.1,
+        ease: "power3.out",
         scrollTrigger: {
-          trigger: testimonialsRef.current,
-          start: "center center",
-          end: () => `+=${totalTestimonialsWidth}`,
-          pin: true,
-          scrub: 1,
-          anticipatePin: 1
+          trigger: "#features",
+          start: "top 70%"
         }
       });
+
+      // Invoicing card interactive tilt
+      const invoicingCard = document.getElementById('invoicing-card');
+      if (invoicingCard && !isMobile) {
+        const handleTiltMove = (e) => {
+          const rect = invoicingCard.getBoundingClientRect();
+          const x = e.clientX - rect.left - rect.width / 2;
+          const y = e.clientY - rect.top - rect.height / 2;
+          gsap.to(invoicingCard, {
+            x: x * 0.15,
+            y: y * 0.15,
+            rotation: x * 0.03,
+            duration: 0.3,
+            ease: "power2.out"
+          });
+        };
+        const handleTiltLeave = () => {
+          gsap.to(invoicingCard, { x: 0, y: 0, rotation: 0, duration: 0.6, ease: "elastic.out(1, 0.4)" });
+        };
+        invoicingCard.addEventListener('mousemove', handleTiltMove);
+        invoicingCard.addEventListener('mouseleave', handleTiltLeave);
+      }
+
+      // How It Works Steps
+      const stepsTl = gsap.timeline({
+        scrollTrigger: {
+          trigger: "#how-it-works",
+          start: "top 65%"
+        }
+      });
+      stepsTl.to("#step-progress-line", { width: "100%", duration: 1.2, ease: "power2.inOut" }, 0);
+      stepsTl.to("#step-stroke-1", { strokeDashoffset: 0, duration: 0.7, ease: "power2.out" }, 0.2);
+      stepsTl.to("#step-stroke-2", { strokeDashoffset: 0, duration: 0.7, ease: "power2.out" }, 0.6);
+      stepsTl.to("#step-stroke-3", { strokeDashoffset: 0, duration: 0.7, ease: "power2.out" }, 1.0);
+
+      // AI panel scale & chat stream
+      gsap.to("#ai-panel", {
+        scale: 1,
+        duration: 1.0,
+        ease: "power3.out",
+        scrollTrigger: {
+          trigger: "#ai-panel",
+          start: "top 80%"
+        }
+      });
+
+      gsap.from("#urdu-sticker", {
+        rotate: -15,
+        scale: 0.7,
+        opacity: 0,
+        duration: 0.9,
+        ease: "back.out(2)",
+        scrollTrigger: {
+          trigger: "#ai-panel",
+          start: "top 70%"
+        }
+      });
+
+      const chatTl = gsap.timeline({
+        scrollTrigger: {
+          trigger: "#ai-panel",
+          start: "top 60%",
+          end: "bottom 80%",
+          scrub: 0.8
+        }
+      });
+
+      chatTl.to("#chat-q1", { opacity: 1, y: 0, duration: 0.4 });
+      chatTl.call(() => {
+        const typ = document.getElementById('chat-typing-1');
+        if (typ) typ.classList.remove('hidden');
+      });
+      chatTl.to({}, { duration: 0.3 });
+      chatTl.call(() => {
+        const typ = document.getElementById('chat-typing-1');
+        if (typ) typ.classList.add('hidden');
+      });
+      chatTl.to("#chat-a1", { opacity: 1, y: 0, duration: 0.5 });
+      chatTl.to("#chat-q2", { opacity: 1, y: 0, duration: 0.4 });
+
+      // Pricing cards entrance
+      gsap.from(".pricing-card", {
+        y: 80,
+        opacity: 0,
+        stagger: 0.15,
+        duration: 0.9,
+        ease: "power3.out",
+        scrollTrigger: {
+          trigger: "#pricing",
+          start: "top 75%"
+        }
+      });
+
+      // Final CTA split line entrance
+      gsap.from(".cta-split-line", {
+        y: 60,
+        opacity: 0,
+        stagger: 0.2,
+        duration: 0.9,
+        ease: "power4.out",
+        scrollTrigger: {
+          trigger: "#final-cta-headline",
+          start: "top 80%"
+        }
+      });
+
+    } else {
+      // Reduced motion fallbacks
+      document.querySelectorAll('.reveal-word').forEach(w => {
+        w.style.transform = 'none';
+        w.style.opacity = '1';
+      });
+      const highlight = document.getElementById('hero-highlight-bg');
+      if (highlight) highlight.style.transform = 'scaleX(1)';
+      const desc = document.getElementById('hero-desc');
+      if (desc) desc.style.opacity = '1';
+      const ctaGroup = document.getElementById('hero-cta-group');
+      if (ctaGroup) ctaGroup.style.opacity = '1';
+      const aiChip = document.getElementById('hero-ai-chip');
+      if (aiChip) aiChip.style.opacity = '1';
+      const metricChip = document.getElementById('hero-metric-chip');
+      if (metricChip) metricChip.style.opacity = '1';
+      const counter = document.getElementById('cash-counter');
+      if (counter) counter.innerText = '4,892,000';
     }
-
-    // 6. CTA Banner Timeline
-    // We create the state timeline in a ref so we can pass it to the Scramble text component
-    const ctaTl = gsap.timeline({
-      scrollTrigger: {
-        trigger: ctaRef.current,
-        start: "top 75%",
-      }
-    });
-
-    // Save to state so the Scramble component can react and attach to it
-    setCtaTimeline(ctaTl);
-
-    ctaTl.from(ctaContentRef.current, {
-      y: 50,
-      opacity: 0,
-      duration: 1,
-      ease: "power3.out"
-    }, 0); // start immediately on trigger
-
-  }, { scope: container });
+  }, { scope: containerRef });
 
   return (
-    <div ref={container} className="relative min-h-screen text-white overflow-x-hidden font-sans">
-      <Background3D mainContentRef={mainContentRef} />
+    <div ref={containerRef} className="bg-[#F3F4EC] text-[#0F1E14] font-sans antialiased selection:bg-[#C8F135] selection:text-[#0F1E14] min-h-screen overflow-x-hidden">
+      
+      {/* ============================================================== */}
+      {/* TOP STICKY NAVIGATION BAR                                       */}
+      {/* ============================================================== */}
+      <header className="fixed top-0 inset-x-0 z-50 transition-all duration-300 backdrop-blur-md bg-[#F3F4EC]/90 border-b border-[#0F1E14]/5">
+        <div className="max-w-7xl mx-auto px-6 h-20 flex items-center justify-between">
+          <a href="#top" aria-label="Smart Financials Home" className="flex items-center gap-3 group">
+            <div className="w-10 h-10 rounded-xl bg-[#0F1E14] flex items-center justify-center text-[#C8F135] font-black text-xl shadow-sm transition-transform duration-200 group-hover:scale-105">
+              SF
+            </div>
+            <div className="flex flex-col">
+              <span className="font-display text-xl font-bold tracking-tight text-[#0F1E14] leading-none">Smart Financials</span>
+              <span className="text-[11px] font-medium text-[#6C7A70] tracking-wider uppercase mt-1">AI Automated Books</span>
+            </div>
+          </a>
 
-      {/* Nav */}
-      <nav className="fixed w-full top-0 z-50 shadow-lg border-b border-slate-800 backdrop-blur-xl bg-gradient-to-br from-slate-900 via-blue-950/80 to-indigo-950/80 text-white">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-3 pb-3">
-          <div className="flex justify-between items-center h-12">
-            <div className="flex items-center">
-              <img src="/final.png" alt="Logo" className="h-14 w-auto drop-shadow-lg" />
+          {/* Navigation Links */}
+          <nav className="hidden md:flex items-center gap-8 text-sm font-medium text-[#0F1E14]/80">
+            <a href="#features" className="hover:text-[#0F1E14] transition-colors py-1 hover:border-b-2 hover:border-[#C8F135]">Features</a>
+            <a href="#insights" className="hover:text-[#0F1E14] transition-colors py-1 hover:border-b-2 hover:border-[#C8F135]">Insights</a>
+            <a href="#how-it-works" className="hover:text-[#0F1E14] transition-colors py-1 hover:border-b-2 hover:border-[#C8F135]">How It Works</a>
+            <a href="#ai-assistant" className="hover:text-[#0F1E14] transition-colors py-1 hover:border-b-2 hover:border-[#C8F135]">Khushi AI</a>
+            <a href="#pricing" className="hover:text-[#0F1E14] transition-colors py-1 hover:border-b-2 hover:border-[#C8F135]">Pricing</a>
+          </nav>
+
+          {/* Trailing CTAs / Dynamic Auth States */}
+          <div className="hidden md:flex items-center gap-4">
+            {user ? (
+              <>
+                <button
+                  onClick={() => navigate("/list")}
+                  className="text-sm font-semibold text-[#0F1E14] hover:text-[#0F1E14]/70 px-3 py-2 transition-colors cursor-pointer"
+                >
+                  Dashboard
+                </button>
+                <button
+                  onClick={handleLogout}
+                  className="text-sm font-semibold text-red-600 hover:text-red-700 px-3 py-2 transition-colors cursor-pointer"
+                >
+                  Logout
+                </button>
+                <Link
+                  to="/profile"
+                  className="inline-flex items-center gap-2 bg-[#0F1E14] text-[#C8F135] hover:bg-[#15271B] font-semibold text-sm px-5 py-2.5 rounded-full transition-all duration-200 hover:scale-105 shadow-md"
+                >
+                  <User className="w-4 h-4 text-[#C8F135]" />
+                  <span>Welcome, {user}</span>
+                </Link>
+              </>
+            ) : (
+              <>
+                <Link
+                  to="/login"
+                  className="hidden sm:inline-flex text-sm font-semibold text-[#0F1E14] hover:text-[#0F1E14]/70 px-3 py-2 transition-colors"
+                >
+                  Login
+                </Link>
+                <Link
+                  to="/register"
+                  className="inline-flex items-center gap-2 bg-[#0F1E14] text-[#C8F135] hover:bg-[#15271B] font-semibold text-sm px-5 py-2.5 rounded-full transition-all duration-200 hover:scale-105 shadow-md"
+                >
+                  <span>Start Free Trial</span>
+                  <ArrowRight className="w-4 h-4" />
+                </Link>
+              </>
+            )}
+          </div>
+
+          {/* Mobile Menu Button */}
+          <div className="md:hidden flex items-center">
+            <button
+              onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+              className="p-2 text-[#0F1E14] focus:outline-none cursor-pointer"
+              aria-label="Toggle menu"
+            >
+              {isMobileMenuOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
+            </button>
+          </div>
+        </div>
+
+        {/* Mobile Dropdown Menu */}
+        {isMobileMenuOpen && (
+          <div className="md:hidden bg-[#0F1E14] text-white border-t border-white/10 w-full p-6 absolute top-full left-0 shadow-2xl">
+            <div className="flex flex-col space-y-4">
+              <a href="#features" onClick={() => setIsMobileMenuOpen(false)} className="text-white/80 hover:text-[#C8F135] text-base py-1">Features</a>
+              <a href="#insights" onClick={() => setIsMobileMenuOpen(false)} className="text-white/80 hover:text-[#C8F135] text-base py-1">Insights</a>
+              <a href="#how-it-works" onClick={() => setIsMobileMenuOpen(false)} className="text-white/80 hover:text-[#C8F135] text-base py-1">How It Works</a>
+              <a href="#ai-assistant" onClick={() => setIsMobileMenuOpen(false)} className="text-white/80 hover:text-[#C8F135] text-base py-1">Khushi AI</a>
+              <a href="#pricing" onClick={() => setIsMobileMenuOpen(false)} className="text-white/80 hover:text-[#C8F135] text-base py-1">Pricing</a>
+
+              <div className="pt-4 border-t border-white/10 flex flex-col space-y-3">
+                {user ? (
+                  <>
+                    <span className="text-[#C8F135] font-bold text-sm">Signed in as {user}</span>
+                    <button
+                      onClick={() => { setIsMobileMenuOpen(false); navigate("/list"); }}
+                      className="text-left text-white hover:text-[#C8F135] font-semibold py-1 cursor-pointer"
+                    >
+                      Dashboard
+                    </button>
+                    <Link
+                      to="/profile"
+                      onClick={() => setIsMobileMenuOpen(false)}
+                      className="text-left text-white hover:text-[#C8F135] font-semibold py-1"
+                    >
+                      Profile
+                    </Link>
+                    <button
+                      onClick={() => { setIsMobileMenuOpen(false); handleLogout(); }}
+                      className="text-left text-red-400 hover:text-red-300 font-semibold py-1 cursor-pointer"
+                    >
+                      Logout
+                    </button>
+                  </>
+                ) : (
+                  <>
+                    <Link
+                      to="/login"
+                      onClick={() => setIsMobileMenuOpen(false)}
+                      className="text-white hover:text-[#C8F135] font-semibold py-1"
+                    >
+                      Login
+                    </Link>
+                    <Link
+                      to="/register"
+                      onClick={() => setIsMobileMenuOpen(false)}
+                      className="inline-flex items-center justify-center gap-2 bg-[#C8F135] text-[#0F1E14] font-bold text-sm px-5 py-3 rounded-full"
+                    >
+                      <span>Start Free Trial</span>
+                      <ArrowRight className="w-4 h-4" />
+                    </Link>
+                  </>
+                )}
+              </div>
             </div>
-            <div className="hidden md:flex items-center space-x-6">
-              {user ? (
-                <>
-                  <button onClick={() => navigate("/list")} className="text-slate-200 hover:text-white font-medium transition-all">Dashboard</button>
-                  <button onClick={handleLogout} className="text-red-400 hover:text-red-300 font-medium transition-all">Logout</button>
-                  <Link to="/profile" className="flex items-center space-x-2 px-4 py-2 bg-slate-800 rounded-full border border-slate-700 hover:bg-slate-700 transition-colors">
-                    <User className="w-4 h-4 text-cyan-400" />
-                    <span className="text-sm font-medium text-white">Welcome, {user}</span>
-                  </Link>
-                </>
-              ) : (
-                <>
-                  <Link to="/login" className="text-slate-300 hover:text-white font-medium transition-colors">Sign In</Link>
-                  <Link to="/register" className="px-6 py-2 bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-white rounded-xl font-bold transition-all shadow-lg hover:shadow-cyan-500/30">Get Started</Link>
-                </>
-              )}
+          </div>
+        )}
+      </header>
+
+      {/* ============================================================== */}
+      {/* HERO SECTION (3D WebGL Canvas + Dynamic GSAP Overlay)          */}
+      {/* ============================================================== */}
+      <main className="relative" id="top">
+        <section className="relative min-h-screen w-full flex items-center justify-center overflow-hidden pt-20" id="hero-section">
+          {/* Three.js WebGL Layer */}
+          <Hero3D />
+
+          {/* Fallback gradient */}
+          <div className="hidden absolute inset-0 z-0 bg-gradient-to-b from-transparent via-[#C8F135]/5 to-transparent" id="hero-static-fallback"></div>
+
+          {/* Hero Content Layer */}
+          <div className="relative z-10 max-w-7xl mx-auto px-6 py-16 w-full pointer-events-none flex flex-col justify-between min-h-[calc(100vh-5rem)]">
+            
+            {/* Top Pill Badge */}
+            <div className="pt-4 pointer-events-auto">
+              <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-white/90 border border-[#0F1E14]/10 shadow-sm text-xs font-semibold text-[#0F1E14] opacity-0" id="hero-badge">
+                <span className="w-2 h-2 rounded-full bg-[#C8F135] ring-2 ring-[#0F1E14]/10 animate-ping"></span>
+                <span className="tracking-wide">New: Autonomous AI Bookkeeping v3.4</span>
+              </div>
             </div>
-            <div className="md:hidden flex items-center">
-              <button onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)} className="text-white p-2 focus:outline-none">
-                {isMobileMenuOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
-              </button>
+
+            {/* Main Headline & Subheadline Grid */}
+            <div className="my-auto py-12 max-w-3xl pointer-events-auto">
+              <h1 className="font-display text-5xl sm:text-7xl lg:text-8xl font-black text-[#0F1E14] leading-[0.95] tracking-tight" id="hero-headline">
+                <div className="line-mask"><span className="reveal-word">Books</span></div>{" "}
+                <div className="line-mask"><span className="reveal-word">that</span></div>{" "}
+                <div className="line-mask">
+                  <span className="reveal-word relative inline-block">
+                    <span className="relative z-10 px-2 text-[#0F1E14]" id="hero-highlight">balance</span>
+                    <span className="absolute inset-0 bg-[#C8F135] rounded-xl -rotate-1 z-0 scale-x-0 origin-left" id="hero-highlight-bg"></span>
+                  </span>
+                </div>
+                <br className="hidden sm:inline" />{" "}
+                <div className="line-mask"><span className="reveal-word">themselves.</span></div>
+              </h1>
+
+              <p className="mt-6 text-lg sm:text-xl text-[#0F1E14]/80 max-w-xl font-normal leading-relaxed opacity-0" id="hero-desc">
+                Invoices, expenses, bank feeds and automated reconciliation in one calm workspace — with an intelligent AI that does the boring bookkeeping for you.
+              </p>
+
+              {/* Interactive CTAs */}
+              <div className="mt-8 flex flex-wrap items-center gap-4 opacity-0" id="hero-cta-group">
+                <Link
+                  to={user ? "/list" : "/register"}
+                  className="inline-flex items-center gap-3 bg-[#C8F135] text-[#0F1E14] hover:bg-[#D9F926] font-bold text-base px-8 py-4 rounded-full transition-all duration-200 hover:scale-105 shadow-lg btn-pulse"
+                >
+                  <span>{user ? "Go to Dashboard" : "Start 30-Day Free Trial"}</span>
+                  <ArrowRight className="w-5 h-5" />
+                </Link>
+
+                <a
+                  href="#how-it-works"
+                  className="inline-flex items-center gap-2 bg-white/90 hover:bg-white text-[#0F1E14] font-semibold text-base px-6 py-4 rounded-full border border-[#0F1E14]/10 shadow-sm transition-all hover:scale-105"
+                >
+                  <Play className="w-5 h-5 text-[#0F1E14] fill-current" />
+                  <span>Watch 2-Minute Demo</span>
+                </a>
+              </div>
+
+              <p className="mt-3 text-xs text-[#6C7A70] font-medium opacity-0" id="hero-microcopy">
+                No credit card required. Cancel anytime.
+              </p>
+            </div>
+
+            {/* Live Floating AI Notification Card & Cash Metrics */}
+            <div className="pointer-events-auto flex flex-col sm:flex-row items-start sm:items-end justify-between gap-6 pb-6">
+              
+              {/* AI Live Notification Floating Chip */}
+              <div className="glass-dark text-white p-4 sm:p-5 rounded-2xl max-w-sm shadow-2xl border border-[#C8F135]/30 opacity-0 transform translate-y-6" id="hero-ai-chip">
+                <div className="flex items-center justify-between gap-3 mb-2">
+                  <div className="flex items-center gap-2">
+                    <span className="w-2.5 h-2.5 rounded-full bg-[#C8F135] animate-ping"></span>
+                    <span className="text-xs uppercase tracking-wider font-bold text-[#C8F135]">Smart Financials AI</span>
+                  </div>
+                  <span className="text-[11px] text-white/50">Just now</span>
+                </div>
+                <p className="text-sm font-medium text-white/90 leading-snug">
+                  "14 bank transactions matched automatically and 1 duplicate bill detected. Review now?"
+                </p>
+                <div className="mt-3 flex items-center gap-2">
+                  <button className="px-3.5 py-1.5 rounded-lg bg-[#C8F135] text-[#0F1E14] text-xs font-bold hover:bg-[#D9F926] transition-colors cursor-pointer" type="button">
+                    Review
+                  </button>
+                  <button className="px-3 py-1.5 rounded-lg bg-white/10 text-white/80 text-xs font-medium hover:bg-white/20 transition-colors cursor-pointer" type="button">
+                    Later
+                  </button>
+                </div>
+              </div>
+
+              {/* Bottom Metric: Live Cash-Flow Counter */}
+              <div className="glass-chip p-5 rounded-2xl shadow-xl border border-white/60 min-w-[260px] opacity-0 transform translate-y-6" id="hero-metric-chip">
+                <div className="flex items-center justify-between text-xs font-semibold text-[#6C7A70] mb-1">
+                  <span>Consolidated Net Cash Flow</span>
+                  <span className="text-[#0F1E14] bg-[#C8F135] px-2 py-0.5 rounded text-[10px] font-bold">LIVE Q1</span>
+                </div>
+                <div className="font-display text-3xl sm:text-4xl font-extrabold text-[#0F1E14] tabular-nums">
+                  Rs. <span id="cash-counter">0</span>
+                </div>
+                <div className="flex items-center gap-2 mt-2 text-xs text-[#0F1E14]/70 font-medium">
+                  <span className="text-emerald-700 font-bold">↑ +14.6%</span>
+                  <span>across 4 linked business accounts</span>
+                </div>
+              </div>
+
+            </div>
+          </div>
+
+          {/* Scroll cue */}
+          <div className="absolute bottom-6 left-1/2 -translate-x-1/2 z-20 flex flex-col items-center gap-2 opacity-0 pointer-events-none" id="scroll-cue">
+            <span className="text-[11px] uppercase tracking-widest text-[#6C7A70] font-bold">Scroll Down</span>
+            <div className="w-5 h-9 rounded-full border-2 border-[#0F1E14]/20 flex items-start justify-center p-1">
+              <div className="w-1.5 h-2.5 rounded-full bg-[#0F1E14] animate-bounce"></div>
+            </div>
+          </div>
+        </section>
+
+        {/* ============================================================== */}
+        {/* MODULE PILLS STRIP                                             */}
+        {/* ============================================================== */}
+        <section className="py-8 bg-white border-y border-[#0F1E14]/5">
+          <div className="max-w-7xl mx-auto px-6 overflow-x-auto no-scrollbar">
+            <div className="flex items-center justify-center min-w-max gap-3 sm:gap-4">
+              <span className="px-5 py-2.5 rounded-full bg-[#0F1E14] text-[#C8F135] text-xs font-bold uppercase tracking-wider shadow-sm">Invoicing</span>
+              <span className="px-5 py-2.5 rounded-full bg-[#F3F4EC] text-[#0F1E14] text-xs font-semibold uppercase tracking-wider hover:bg-[#E5E7DC] transition-colors cursor-default">Expenses</span>
+              <span className="px-5 py-2.5 rounded-full bg-[#F3F4EC] text-[#0F1E14] text-xs font-semibold uppercase tracking-wider hover:bg-[#E5E7DC] transition-colors cursor-default">Bank Feeds</span>
+              <span className="px-5 py-2.5 rounded-full bg-[#F3F4EC] text-[#0F1E14] text-xs font-semibold uppercase tracking-wider hover:bg-[#E5E7DC] transition-colors cursor-default">Payroll</span>
+              <span className="px-5 py-2.5 rounded-full bg-[#F3F4EC] text-[#0F1E14] text-xs font-semibold uppercase tracking-wider hover:bg-[#E5E7DC] transition-colors cursor-default">Inventory</span>
+              <span className="px-5 py-2.5 rounded-full bg-[#F3F4EC] text-[#0F1E14] text-xs font-semibold uppercase tracking-wider hover:bg-[#E5E7DC] transition-colors cursor-default">Tax &amp; VAT</span>
+              <span className="px-5 py-2.5 rounded-full bg-[#F3F4EC] text-[#0F1E14] text-xs font-semibold uppercase tracking-wider hover:bg-[#E5E7DC] transition-colors cursor-default">Multi-Currency</span>
+              <span className="px-5 py-2.5 rounded-full bg-[#F3F4EC] text-[#0F1E14] text-xs font-semibold uppercase tracking-wider hover:bg-[#E5E7DC] transition-colors cursor-default">Reports</span>
+            </div>
+          </div>
+        </section>
+
+        {/* ============================================================== */}
+        {/* FEATURES SECTION (Bento Grid with 6 Cards)                     */}
+        {/* ============================================================== */}
+        <section className="py-24 sm:py-32 px-6 max-w-7xl mx-auto" id="features">
+          <div className="max-w-3xl mb-16">
+            <span className="text-xs font-bold uppercase tracking-widest text-[#6C7A70] block mb-3">EVERYTHING IN ONE PLACE</span>
+            <h2 className="font-display text-4xl sm:text-6xl font-black text-[#0F1E14] tracking-tight leading-[1.05]">
+              Less spreadsheet. <br />
+              <span className="relative inline-block mt-2">
+                <span className="relative z-10 px-3 py-0.5 text-[#0F1E14]">More business.</span>
+                <span className="absolute inset-0 bg-[#CCFF00] rounded-2xl -rotate-1 z-0 scale-x-0 origin-left" id="features-highlight-bg"></span>
+              </span>
+            </h2>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            
+            {/* Card 1: INVOICING */}
+            <article className="feature-card bg-[#CCFF00] p-8 rounded-2xl flex flex-col justify-between min-h-[310px] transition-all duration-300 shadow-sm hover:shadow-xl" id="invoicing-card">
+              <div>
+                <div className="flex items-center justify-between mb-8">
+                  <span className="text-xs font-extrabold tracking-wider uppercase text-[#0F1E14]/75">INVOICING</span>
+                  <span className="w-8 h-8 rounded-full bg-[#0F1E14] text-[#CCFF00] flex items-center justify-center font-bold text-sm">
+                    <ArrowUpRight className="w-4 h-4" />
+                  </span>
+                </div>
+                <h3 className="font-display text-3xl sm:text-4xl font-extrabold text-[#0F1E14] leading-tight mb-3">
+                  Get paid days sooner.
+                </h3>
+                <p className="text-[#0F1E14]/80 text-sm font-medium leading-relaxed">
+                  Branded invoices, automatic reminders and one-tap payment links.
+                </p>
+              </div>
+              <div className="pt-4 text-xs font-bold text-[#0F1E14] uppercase tracking-wider flex items-center gap-1.5">
+                <span>Instant payment checkout</span>
+                <ArrowRight className="w-3.5 h-3.5" />
+              </div>
+            </article>
+
+            {/* Card 2: BANK FEEDS */}
+            <article className="feature-card bg-white p-8 rounded-2xl border border-[#0F1E14]/10 flex flex-col justify-between min-h-[310px] shadow-sm hover:shadow-xl transition-all">
+              <div>
+                <div className="flex items-center justify-between mb-4">
+                  <span className="text-xs font-extrabold tracking-wider uppercase text-[#6C7A70]">BANK FEEDS</span>
+                  <span className="text-xs font-bold text-emerald-800 bg-emerald-100 px-2.5 py-0.5 rounded-full">Synced</span>
+                </div>
+                <div className="mb-5 bg-[#FAF9F5] p-3 rounded-xl border border-[#0F1E14]/5">
+                  <div className="flex justify-between items-center text-xs font-semibold text-[#0F1E14] mb-1.5">
+                    <span className="text-[#6C7A70]">Reconciliation state</span>
+                    <span className="font-bold tabular-nums text-[#0F1E14]" id="recon-percent">86% reconciled automatically</span>
+                  </div>
+                  <div className="w-full h-2.5 bg-[#E5E7DC] rounded-full overflow-hidden">
+                    <div className="h-full bg-[#0F1E14] rounded-full w-[86%] transition-all duration-1000" id="recon-bar"></div>
+                  </div>
+                </div>
+                <h3 className="font-display text-3xl font-extrabold text-[#0F1E14] leading-tight mb-3">
+                  Reconcile in minutes.
+                </h3>
+                <p className="text-[#6C7A70] text-sm leading-relaxed">
+                  Transactions match themselves. You only touch the odd ones out.
+                </p>
+              </div>
+              <div className="pt-4 text-xs font-bold text-[#0F1E14] flex items-center gap-2">
+                <span className="w-2 h-2 rounded-full bg-emerald-500"></span>
+                <span>Continuous automatic matching</span>
+              </div>
+            </article>
+
+            {/* Card 3: REPORTS */}
+            <article className="feature-card bg-[#111315] text-white p-8 rounded-2xl flex flex-col justify-between min-h-[310px] shadow-xl hover:shadow-2xl transition-all">
+              <div>
+                <div className="flex items-center justify-between mb-8">
+                  <span className="text-xs font-extrabold tracking-wider uppercase text-[#CCFF00]">REPORTS</span>
+                  <span className="px-2.5 py-0.5 rounded-full bg-white/10 text-[11px] font-semibold text-white/70">Realtime</span>
+                </div>
+                <h3 className="font-display text-3xl sm:text-4xl font-extrabold text-white leading-tight mb-3">
+                  Know your numbers.
+                </h3>
+                <p className="text-white/70 text-sm leading-relaxed">
+                  Profit &amp; loss, balance sheet and cash forecast — always current, never exported.
+                </p>
+              </div>
+              <div className="pt-4 flex items-center justify-between text-xs text-[#CCFF00] font-semibold border-t border-white/10">
+                <span>Automated P&amp;L Reports</span>
+                <span>Live Audit Trail</span>
+              </div>
+            </article>
+
+            {/* Card 4: EXPENSES */}
+            <article className="feature-card bg-white p-8 rounded-2xl border border-[#0F1E14]/10 flex flex-col justify-between min-h-[290px] shadow-sm hover:shadow-xl transition-all">
+              <div>
+                <div className="flex items-center justify-between mb-6">
+                  <span className="text-xs font-extrabold tracking-wider uppercase text-[#6C7A70]">EXPENSES</span>
+                  <span className="w-8 h-8 rounded-full bg-[#F3F4EC] flex items-center justify-center text-sm text-[#0F1E14]">
+                    <Camera className="w-4 h-4" />
+                  </span>
+                </div>
+                <h3 className="font-display text-2xl sm:text-3xl font-extrabold text-[#0F1E14] leading-tight mb-2">
+                  Snap a receipt. Done.
+                </h3>
+                <p className="text-[#6C7A70] text-sm leading-relaxed">
+                  Scan, categorise and attach to the right bill.
+                </p>
+              </div>
+              <div className="pt-4 text-xs font-medium text-[#0F1E14]">
+                AI Optical Character Recognition (OCR)
+              </div>
+            </article>
+
+            {/* Card 5: TAX */}
+            <article className="feature-card bg-white p-8 rounded-2xl border border-[#0F1E14]/10 flex flex-col justify-between min-h-[290px] shadow-sm hover:shadow-xl transition-all">
+              <div>
+                <div className="flex items-center justify-between mb-6">
+                  <span className="text-xs font-extrabold tracking-wider uppercase text-[#6C7A70]">TAX</span>
+                  <span className="w-8 h-8 rounded-full bg-[#F3F4EC] flex items-center justify-center text-sm text-[#0F1E14]">
+                    <Scale className="w-4 h-4" />
+                  </span>
+                </div>
+                <h3 className="font-display text-2xl sm:text-3xl font-extrabold text-[#0F1E14] leading-tight mb-2">
+                  Tax-ready all year.
+                </h3>
+                <p className="text-[#6C7A70] text-sm leading-relaxed">
+                  VAT and sales tax tracked as you go, filed without panic.
+                </p>
+              </div>
+              <div className="pt-4 text-xs font-semibold text-emerald-700">
+                Auto-audited sales tax &amp; VAT
+              </div>
+            </article>
+
+            {/* Card 6: TEAM */}
+            <article className="feature-card bg-white p-8 rounded-2xl border border-[#0F1E14]/10 flex flex-col justify-between min-h-[290px] shadow-sm hover:shadow-xl transition-all">
+              <div>
+                <div className="flex items-center justify-between mb-6">
+                  <span className="text-xs font-extrabold tracking-wider uppercase text-[#6C7A70]">TEAM</span>
+                  <span className="w-8 h-8 rounded-full bg-[#F3F4EC] flex items-center justify-center text-sm text-[#0F1E14]">
+                    <Users className="w-4 h-4" />
+                  </span>
+                </div>
+                <h3 className="font-display text-2xl sm:text-3xl font-extrabold text-[#0F1E14] leading-tight mb-2">
+                  Your accountant, invited.
+                </h3>
+                <p className="text-[#6C7A70] text-sm leading-relaxed">
+                  Share access with roles — no more emailing files.
+                </p>
+              </div>
+              <div className="pt-4 text-xs font-medium text-[#0F1E14]">
+                Multi-user granular permissions
+              </div>
+            </article>
+
+          </div>
+        </section>
+
+        {/* ============================================================== */}
+        {/* SECTION: REAL-TIME BUSINESS INSIGHTS (TELEMETRY DASHBOARD)      */}
+        {/* ============================================================== */}
+        <section className="py-20 px-6 max-w-7xl mx-auto" id="insights">
+          <div className="text-center max-w-3xl mx-auto mb-10">
+            <h2 className="font-display text-4xl sm:text-6xl font-black text-[#0F1E14] tracking-tight">
+              Real-time Business Insights
+            </h2>
+            <p className="mt-4 text-[#6C7A70] text-base sm:text-lg">
+              Instant visibility across all active ledger syncs, live visitors, and continuous interaction streams.
+            </p>
+          </div>
+
+          <div className="relative rounded-3xl bg-[#09111e] border border-cyan-500/25 shadow-2xl p-6 sm:p-10 text-white overflow-hidden backdrop-blur-2xl">
+            {/* Glowing Ambient Radials */}
+            <div className="absolute -top-32 -left-32 w-80 h-80 bg-cyan-500/10 rounded-full blur-3xl pointer-events-none"></div>
+            <div className="absolute -bottom-32 -right-32 w-80 h-80 bg-[#C8F135]/10 rounded-full blur-3xl pointer-events-none"></div>
+
+            {/* Top Window Header Bar */}
+            <div className="flex items-center justify-between pb-6 mb-8 border-b border-white/10 relative z-10">
+              <div className="flex items-center gap-2">
+                <div className="w-3 h-3 rounded-full bg-cyan-400/40"></div>
+                <div className="w-3 h-3 rounded-full bg-cyan-400/30"></div>
+                <div className="w-3 h-3 rounded-full bg-cyan-400/20"></div>
+                <span className="ml-2 text-xs font-mono text-cyan-200/60 hidden sm:inline">live://finflow.telemetry/v4.1</span>
+              </div>
+              <div className="flex items-center gap-4">
+                <span className="text-xs uppercase tracking-widest text-cyan-300 font-bold font-mono">FINFLOW ANALYTICS</span>
+              </div>
+            </div>
+
+            {/* 3 Top Metric Bento Cards (Bound to real Firebase data) */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8 relative z-10">
+              
+              {/* Card 1: Active Ledger Syncs */}
+              <div className="rounded-2xl bg-gradient-to-b from-[#132238] to-[#0e1829] border border-cyan-500/30 p-6 sm:p-7 shadow-lg flex flex-col justify-between hover:border-cyan-400/60 transition-all duration-300">
+                <div>
+                  <p className="text-sm font-semibold text-cyan-100/70 mb-2">Active Ledger Syncs</p>
+                  <div className="font-display text-4xl sm:text-5xl font-extrabold text-white tracking-tight tabular-nums" id="metric-syncs">
+                    24,103
+                  </div>
+                </div>
+                <div className="mt-5">
+                  <span className="inline-flex items-center gap-1.5 text-xs font-bold text-teal-300 bg-teal-950/80 border border-teal-500/30 px-3 py-1.5 rounded-lg">
+                    <Check className="w-3.5 h-3.5" />
+                    <span>Real-time validation</span>
+                  </span>
+                </div>
+              </div>
+
+              {/* Card 2: Total Visitors (Real Firebase Visitor count) */}
+              <div className="rounded-2xl bg-gradient-to-b from-[#132238] to-[#0e1829] border border-cyan-500/30 p-6 sm:p-7 shadow-lg flex flex-col justify-between hover:border-cyan-400/60 transition-all duration-300">
+                <div>
+                  <p className="text-sm font-semibold text-cyan-100/70 mb-2">Total Visitors</p>
+                  <div className="font-display text-4xl sm:text-5xl font-extrabold text-white tracking-tight tabular-nums" id="metric-visitors">
+                    {stats.visitors.toLocaleString()}
+                  </div>
+                </div>
+                <div className="mt-5">
+                  <span className="inline-flex items-center gap-1.5 text-xs font-bold text-cyan-300 bg-cyan-950/80 border border-cyan-500/30 px-3 py-1.5 rounded-lg">
+                    <span className="w-1.5 h-1.5 rounded-full bg-cyan-400 animate-pulse"></span>
+                    <span>Live traffic count</span>
+                  </span>
+                </div>
+              </div>
+
+              {/* Card 3: Total Interactions (Real Firebase Interactions count) */}
+              <div className="rounded-2xl bg-gradient-to-b from-[#132238] to-[#0e1829] border border-cyan-500/30 p-6 sm:p-7 shadow-lg flex flex-col justify-between hover:border-cyan-400/60 transition-all duration-300">
+                <div>
+                  <p className="text-sm font-semibold text-cyan-100/70 mb-2">Total Interactions</p>
+                  <div className="font-display text-4xl sm:text-5xl font-extrabold text-white tracking-tight tabular-nums" id="metric-interactions">
+                    {stats.clicks.toLocaleString()}
+                  </div>
+                </div>
+                <div className="mt-5">
+                  <span className="inline-flex items-center gap-1.5 text-xs font-bold text-cyan-300 bg-cyan-950/80 border border-cyan-500/30 px-3 py-1.5 rounded-lg">
+                    <span className="w-1.5 h-1.5 rounded-full bg-cyan-400"></span>
+                    <span>Live interaction tracking</span>
+                  </span>
+                </div>
+              </div>
+
+            </div>
+
+            {/* Lower Card: Large Glowing Histogram Chart Box (9 Bars) */}
+            <div className="rounded-2xl bg-gradient-to-b from-[#101b2f] to-[#09111f] border border-cyan-500/30 p-6 sm:p-8 relative z-10 shadow-inner">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
+                <div className="flex items-center gap-3">
+                  <div className="w-2.5 h-2.5 rounded-full bg-cyan-400 animate-pulse"></div>
+                  <span className="text-xs font-mono font-bold tracking-wider text-cyan-200 uppercase">Synchronous Throughput Histogram (Last 8 Intervals)</span>
+                </div>
+                <div className="flex items-center gap-4 text-xs font-mono text-cyan-200/70">
+                  <span className="flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-sm bg-[#00E5FF]"></span> Automated Ingestion</span>
+                  <span className="hidden md:inline text-white/30">|</span>
+                  <span className="hidden md:inline text-emerald-400 font-bold">Peak: +34.2% Sync Velocity</span>
+                </div>
+              </div>
+
+              {/* Bar Graphic Container (9 Bars) */}
+              <div className="h-64 sm:h-72 w-full flex items-end justify-between gap-2.5 sm:gap-4 pt-8 pb-3 border-b border-cyan-500/20" id="telemetry-bar-container">
+                {/* Bar 1 */}
+                <div className="flex-1 flex flex-col items-center group relative h-full justify-end">
+                  <div className="absolute -top-7 opacity-0 group-hover:opacity-100 transition-opacity text-[11px] font-mono bg-cyan-950 text-cyan-300 border border-cyan-400/40 px-2 py-0.5 rounded shadow pointer-events-none">
+                    2,410 syncs
+                  </div>
+                  <div className="w-full rounded-t-lg bg-gradient-to-t from-[#0091FF] via-[#00B4D8] to-[#00E5FF] transition-all duration-700 hover:brightness-125" style={{ height: '24%' }}></div>
+                  <span className="text-[10px] font-mono text-cyan-300/60 mt-2">08:00</span>
+                </div>
+                {/* Bar 2 */}
+                <div className="flex-1 flex flex-col items-center group relative h-full justify-end">
+                  <div className="absolute -top-7 opacity-0 group-hover:opacity-100 transition-opacity text-[11px] font-mono bg-cyan-950 text-cyan-300 border border-cyan-400/40 px-2 py-0.5 rounded shadow pointer-events-none">
+                    3,840 syncs
+                  </div>
+                  <div className="w-full rounded-t-lg bg-gradient-to-t from-[#0091FF] via-[#00B4D8] to-[#00E5FF] transition-all duration-700 hover:brightness-125" style={{ height: '38%' }}></div>
+                  <span className="text-[10px] font-mono text-cyan-300/60 mt-2">10:00</span>
+                </div>
+                {/* Bar 3 */}
+                <div className="flex-1 flex flex-col items-center group relative h-full justify-end">
+                  <div className="absolute -top-7 opacity-0 group-hover:opacity-100 transition-opacity text-[11px] font-mono bg-cyan-950 text-cyan-300 border border-cyan-400/40 px-2 py-0.5 rounded shadow pointer-events-none">
+                    1,780 syncs
+                  </div>
+                  <div className="w-full rounded-t-lg bg-gradient-to-t from-[#0091FF] via-[#00B4D8] to-[#00E5FF] transition-all duration-700 hover:brightness-125" style={{ height: '18%' }}></div>
+                  <span className="text-[10px] font-mono text-cyan-300/60 mt-2">12:00</span>
+                </div>
+                {/* Bar 4 */}
+                <div className="flex-1 flex flex-col items-center group relative h-full justify-end">
+                  <div className="absolute -top-7 opacity-0 group-hover:opacity-100 transition-opacity text-[11px] font-mono bg-cyan-950 text-cyan-300 border border-cyan-400/40 px-2 py-0.5 rounded shadow pointer-events-none">
+                    5,200 syncs
+                  </div>
+                  <div className="w-full rounded-t-lg bg-gradient-to-t from-[#0091FF] via-[#00B4D8] to-[#00E5FF] transition-all duration-700 hover:brightness-125" style={{ height: '52%' }}></div>
+                  <span className="text-[10px] font-mono text-cyan-300/60 mt-2">14:00</span>
+                </div>
+                {/* Bar 5 */}
+                <div className="flex-1 flex flex-col items-center group relative h-full justify-end">
+                  <div className="absolute -top-7 opacity-0 group-hover:opacity-100 transition-opacity text-[11px] font-mono bg-cyan-950 text-cyan-300 border border-cyan-400/40 px-2 py-0.5 rounded shadow pointer-events-none">
+                    3,810 syncs
+                  </div>
+                  <div className="w-full rounded-t-lg bg-gradient-to-t from-[#0091FF] via-[#00B4D8] to-[#00E5FF] transition-all duration-700 hover:brightness-125" style={{ height: '38%' }}></div>
+                  <span className="text-[10px] font-mono text-cyan-300/60 mt-2">16:00</span>
+                </div>
+                {/* Bar 6 */}
+                <div className="flex-1 flex flex-col items-center group relative h-full justify-end">
+                  <div className="absolute -top-7 opacity-0 group-hover:opacity-100 transition-opacity text-[11px] font-mono bg-cyan-950 text-cyan-300 border border-cyan-400/40 px-2 py-0.5 rounded shadow pointer-events-none">
+                    6,620 syncs
+                  </div>
+                  <div className="w-full rounded-t-lg bg-gradient-to-t from-[#0091FF] via-[#00B4D8] to-[#00E5FF] transition-all duration-700 hover:brightness-125" style={{ height: '66%' }}></div>
+                  <span className="text-[10px] font-mono text-cyan-300/60 mt-2">18:00</span>
+                </div>
+                {/* Bar 7 */}
+                <div className="flex-1 flex flex-col items-center group relative h-full justify-end">
+                  <div className="absolute -top-7 opacity-0 group-hover:opacity-100 transition-opacity text-[11px] font-mono bg-cyan-950 text-cyan-300 border border-cyan-400/40 px-2 py-0.5 rounded shadow pointer-events-none">
+                    4,240 syncs
+                  </div>
+                  <div className="w-full rounded-t-lg bg-gradient-to-t from-[#0091FF] via-[#00B4D8] to-[#00E5FF] transition-all duration-700 hover:brightness-125" style={{ height: '42%' }}></div>
+                  <span className="text-[10px] font-mono text-cyan-300/60 mt-2">20:00</span>
+                </div>
+                {/* Bar 8 (Peak) */}
+                <div className="flex-1 flex flex-col items-center group relative h-full justify-end">
+                  <div className="absolute -top-7 opacity-100 text-[11px] font-mono bg-[#00E5FF] text-[#09111e] font-black px-2 py-0.5 rounded shadow">
+                    PEAK 9,410
+                  </div>
+                  <div className="w-full rounded-t-lg bg-gradient-to-t from-[#0091FF] via-[#00E5FF] to-[#C8F135] transition-all duration-700 hover:brightness-125 telemetry-bar-glow" style={{ height: '94%' }}></div>
+                  <span className="text-[10px] font-mono text-cyan-300 font-bold mt-2">NOW</span>
+                </div>
+                {/* Bar 9 */}
+                <div className="flex-1 flex flex-col items-center group relative h-full justify-end">
+                  <div className="absolute -top-7 opacity-0 group-hover:opacity-100 transition-opacity text-[11px] font-mono bg-cyan-950 text-cyan-300 border border-cyan-400/40 px-2 py-0.5 rounded shadow pointer-events-none">
+                    5,610 syncs
+                  </div>
+                  <div className="w-full rounded-t-lg bg-gradient-to-t from-[#0091FF] via-[#00B4D8] to-[#00E5FF] transition-all duration-700 hover:brightness-125" style={{ height: '56%' }}></div>
+                  <span className="text-[10px] font-mono text-cyan-300/60 mt-2">+2h EST</span>
+                </div>
+              </div>
+
+              {/* Chart Footer Status Metrics */}
+              <div className="mt-6 flex flex-wrap items-center justify-between text-xs text-cyan-200/70 gap-4">
+                <div className="flex items-center gap-6">
+                  <div>Sync Health: <span className="text-emerald-400 font-mono font-bold">99.98% uptime</span></div>
+                  <div>Average Latency: <span className="text-cyan-300 font-mono font-bold">42ms</span></div>
+                  <div className="hidden sm:inline">Packet Loss: <span className="text-white font-mono font-bold">0.00%</span></div>
+                </div>
+                <div className="flex items-center gap-2 text-cyan-300">
+                  <span>Ledger status: In Sync</span>
+                  <span className="w-2 h-2 rounded-full bg-emerald-400"></span>
+                </div>
+              </div>
+
+            </div>
+          </div>
+        </section>
+
+        {/* ============================================================== */}
+        {/* HOW IT WORKS SECTION (Stroke Drawing Numbers + Connecting Line)*/}
+        {/* ============================================================== */}
+        <section className="py-24 sm:py-32 bg-white border-y border-[#0F1E14]/5 relative overflow-hidden" id="how-it-works">
+          <div className="max-w-7xl mx-auto px-6">
+            <div className="text-center max-w-2xl mx-auto mb-20">
+              <span className="text-xs font-bold uppercase tracking-widest text-[#6C7A70] block mb-2">HOW IT WORKS</span>
+              <h2 className="font-display text-4xl sm:text-6xl font-black text-[#0F1E14] tracking-tight">
+                Set up before your chai cools.
+              </h2>
+            </div>
+
+            {/* 3-Step Process with Connecting SVG Line */}
+            <div className="relative grid grid-cols-1 md:grid-cols-3 gap-12 lg:gap-16">
+              {/* Connecting Line (Desktop) */}
+              <div className="hidden md:block absolute top-14 left-[15%] right-[15%] h-1 bg-[#E5E7DC] z-0">
+                <div className="h-full bg-[#C8F135] w-0 transition-all duration-300" id="step-progress-line"></div>
+              </div>
+
+              {/* Step 1 */}
+              <div className="step-card relative z-10 flex flex-col items-center md:items-start text-center md:text-left">
+                <div className="w-28 h-28 mb-6 flex items-center justify-center bg-white rounded-3xl shadow-sm border border-[#0F1E14]/10">
+                  <svg className="w-16 h-16" fill="none" viewBox="0 0 100 100">
+                    <path
+                      className="step-stroke"
+                      d="M35 35 L50 20 L50 80 M30 80 L70 80"
+                      id="step-stroke-1"
+                      stroke="#0F1E14"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth="8"
+                    />
+                  </svg>
+                </div>
+                <h3 className="font-display text-2xl font-bold text-[#0F1E14] mb-3">
+                  1. Connect your bank
+                </h3>
+                <p className="text-[#6C7A70] text-base leading-relaxed">
+                  Secure read-only feeds bring in every transaction instantly into your automated workspace.
+                </p>
+              </div>
+
+              {/* Step 2 */}
+              <div className="step-card relative z-10 flex flex-col items-center md:items-start text-center md:text-left">
+                <div className="w-28 h-28 mb-6 flex items-center justify-center bg-white rounded-3xl shadow-sm border border-[#0F1E14]/10">
+                  <svg className="w-16 h-16" fill="none" viewBox="0 0 100 100">
+                    <path
+                      className="step-stroke"
+                      d="M25 35 C25 20 75 20 75 40 C75 60 25 80 25 80 L75 80"
+                      id="step-stroke-2"
+                      stroke="#0F1E14"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth="8"
+                    />
+                  </svg>
+                </div>
+                <h3 className="font-display text-2xl font-bold text-[#0F1E14] mb-3">
+                  2. Let Smart Financials sort it
+                </h3>
+                <p className="text-[#6C7A70] text-base leading-relaxed">
+                  Categories, automatic matching and payment reminders happen seamlessly on autopilot.
+                </p>
+              </div>
+
+              {/* Step 3 */}
+              <div className="step-card relative z-10 flex flex-col items-center md:items-start text-center md:text-left">
+                <div className="w-28 h-28 mb-6 flex items-center justify-center bg-white rounded-3xl shadow-sm border border-[#0F1E14]/10">
+                  <svg className="w-16 h-16" fill="none" viewBox="0 0 100 100">
+                    <path
+                      className="step-stroke"
+                      d="M25 25 L75 25 L45 50 C65 50 75 60 75 75 C75 90 25 90 25 75"
+                      id="step-stroke-3"
+                      stroke="#0F1E14"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth="8"
+                    />
+                  </svg>
+                </div>
+                <h3 className="font-display text-2xl font-bold text-[#0F1E14] mb-3">
+                  3. Run on real numbers
+                </h3>
+                <p className="text-[#6C7A70] text-base leading-relaxed">
+                  Open the dashboard and see exactly where your business stands in real time, 24 hours a day.
+                </p>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* ============================================================== */}
+        {/* AI ASSISTANT SECTION ("Just ask your books")                   */}
+        {/* ============================================================== */}
+        <section className="py-24 sm:py-32 px-6 max-w-7xl mx-auto" id="ai-assistant">
+          <div className="bg-[#0F1E14] text-white rounded-[2.5rem] p-8 sm:p-14 lg:p-20 shadow-2xl relative overflow-hidden transform scale-[0.92] transition-transform" id="ai-panel">
+            {/* Ambient decorative glow */}
+            <div className="absolute -top-40 -right-40 w-96 h-96 bg-[#C8F135]/15 rounded-full blur-3xl pointer-events-none"></div>
+
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-center relative z-10">
+              {/* Left Column: Copy */}
+              <div className="lg:col-span-5">
+                <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/10 text-xs font-bold text-[#C8F135] uppercase tracking-wider mb-6">
+                  <span className="w-2 h-2 rounded-full bg-[#C8F135]"></span>
+                  <span>SMART FINANCIALS AI</span>
+                </div>
+                <h2 className="font-display text-4xl sm:text-6xl font-black text-white tracking-tight leading-[1.05]">
+                  Just ask your books.
+                </h2>
+                <p className="mt-6 text-white/80 text-base sm:text-lg leading-relaxed">
+                  Type a question in plain English or Roman Urdu. Get an instant answer, a chart, and the underlying journal entry behind it.
+                </p>
+
+                {/* Urdu/Roman Capable Badge */}
+                <div className="mt-8 inline-block origin-top-left transform rotate-3" id="urdu-sticker">
+                  <div className="bg-[#C8F135] text-[#0F1E14] font-bold text-sm sm:text-base px-4 py-2.5 rounded-2xl shadow-lg border-2 border-[#0F1E14] flex items-center gap-2">
+                    <Sparkles className="w-4 h-4 text-[#0F1E14]" />
+                    <span>Understands natural business queries</span>
+                  </div>
+                </div>
+
+                <div className="mt-10">
+                  <a
+                    href="#pricing"
+                    className="inline-flex items-center gap-2 bg-[#C8F135] text-[#0F1E14] hover:bg-[#D9F926] font-bold text-sm px-6 py-3.5 rounded-full transition-all hover:scale-105 shadow-md"
+                  >
+                    <span>Meet the assistant</span>
+                    <ArrowRight className="w-4 h-4" />
+                  </a>
+                </div>
+              </div>
+
+              {/* Right Column: Interactive Scrubbed Chat Stream */}
+              <div className="lg:col-span-7">
+                <div className="bg-[#15271B]/90 border border-white/10 rounded-3xl p-6 sm:p-8 space-y-4 shadow-2xl backdrop-blur-md">
+                  {/* Chat Bubble 1 */}
+                  <div className="flex justify-end opacity-0 transform translate-y-4" id="chat-q1">
+                    <div className="bg-white/10 hover:bg-white/15 text-white/90 px-5 py-3.5 rounded-2xl rounded-tr-sm text-sm sm:text-base font-medium max-w-md border border-white/5">
+                      "What's the profit margin this month across nav shop &amp; Ai agency?"
+                    </div>
+                  </div>
+
+                  {/* Typing Indicator */}
+                  <div className="hidden flex items-center gap-2 text-xs text-[#C8F135] pl-2 font-mono" id="chat-typing-1">
+                    <span className="inline-block w-1.5 h-1.5 rounded-full bg-[#C8F135] animate-ping"></span>
+                    <span>Khushi AI calculating consolidated ledger...</span>
+                  </div>
+
+                  {/* Chat Bubble 2 (AI Reply) */}
+                  <div className="flex justify-start opacity-0 transform translate-y-4" id="chat-a1">
+                    <div className="bg-[#C8F135] text-[#0F1E14] px-6 py-4 rounded-2xl rounded-tl-sm text-sm sm:text-base font-bold max-w-lg shadow-lg">
+                      Net combined profit is Rs. 785,400 (up 22% on last month). Software licensing was the strongest driver at Rs. 310,000.
+                    </div>
+                  </div>
+
+                  {/* Chat Bubble 3 */}
+                  <div className="flex justify-end opacity-0 transform translate-y-4" id="chat-q2">
+                    <div className="bg-white/10 hover:bg-white/15 text-white/90 px-5 py-3.5 rounded-2xl rounded-tr-sm text-sm sm:text-base font-medium max-w-md border border-white/5">
+                      "Show unpaid invoices over 30 days."
+                    </div>
+                  </div>
+
+                  {/* Input bar mockup */}
+                  <div className="pt-2">
+                    <div className="w-full bg-[#08110B] border border-white/10 rounded-full px-5 py-3.5 flex items-center justify-between text-sm text-white/40">
+                      <span>Ask anything about your consolidated finances...</span>
+                      <div className="w-7 h-7 rounded-full bg-[#C8F135] text-[#0F1E14] flex items-center justify-center font-bold text-xs">
+                        ↑
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* ============================================================== */}
+        {/* PRICING SECTION (Simple plans. Honest prices.)                 */}
+        {/* ============================================================== */}
+        <section className="py-24 sm:py-32 px-6 max-w-7xl mx-auto" id="pricing">
+          <div className="text-center max-w-2xl mx-auto mb-20">
+            <span className="text-xs font-bold uppercase tracking-widest text-[#6C7A70] block mb-2">PRICING</span>
+            <h2 className="font-display text-4xl sm:text-6xl font-black text-[#0F1E14] tracking-tight">
+              Simple plans. Honest prices.
+            </h2>
+            <p className="mt-4 text-[#6C7A70] text-base">
+              From solo boutique operators to fast-scaling multi-branch agencies — transparent pricing for everyone.
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-stretch">
+            {/* Starter Tier */}
+            <div className="pricing-card bg-white p-8 sm:p-10 rounded-3xl border border-[#0F1E14]/10 shadow-sm flex flex-col justify-between">
+              <div>
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="font-display text-2xl font-bold text-[#0F1E14]">Starter</h3>
+                  <span className="text-xs uppercase font-bold text-[#6C7A70]">Freelancers</span>
+                </div>
+                <div className="font-display text-4xl font-extrabold text-[#0F1E14] mb-1">
+                  $19 <span className="text-sm font-medium text-[#6C7A70]">/month</span>
+                </div>
+                <div className="text-xs text-[#6C7A70] mb-6">or Rs. 4,500/month billed annually</div>
+                <ul className="space-y-3.5 text-sm text-[#0F1E14]/80 mb-8 font-medium">
+                  <li className="flex items-center gap-3">
+                    <span className="text-emerald-600 font-bold">✓</span> Invoices &amp; basic expenses
+                  </li>
+                  <li className="flex items-center gap-3">
+                    <span className="text-emerald-600 font-bold">✓</span> 1 Bank account feed
+                  </li>
+                  <li className="flex items-center gap-3">
+                    <span className="text-emerald-600 font-bold">✓</span> Monthly P&amp;L report export
+                  </li>
+                  <li className="flex items-center gap-3 text-[#6C7A70]">
+                    <span>—</span> AI Copilot assistant
+                  </li>
+                </ul>
+              </div>
+              <Link
+                to="/register"
+                className="w-full text-center py-3.5 px-6 rounded-full border-2 border-[#0F1E14] text-[#0F1E14] font-bold text-sm hover:bg-[#0F1E14] hover:text-[#C8F135] transition-all block"
+              >
+                Choose Starter
+              </Link>
+            </div>
+
+            {/* Growth Tier (Most Popular) */}
+            <div className="pricing-card bg-[#C8F135] p-8 sm:p-10 rounded-3xl shadow-xl border-2 border-[#0F1E14] flex flex-col justify-between relative lg:-translate-y-4">
+              <div className="absolute -top-3.5 left-1/2 -translate-x-1/2 bg-[#0F1E14] text-[#C8F135] text-[11px] font-extrabold uppercase tracking-widest px-4 py-1 rounded-full">
+                MOST POPULAR
+              </div>
+              <div>
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="font-display text-2xl font-bold text-[#0F1E14]">Growth</h3>
+                  <span className="text-xs uppercase font-bold text-[#0F1E14]/70">Growing Teams</span>
+                </div>
+                <div className="font-display text-4xl font-extrabold text-[#0F1E14] mb-1">
+                  $49 <span className="text-sm font-medium text-[#0F1E14]/70">/month</span>
+                </div>
+                <div className="text-xs text-[#0F1E14]/80 mb-6">or Rs. 12,500/month billed annually</div>
+                <ul className="space-y-3.5 text-sm text-[#0F1E14] mb-8 font-semibold">
+                  <li className="flex items-center gap-3">
+                    <span className="text-[#0F1E14] font-black">✓</span> All Starter features included
+                  </li>
+                  <li className="flex items-center gap-3">
+                    <span className="text-[#0F1E14] font-black">✓</span> Unlimited live bank accounts
+                  </li>
+                  <li className="flex items-center gap-3">
+                    <span className="text-[#0F1E14] font-black">✓</span> Full Smart Financials AI assistant
+                  </li>
+                  <li className="flex items-center gap-3">
+                    <span className="text-[#0F1E14] font-black">✓</span> Payroll &amp; multi-currency
+                  </li>
+                </ul>
+              </div>
+              <Link
+                to="/register"
+                className="w-full text-center py-4 px-6 rounded-full bg-[#0F1E14] text-[#C8F135] hover:bg-[#15271B] font-bold text-sm shadow-md transition-all hover:scale-105 block"
+              >
+                Choose Growth
+              </Link>
+            </div>
+
+            {/* Scale Tier */}
+            <div className="pricing-card bg-white p-8 sm:p-10 rounded-3xl border border-[#0F1E14]/10 shadow-sm flex flex-col justify-between">
+              <div>
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="font-display text-2xl font-bold text-[#0F1E14]">Scale</h3>
+                  <span className="text-xs uppercase font-bold text-[#6C7A70]">Finance Teams</span>
+                </div>
+                <div className="font-display text-4xl font-extrabold text-[#0F1E14] mb-1">
+                  $119 <span className="text-sm font-medium text-[#6C7A70]">/month</span>
+                </div>
+                <div className="text-xs text-[#6C7A70] mb-6">or Rs. 28,000/month billed annually</div>
+                <ul className="space-y-3.5 text-sm text-[#0F1E14]/80 mb-8 font-medium">
+                  <li className="flex items-center gap-3">
+                    <span className="text-emerald-600 font-bold">✓</span> All Growth features included
+                  </li>
+                  <li className="flex items-center gap-3">
+                    <span className="text-emerald-600 font-bold">✓</span> Multi-entity consolidated books
+                  </li>
+                  <li className="flex items-center gap-3">
+                    <span className="text-emerald-600 font-bold">✓</span> Custom roles &amp; audit trails
+                  </li>
+                  <li className="flex items-center gap-3">
+                    <span className="text-emerald-600 font-bold">✓</span> Priority 24/7 dedicated support
+                  </li>
+                </ul>
+              </div>
+              <Link
+                to="/contact"
+                className="w-full text-center py-3.5 px-6 rounded-full border-2 border-[#0F1E14] text-[#0F1E14] font-bold text-sm hover:bg-[#0F1E14] hover:text-[#C8F135] transition-all block"
+              >
+                Talk to Us
+              </Link>
+            </div>
+          </div>
+        </section>
+
+        {/* ============================================================== */}
+        {/* FINAL CALL TO ACTION (Giant Lime Banner + Splitting Headline) */}
+        {/* ============================================================== */}
+        <section className="py-16 px-6 max-w-7xl mx-auto">
+          <div className="bg-[#C8F135] rounded-[3rem] p-10 sm:p-20 text-center relative overflow-hidden shadow-2xl">
+            <div className="max-w-3xl mx-auto">
+              <h2 className="font-display text-4xl sm:text-7xl font-black text-[#0F1E14] tracking-tight leading-[0.95] mb-8" id="final-cta-headline">
+                <span className="cta-split-line block">Close the books.</span>
+                <span className="cta-split-line block">Not your weekend.</span>
+              </h2>
+              <div className="flex flex-wrap items-center justify-center gap-4">
+                <Link
+                  to={user ? "/list" : "/register"}
+                  className="bg-[#0F1E14] text-[#C8F135] hover:bg-[#15271B] font-bold text-base px-8 py-4 rounded-full transition-all duration-200 hover:scale-105 shadow-xl btn-pulse inline-block"
+                >
+                  {user ? "Go to Dashboard" : "Start Free Trial"}
+                </Link>
+                <Link
+                  to="/contact"
+                  className="bg-white/80 hover:bg-white text-[#0F1E14] font-bold text-base px-8 py-4 rounded-full border border-[#0F1E14]/10 transition-all hover:scale-105 inline-block"
+                >
+                  Book a Demo
+                </Link>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* ============================================================== */}
+        {/* SLOW LIME MARQUEE STRIP (Infinite Seamless Running Tape)       */}
+        {/* ============================================================== */}
+        <section aria-label="Operating highlights" className="py-6 bg-[#C8F135] border-y border-[#0F1E14] overflow-hidden">
+          <div className="animate-marquee font-display text-xl sm:text-2xl font-black uppercase tracking-tight text-[#0F1E14] flex items-center">
+            <span className="mx-6">AUTOMATED RECONCILIATION</span>
+            <span className="w-3 h-3 rounded-full bg-[#0F1E14]"></span>
+            <span className="mx-6">INTELLIGENT AI COPILOT</span>
+            <span className="w-3 h-3 rounded-full bg-[#0F1E14]"></span>
+            <span className="mx-6">TAX &amp; COMPLIANCE READY</span>
+            <span className="w-3 h-3 rounded-full bg-[#0F1E14]"></span>
+            <span className="mx-6">MULTI-ENTITY CASH FLOW</span>
+            <span className="w-3 h-3 rounded-full bg-[#0F1E14]"></span>
+            <span className="mx-6">INSTANT AUDIT TRAILS</span>
+            <span className="w-3 h-3 rounded-full bg-[#0F1E14]"></span>
+            <span className="mx-6">ZERO MANUAL SPREADSHEETS</span>
+            <span className="w-3 h-3 rounded-full bg-[#0F1E14]"></span>
+            {/* Duplicated seamless loop set */}
+            <span className="mx-6">AUTOMATED RECONCILIATION</span>
+            <span className="w-3 h-3 rounded-full bg-[#0F1E14]"></span>
+            <span className="mx-6">INTELLIGENT AI COPILOT</span>
+            <span className="w-3 h-3 rounded-full bg-[#0F1E14]"></span>
+            <span className="mx-6">TAX &amp; COMPLIANCE READY</span>
+            <span className="w-3 h-3 rounded-full bg-[#0F1E14]"></span>
+            <span className="mx-6">MULTI-ENTITY CASH FLOW</span>
+            <span className="w-3 h-3 rounded-full bg-[#0F1E14]"></span>
+            <span className="mx-6">INSTANT AUDIT TRAILS</span>
+            <span className="w-3 h-3 rounded-full bg-[#0F1E14]"></span>
+            <span className="mx-6">ZERO MANUAL SPREADSHEETS</span>
+            <span className="w-3 h-3 rounded-full bg-[#0F1E14]"></span>
+          </div>
+        </section>
+
+      </main>
+
+      {/* ============================================================== */}
+      {/* FOOTER (Deep Ink Charcoal #08110B)                             */}
+      {/* ============================================================== */}
+      <footer className="bg-[#08110B] text-white pt-20 pb-12 border-t border-white/10">
+        <div className="max-w-7xl mx-auto px-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-12 pb-16 border-b border-white/10">
+            {/* Left Brand Col */}
+            <div className="lg:col-span-2">
+              <div className="flex items-center gap-3 mb-4">
+                <div className="w-10 h-10 rounded-xl bg-[#C8F135] flex items-center justify-center text-[#0F1E14] font-black text-xl">
+                  SF
+                </div>
+                <span className="font-display text-2xl font-bold tracking-tight text-white">Smart Financials</span>
+              </div>
+              <p className="text-white/60 text-sm max-w-sm leading-relaxed mb-6">
+                Accounting that feels like a conversation. Built for modern operators, founders, and multi-entity enterprises.
+              </p>
+              <div className="text-xs text-[#C8F135] font-semibold">
+                Calibrated with SOC2 Type II Certification &amp; 256-bit encryption.
+              </div>
+            </div>
+
+            {/* Links Col 1 */}
+            <div>
+              <h4 className="text-xs font-bold uppercase tracking-wider text-white/40 mb-4">Product</h4>
+              <ul className="space-y-3 text-sm text-white/70 list-none p-0">
+                <li><a className="hover:text-[#C8F135] transition-colors" href="#features">Invoicing</a></li>
+                <li><a className="hover:text-[#C8F135] transition-colors" href="#features">Expenses &amp; OCR</a></li>
+                <li><a className="hover:text-[#C8F135] transition-colors" href="#features">Bank Sync</a></li>
+                <li><a className="hover:text-[#C8F135] transition-colors" href="#insights">Insights &amp; Telemetry</a></li>
+                <li><a className="hover:text-[#C8F135] transition-colors" href="#ai-assistant">Khushi AI Assistant</a></li>
+                <li><a className="hover:text-[#C8F135] transition-colors" href="#features">Reports &amp; VAT</a></li>
+              </ul>
+            </div>
+
+            {/* Links Col 2 */}
+            <div>
+              <h4 className="text-xs font-bold uppercase tracking-wider text-white/40 mb-4">Company</h4>
+              <ul className="space-y-3 text-sm text-white/70 list-none p-0">
+                <li><a className="hover:text-[#C8F135] transition-colors" href="#top">About Us</a></li>
+                <li><a className="hover:text-[#C8F135] transition-colors" href="#top">Careers</a></li>
+                <li><Link className="hover:text-[#C8F135] transition-colors" to="/contact">Contact</Link></li>
+                <li><a className="hover:text-[#C8F135] transition-colors" href="#top">Security Architecture</a></li>
+                <li><a className="hover:text-[#C8F135] transition-colors" href="#top">API Documentation</a></li>
+              </ul>
+            </div>
+
+            {/* Links Col 3 */}
+            <div>
+              <h4 className="text-xs font-bold uppercase tracking-wider text-white/40 mb-4">Resources</h4>
+              <ul className="space-y-3 text-sm text-white/70 list-none p-0">
+                <li><a className="hover:text-[#C8F135] transition-colors" href="#top">Help Centre</a></li>
+                <li><a className="hover:text-[#C8F135] transition-colors" href="#top">FBR Tax Guides</a></li>
+                <li><a className="hover:text-[#C8F135] transition-colors" href="#top">Accounting Glossary</a></li>
+                <li><a className="hover:text-[#C8F135] transition-colors" href="#insights">System Telemetry</a></li>
+                <li><a className="hover:text-[#C8F135] transition-colors" href="#top">Privacy Ledger</a></li>
+              </ul>
+            </div>
+          </div>
+
+          {/* Copyright & Bottom Info */}
+          <div className="pt-8 flex flex-col sm:flex-row items-center justify-between text-xs text-white/40 gap-4">
+            <p>© 2026 Smart Financials Inc. All rights reserved.</p>
+            <div className="flex items-center gap-6">
+              <a className="hover:text-white transition-colors" href="#top">Privacy Policy</a>
+              <a className="hover:text-white transition-colors" href="#top">Terms of Service</a>
+              <a className="hover:text-white transition-colors" href="#top">Security Status</a>
             </div>
           </div>
         </div>
-        {/* Mobile Menu Output */}
-        {isMobileMenuOpen && (
-          <div className="md:hidden bg-slate-800 border-t border-slate-700 w-full p-4 absolute top-full left-0 z-50">
-            {user ? (
-              <div className="flex flex-col space-y-4">
-                <span className="text-cyan-400 font-bold block mb-2 px-2">Hi, {user}</span>
-                <button onClick={() => navigate("/list")} className="text-left px-2 py-1 text-white text-lg">Dashboard</button>
-                <button onClick={handleLogout} className="text-left px-2 py-1 text-red-400 text-lg">Logout</button>
-              </div>
-            ) : (
-              <div className="flex flex-col space-y-4">
-                <Link to="/login" className="text-white text-lg block px-2 py-1 border-b border-slate-700">Sign In</Link>
-                <Link to="/register" className="text-white text-lg block px-2 py-1 font-bold text-cyan-400">Get Started</Link>
-              </div>
-            )}
-          </div>
-        )}
-      </nav>
+      </footer>
 
-      {/* Content Container ensures pointer events apply accurately above 3D context */}
-      <div ref={mainContentRef} id="main-content" className="relative z-10 mt-10">
-
-        {/* Hero Section */}
-        <section className="relative min-h-screen flex items-center pt-32 pb-16 px-4">
-          <div className="max-w-7xl mx-auto w-full grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
-            <div className="z-10">
-              <div className="inline-flex items-center px-4 py-2 bg-slate-800/80 border border-slate-700 backdrop-blur text-cyan-400 text-sm font-semibold rounded-full mb-8 shadow-2xl">
-                <Award className="w-4 h-4 mr-2" />
-                Premium Financial OS
-              </div>
-              {/* Typewriter target */}
-              <h1 className="text-3xl sm:text-6xl lg:text-7xl font-extrabold leading-[1.1] mb-4 sm:mb-6 min-h-[2.5em] lg:min-h-[2.2em]">Accounting made
-                <span ref={heroTitleRef} className="text-transparent bg-clip-text bg-gradient-to-r from-white via-slate-200 to-slate-400"></span>
-              </h1>
-              <p className="text-base sm:text-xl text-slate-300 mb-6 sm:mb-10 leading-relaxed max-w-xl">
-                Manage your business finances with professional-grade software. From startups to enterprises, experience intelligent automation natively designed for the future.
-              </p>
-              <div className="flex flex-wrap gap-4 sm:gap-6 items-center">
-                <Link to={user ? "/list" : "/register"} className="px-6 py-3 sm:px-8 sm:py-4 bg-white text-slate-900 text-sm sm:text-base font-black rounded-xl sm:rounded-2xl hover:bg-slate-200 hover:scale-105 transition-all shadow-xl hover:shadow-cyan-400/20 flex items-center gap-2 group">
-                  {user ? "Go to Dashboard" : "Start Free Today"}
-                  <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
-                </Link>
-                <button className="flex items-center gap-3 text-slate-300 font-semibold hover:text-white transition-colors group">
-                  <div className="w-14 h-14 bg-slate-800/80 border border-slate-600 rounded-full flex items-center justify-center group-hover:bg-cyan-500/20 group-hover:border-cyan-500 transition-all shadow-xl">
-                    <Play className="w-5 h-5 text-cyan-400 ml-1" />
-                  </div>
-                  Watch Promo
-                </button>
-              </div>
-              <div className="flex gap-8 mt-12 text-sm text-slate-400 font-medium">
-                <span className="flex items-center gap-2"><Check className="text-cyan-400 w-4 h-4" /> No credit card</span>
-                <span className="flex items-center gap-2"><Check className="text-cyan-400 w-4 h-4" /> Setup in 5 mins</span>
-              </div>
-            </div>
-          </div>
-        </section>
-
-        {/* New Section 1: AI-Powered Financial Intelligence */}
-        <section id="insights-section" className="relative min-h-screen flex items-center py-24 px-4 overflow-hidden border-t border-slate-800/30">
-          <div className="max-w-7xl mx-auto w-full grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
-            {/* Left side is intentionally empty for the 3D Object */}
-            <div className="hidden lg:block relative z-0 h-full w-full"></div>
-
-            {/* Right side content */}
-            <div className="z-10 group relative mb-[45vh] lg:mb-0">
-              <div className="absolute -inset-0.5 bg-gradient-to-r from-cyan-500/30 to-blue-600/30 rounded-[2rem] blur opacity-50 group-hover:opacity-100 transition duration-1000 group-hover:duration-200"></div>
-              <div className="relative bg-slate-900/60 backdrop-blur-xl p-5 md:p-12 rounded-3xl md:rounded-[2rem] border border-slate-700/60 shadow-2xl transition-all duration-300 hover:bg-slate-900/80">
-                <h2 className="text-2xl md:text-4xl font-extrabold text-white mb-2 md:mb-3 tracking-tight">AI-Powered Financial Intelligence</h2>
-                <p className="text-base md:text-xl text-cyan-400 font-semibold mb-4 md:mb-8">Ask your financial data in plain English.</p>
-
-                <ul className="space-y-2 md:space-y-4 mb-4 md:mb-8">
-                  <li className="flex items-start gap-3 md:gap-4">
-                    <div className="mt-1 flex-shrink-0 w-5 h-5 md:w-6 md:h-6 rounded-full bg-slate-800 border border-cyan-500/50 flex items-center justify-center">
-                      <div className="w-1.5 h-1.5 md:w-2 md:h-2 rounded-full bg-cyan-400"></div>
-                    </div>
-                    <span className="text-slate-300 font-medium text-sm md:text-lg">Natural Language Queries</span>
-                  </li>
-                  <li className="flex items-start gap-3 md:gap-4">
-                    <div className="mt-1 flex-shrink-0 w-5 h-5 md:w-6 md:h-6 rounded-full bg-slate-800 border border-cyan-500/50 flex items-center justify-center">
-                      <div className="w-1.5 h-1.5 md:w-2 md:h-2 rounded-full bg-cyan-400"></div>
-                    </div>
-                    <span className="text-slate-300 font-medium text-sm md:text-lg">Real-Time Ledger Analysis</span>
-                  </li>
-                  <li className="flex items-start gap-3 md:gap-4">
-                    <div className="mt-1 flex-shrink-0 w-5 h-5 md:w-6 md:h-6 rounded-full bg-slate-800 border border-cyan-500/50 flex items-center justify-center">
-                      <div className="w-1.5 h-1.5 md:w-2 md:h-2 rounded-full bg-cyan-400"></div>
-                    </div>
-                    <span className="text-slate-300 font-medium text-sm md:text-lg">Automatic Debit & Credit Validation</span>
-                  </li>
-                  <li className="flex items-start gap-3 md:gap-4">
-                    <div className="mt-1 flex-shrink-0 w-5 h-5 md:w-6 md:h-6 rounded-full bg-slate-800 border border-cyan-500/50 flex items-center justify-center">
-                      <div className="w-1.5 h-1.5 md:w-2 md:h-2 rounded-full bg-cyan-400"></div>
-                    </div>
-                    <span className="text-slate-300 font-medium text-sm md:text-lg">Intelligent Expense Tracking</span>
-                  </li>
-                </ul>
-
-                <div className="p-3 md:p-5 rounded-xl md:rounded-2xl bg-slate-800/50 border border-slate-700/50 backdrop-blur-sm">
-                  <p className="text-xs md:text-sm text-slate-400 font-medium leading-relaxed">
-                    The system converts user queries into SQL and instantly generates accurate financial insights.
-                  </p>
-                </div>
-              </div>
-            </div>
-          </div>
-        </section>
-
-        {/* New Section 2: Financial Management & Reports */}
-        <section id="workflow-section" className="relative min-h-screen flex items-center py-24 px-4 overflow-hidden border-t border-slate-800/30">
-          <div className="max-w-7xl mx-auto w-full flex flex-col lg:flex-row justify-between items-center relative z-10 gap-8">
-
-            {/* Left Column: Transaction Management */}
-            <div className="group relative w-full lg:w-[450px]">
-              <div className="absolute -inset-0.5 bg-gradient-to-r from-purple-500/20 to-pink-600/20 rounded-[2rem] blur opacity-40 group-hover:opacity-80 transition duration-1000 group-hover:duration-200"></div>
-              <div className="relative bg-slate-900/60 backdrop-blur-xl p-5 md:p-10 rounded-3xl md:rounded-[2rem] border border-slate-700/60 shadow-2xl transition-all duration-300 hover:bg-slate-900/80">
-                <div className="w-10 h-10 md:w-14 md:h-14 bg-slate-800 rounded-xl md:rounded-2xl border border-slate-700 flex items-center justify-center mb-4 md:mb-8 shadow-inner">
-                  <FileText className="w-5 h-5 md:w-6 md:h-6 text-purple-400" />
-                </div>
-                <h3 className="text-xl md:text-2xl font-bold text-white mb-4 md:mb-6 tracking-tight">Transaction Management</h3>
-                <ul className="space-y-2 md:space-y-4 mb-4 md:mb-8">
-                  <li className="flex items-center gap-2 md:gap-3"><Check className="w-3 h-3 md:w-4 md:h-4 text-emerald-400" /><span className="text-slate-300 font-medium text-sm md:text-base">Double Entry Accounting</span></li>
-                  <li className="flex items-center gap-2 md:gap-3"><Check className="w-3 h-3 md:w-4 md:h-4 text-emerald-400" /><span className="text-slate-300 font-medium text-sm md:text-base">Multi-Ledger Support</span></li>
-                  <li className="flex items-center gap-2 md:gap-3"><Check className="w-3 h-3 md:w-4 md:h-4 text-emerald-400" /><span className="text-slate-300 font-medium text-sm md:text-base">Real-Time Balance Updates</span></li>
-                  <li className="flex items-center gap-2 md:gap-3"><Check className="w-3 h-3 md:w-4 md:h-4 text-emerald-400" /><span className="text-slate-300 font-medium text-sm md:text-base">Automatic Validation</span></li>
-                </ul>
-                <p className="text-xs md:text-sm text-slate-400 mt-auto pt-4 md:pt-6 border-t border-slate-800">
-                  Every transaction updates financial records instantly and accurately.
-                </p>
-              </div>
-            </div>
-
-            {/* Right Column: Reports & Insights */}
-            <div className="group relative w-full lg:w-[450px]">
-              <div className="absolute -inset-0.5 bg-gradient-to-r from-blue-500/20 to-cyan-400/20 rounded-[2rem] blur opacity-40 group-hover:opacity-80 transition duration-1000 group-hover:duration-200"></div>
-              <div className="relative bg-slate-900/60 backdrop-blur-xl p-5 md:p-10 rounded-3xl md:rounded-[2rem] border border-slate-700/60 shadow-2xl transition-all duration-300 hover:bg-slate-900/80">
-                <div className="w-10 h-10 md:w-14 md:h-14 bg-slate-800 rounded-xl md:rounded-2xl border border-slate-700 flex items-center justify-center mb-4 md:mb-8 shadow-inner">
-                  <PieChart className="w-5 h-5 md:w-6 md:h-6 text-blue-400" />
-                </div>
-                <h3 className="text-xl md:text-2xl font-bold text-white mb-4 md:mb-6 tracking-tight">Financial Reports & Insights</h3>
-                <ul className="space-y-2 md:space-y-4 mb-4 md:mb-8">
-                  <li className="flex items-center gap-2 md:gap-3"><Check className="w-3 h-3 md:w-4 md:h-4 text-emerald-400" /><span className="text-slate-300 font-medium text-sm md:text-base">Trial Balance</span></li>
-                  <li className="flex items-center gap-2 md:gap-3"><Check className="w-3 h-3 md:w-4 md:h-4 text-emerald-400" /><span className="text-slate-300 font-medium text-sm md:text-base">Income Statement</span></li>
-                  <li className="flex items-center gap-2 md:gap-3"><Check className="w-3 h-3 md:w-4 md:h-4 text-emerald-400" /><span className="text-slate-300 font-medium text-sm md:text-base">Balance Sheet</span></li>
-                  <li className="flex items-center gap-2 md:gap-3"><Check className="w-3 h-3 md:w-4 md:h-4 text-emerald-400" /><span className="text-slate-300 font-medium text-sm md:text-base">Export & Print Reports</span></li>
-                </ul>
-                <p className="text-xs md:text-sm text-slate-400 mt-auto pt-4 md:pt-6 border-t border-slate-800">
-                  Generate professional financial statements anytime with one click.
-                </p>
-              </div>
-            </div>
-
-          </div>
-        </section>
-
-        {/* Dashboard Pinned Section */}
-        <section id="dashboard-section" ref={dashboardContainerRef} className="relative md:h-[250vh] border-t border-slate-800/30">
-          <div ref={dashboardElementRef} className="min-h-screen py-24 md:py-0 md:h-screen md:sticky top-0 flex flex-col items-center justify-center overflow-hidden px-4">
-            <h2 ref={dashboardTitleRef} className="text-2xl md:text-5xl font-extrabold mb-4 md:mb-10 text-white text-center">Real-time Business Insights</h2>
-
-            <div className="w-full max-w-5xl bg-slate-900/40 backdrop-blur-2xl border border-slate-700 rounded-2xl md:rounded-3xl shadow-[0_0_80px_rgba(0,183,255,0.15)] p-3 sm:p-10 transform-gpu relative z-20 mx-auto">
-              {/* Dashboard mockup header */}
-              <div className="flex justify-between items-center mb-4 md:mb-10 border-b border-slate-700/50 pb-4 md:pb-6">
-                <div className="flex space-x-2">
-                  <div className="w-2.5 h-2.5 md:w-3.5 md:h-3.5 rounded-full bg-slate-700"></div>
-                  <div className="w-2.5 h-2.5 md:w-3.5 md:h-3.5 rounded-full bg-slate-700"></div>
-                  <div className="w-2.5 h-2.5 md:w-3.5 md:h-3.5 rounded-full bg-slate-700"></div>
-                </div>
-                <div className="text-slate-400 font-semibold uppercase tracking-widest text-[10px] md:text-xs">FinFlow Analytics</div>
-              </div>
-
-              {/* Dashboard grid */}
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-3 md:gap-6">
-                <div className="bg-slate-800/50 backdrop-blur-sm border border-slate-700/80 rounded-xl md:rounded-2xl p-3 md:p-6 hover:bg-slate-800/80 transition-all pointer-events-auto">
-                  <div className="text-[11px] md:text-sm text-slate-400 mb-1 md:mb-2 font-medium">Active Ledger Syncs</div>
-                  <div className="text-2xl md:text-4xl font-extrabold text-white mb-1 md:mb-2">24,103</div>
-                  <div className="flex items-center text-emerald-400 text-[10px] md:text-sm font-semibold bg-emerald-400/10 w-fit px-2 py-0.5 md:py-1 rounded-md">
-                    <Check className="w-3 h-3 md:w-4 md:h-4 mr-1" /> Real-time validation
-                  </div>
-                </div>
-                <div className="bg-slate-800/50 backdrop-blur-sm border border-slate-700/80 rounded-xl md:rounded-2xl p-3 md:p-6 pointer-events-auto">
-                  <div className="text-[11px] md:text-sm text-slate-400 mb-1 md:mb-2 font-medium">Total Visitors</div>
-                  <div className="text-2xl md:text-4xl font-extrabold text-white mb-1 md:mb-2">{stats.visitors.toLocaleString()}</div>
-                  <div className="flex items-center text-cyan-400 text-[10px] md:text-sm font-semibold bg-cyan-400/10 w-fit px-2 py-0.5 md:py-1 rounded-md">
-                    Live traffic count
-                  </div>
-                </div>
-                <div className="bg-slate-800/50 backdrop-blur-sm border border-slate-700/80 rounded-xl md:rounded-2xl p-3 md:p-6 pointer-events-auto">
-                  <div className="text-[11px] md:text-sm text-slate-400 mb-1 md:mb-2 font-medium">Total Interactions</div>
-                  <div className="text-2xl md:text-4xl font-extrabold text-white mb-1 md:mb-2">{stats.clicks.toLocaleString()}</div>
-                  <div className="flex items-center text-cyan-400 text-[10px] md:text-sm font-semibold bg-cyan-400/10 w-fit px-2 py-0.5 md:py-1 rounded-md">
-                    Live interaction tracking
-                  </div>
-                </div>
-              </div>
-
-              {/* Dashboard graph mockup */}
-              <div className="mt-3 md:mt-6 bg-slate-800/30 backdrop-blur-sm border border-slate-700/50 rounded-xl md:rounded-2xl h-16 md:h-40 flex items-end overflow-hidden p-3 md:p-6 gap-1 md:gap-2">
-                {[30, 45, 25, 60, 45, 80, 50, 95, 65, 80].map((h, i) => (
-                  <div key={i} className="flex-1 bg-gradient-to-t from-cyan-600 to-cyan-400 rounded-t-sm" style={{ height: `${h}%` }}></div>
-                ))}
-              </div>
-            </div>
-          </div>
-        </section>
-
-        {/* Features Section */}
-        <section id="features-section" className="relative py-32 px-4">
-          <div className="max-w-7xl mx-auto">
-            <div className="text-center mb-24">
-              <span className="text-cyan-400 font-bold uppercase tracking-widest text-sm bg-cyan-400/10 px-4 py-2 rounded-full border border-cyan-400/20">The Core Engine</span>
-              <h2 className="text-4xl md:text-6xl font-extrabold text-white mt-8">Powerful Features</h2>
-            </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 pointer-events-none">
-              {features.map((feature, i) => {
-                const Icon = feature.icon;
-                return (
-                  <div key={i} className="feature-flip-card h-[22rem] cursor-pointer pointer-events-auto group" style={{ perspective: '1200px' }}>
-                    <div className="flip-inner relative w-full h-full transition-transform duration-700" style={{ transformStyle: 'preserve-3d' }}>
-                      {/* Front Side */}
-                      <div className="absolute inset-0 bg-slate-900/60 backdrop-blur-xl border border-slate-700 hover:border-cyan-500/50 rounded-3xl p-8 flex flex-col justify-center items-center shadow-lg transition-colors" style={{ backfaceVisibility: 'hidden' }}>
-                        <div className="w-20 h-20 rounded-2xl bg-slate-800 border border-slate-700 flex items-center justify-center mb-6 shadow-inner group-hover:bg-cyan-900/50 transition-colors">
-                          <Icon className="w-10 h-10 text-cyan-400" />
-                        </div>
-                        <h3 className="text-2xl font-bold text-white text-center">{feature.title}</h3>
-                      </div>
-                      {/* Back Side */}
-                      <div className="absolute inset-0 bg-cyan-900/80 backdrop-blur-xl border border-cyan-400 rounded-3xl p-8 flex items-center justify-center text-center shadow-[0_0_30px_rgba(0,183,255,0.3)]" style={{ backfaceVisibility: 'hidden', transform: 'rotateY(180deg)' }}>
-                        <p className="text-gray-100 text-xl font-medium leading-relaxed">{feature.description}</p>
-                      </div>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-        </section>
-
-        {/* Interactive Marquee */}
-        <section ref={marqueeContainerRef} className="relative py-20 overflow-hidden bg-gradient-to-r from-transparent via-cyan-900/10 to-transparent border-y border-slate-800/50 my-20">
-          <div className="w-max pr-[5vw] whitespace-nowrap opacity-50 select-none pointer-events-none" ref={marqueeTextRef}>
-            <h1 className="text-[12vw] font-black italic text-white uppercase tracking-tighter mix-blend-screen">
-              SMART FINANCIAL SYSTEM • NEXT GEN ACCOUNTING • AUTOMATED REPORT GENERATION
-            </h1>
-          </div>
-        </section>
-
-        {/* Testimonials */}
-        <section id="testimonials-section" className="relative py-32 overflow-hidden bg-slate-900/50 backdrop-blur-sm border-t border-slate-800" ref={testimonialsRef}>
-          <h2 className="text-4xl md:text-5xl text-center font-extrabold text-white mb-20 px-8 lg:px-20">What our clients say</h2>
-          <div className="flex w-max px-8 lg:px-20 gap-8 pb-10" ref={testimonialsContainerRef}>
-            {testimonials.map((t, i) => (
-              <div key={i} className="testimonial-card w-[85vw] md:w-[35vw] xl:w-[25vw] flex-shrink-0 bg-slate-800/80 backdrop-blur-2xl border border-slate-700/50 rounded-[2.5rem] p-10 pointer-events-auto hover:bg-slate-800 transition-colors shadow-2xl">
-                <div className="flex items-center mb-8 gap-1">
-                  {[...Array(t.rating)].map((_, j) => <Star key={j} className="w-6 h-6 text-yellow-500 fill-current" />)}
-                </div>
-                <p className="text-gray-300 text-xl font-medium leading-relaxed mb-10 min-h-[6rem]">"{t.content}"</p>
-                <div className="flex items-center pt-8 border-t border-slate-700/50">
-                  <img src={t.avatar} className="w-16 h-16 rounded-full mr-5 object-cover border-2 border-cyan-500" alt={t.name} />
-                  <div>
-                    <h4 className="font-bold text-white text-xl">{t.name}</h4>
-                    <p className="text-sm font-semibold text-cyan-400 uppercase tracking-wider mt-1">{t.role}</p>
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
-        </section>
-
-        {/* CTA Banner */}
-        <section id="cta-section" ref={ctaRef} className="relative py-48 text-center px-4 overflow-hidden border-t border-cyan-900/30">
-          <div className="absolute inset-0 bg-gradient-to-b from-transparent to-slate-900 pointer-events-none z-0"></div>
-          <div className="max-w-4xl mx-auto relative z-10">
-            <h2 className="text-5xl md:text-7xl font-black text-white mb-8 leading-tight">
-              {/* Parent CTA timeline controls the trigger */}
-              <CustomScrambleText timeline={ctaTimeline} text="Ready to transform your finances?" className="text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 via-blue-400 to-purple-500 block" />
-            </h2>
-            <div ref={ctaContentRef}>
-              <p className="text-2xl text-slate-300 mb-14 font-medium">Join thousands of businesses experiencing the future of accounting today.</p>
-              <div className="flex flex-col sm:flex-row justify-center gap-6 pointer-events-auto">
-                <Link to="/register" className="px-10 py-5 bg-white text-slate-900 rounded-2xl font-black text-xl hover:bg-slate-200 hover:scale-105 transition-all shadow-[0_0_40px_rgba(255,255,255,0.3)] w-full sm:w-auto text-center">
-                  Start Free Trial
-                </Link>
-                <Link to="/login" className="px-10 py-5 bg-slate-800/80 backdrop-blur border-2 border-slate-600 rounded-2xl font-black text-xl text-white hover:bg-slate-700 transition-all w-full sm:w-auto text-center hover:scale-105">
-                  Sign In
-                </Link>
-              </div>
-            </div>
-          </div>
-        </section>
-
-        {/* Footer */}
-        <footer className="bg-slate-800 text-slate-400 py-16 px-4 border-t border-slate-800/50 pointer-events-auto relative z-10">
-          <div className="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-4 gap-12 mb-16">
-            <div className="col-span-1 md:col-span-2">
-              <div className="flex items-center gap-3 mb-6">
-                <img src="/final.png" alt="Logo" className="h-10 w-auto opacity-80" />
-                <span className="text-2xl font-black text-white tracking-tight">Smart Financial</span>
-              </div>
-              <p className="max-w-sm text-slate-500 font-medium leading-relaxed">The premium financial operating system engineered for scalability, precision, and modern design.</p>
-            </div>
-            <div>
-              <h4 className="font-bold text-white mb-6 uppercase tracking-wider text-sm">Product</h4>
-              <ul className="pl-0 space-y-4">
-                <li><a href="#" className="hover:text-cyan-400 transition-colors">Features</a></li>
-                <li><a href="#" className="hover:text-cyan-400 transition-colors">Pricing</a></li>
-                <li><a href="#" className="hover:text-cyan-400 transition-colors">Security</a></li>
-              </ul>
-            </div>
-            <div>
-              <h4 className="font-bold text-white mb-6 uppercase tracking-wider text-sm">Company</h4>
-              <ul className="pl-0 space-y-4">
-                <li><a href="#" className="hover:text-cyan-400 transition-colors">About Us</a></li>
-                <li><a href="#" className="hover:text-cyan-400 transition-colors">Contact</a></li>
-                <li><a href="#" className="hover:text-cyan-400 transition-colors">Careers</a></li>
-              </ul>
-            </div>
-          </div>
-          <div className="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center pt-8 border-t border-slate-800/50">
-            <p>© 2026 Smart Financial. All rights reserved.</p>
-            <div className="flex items-center gap-6 mt-4 md:mt-0 text-sm font-semibold">
-              <span className="flex items-center"><Globe className="w-4 h-4 mr-2" /> English</span>
-              <span className="flex items-center">
-                <div className="w-2 h-2 bg-emerald-500 rounded-full mr-2 shadow-[0_0_10px_rgba(16,185,129,1)] animate-pulse"></div>
-                All systems operational
-              </span>
-            </div>
-          </div>
-        </footer>
-
-      </div>
     </div>
   );
 }
