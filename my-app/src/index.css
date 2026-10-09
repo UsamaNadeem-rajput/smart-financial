@@ -131,91 +131,21 @@ html {
   @apply bg-gray-400;
 }
 
-/* --- Stitch Design System Tokens & Utilities --- */
-:root {
-  --sf-ink: #0F1E14;
-  --sf-ink-card: #15271B;
-  --sf-ink-dark: #08110B;
-  --sf-lime: #C8F135;
-  --sf-lime-soft: #D9F926;
-  --sf-lime-bright: #CCFF00;
-  --sf-cream: #F3F4EC;
-  --sf-cream-muted: #E5E7DC;
-  --sf-white: #FFFFFF;
-  --sf-gray-muted: #6C7A70;
-  --sf-border-light: rgba(15, 30, 20, 0.08);
-  --sf-border-dark: rgba(200, 241, 53, 0.2);
+/* Stitch Design System - Step number outline */
+.step-num-outline {
+  font-size: 5rem;
+  line-height: 1;
+  font-weight: 800;
+  color: #D8F929;
+  -webkit-text-stroke: 3px #111315;
+  text-stroke: 3px #111315;
 }
 
-.font-display {
-  font-family: 'Bricolage Grotesque', sans-serif;
-  letter-spacing: -0.03em;
+/* Hide scrollbar utility */
+.scrollbar-none::-webkit-scrollbar {
+  display: none;
 }
-
-.tabular-nums {
-  font-variant-numeric: tabular-nums;
+.scrollbar-none {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
 }
-
-.glass-chip {
-  background: rgba(255, 255, 255, 0.85);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-  border: 1px solid rgba(255, 255, 255, 0.6);
-}
-
-.glass-dark {
-  background: rgba(15, 30, 20, 0.92);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
-  border: 1px solid rgba(200, 241, 53, 0.25);
-}
-
-@keyframes subtlePulse {
-  0%, 100% { box-shadow: 0 0 0 0 rgba(200, 241, 53, 0.5); }
-  50% { box-shadow: 0 0 0 12px rgba(200, 241, 53, 0); }
-}
-
-.btn-pulse {
-  animation: subtlePulse 2.8s infinite;
-}
-
-@keyframes marqueeScroll {
-  0% { transform: translateX(0); }
-  100% { transform: translateX(-50%); }
-}
-
-.animate-marquee {
-  display: flex;
-  width: max-content;
-  animation: marqueeScroll 24s linear infinite;
-}
-
-.animate-marquee:hover {
-  animation-play-state: paused;
-}
-
-.line-mask {
-  overflow: hidden;
-  display: inline-block;
-  vertical-align: bottom;
-}
-
-.reveal-word {
-  display: inline-block;
-  will-change: transform, opacity;
-}
-
-.step-stroke {
-  stroke-dasharray: 260;
-  stroke-dashoffset: 260;
-  transition: stroke-dashoffset 0.8s cubic-bezier(0.16, 1, 0.3, 1);
-}
-
-@keyframes barGlow {
-  0%, 100% { filter: drop-shadow(0 0 8px rgba(0, 229, 255, 0.4)); }
-  50% { filter: drop-shadow(0 0 18px rgba(0, 229, 255, 0.85)); }
-}
-
-.telemetry-bar-glow {
-  animation: barGlow 3.5s ease-in-out infinite;
-}
