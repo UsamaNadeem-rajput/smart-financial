@@ -84,19 +84,20 @@ export default function LandingPage() {
       >
         <div className="max-w-7xl mx-auto px-6 h-20 flex items-center justify-between">
           {/* Brand Logo */}
-          <Link className="flex items-center gap-2.5 group" data-purpose="brand-logo" to="/">
-            <div className="w-7 h-7 bg-brand-lime rounded-md flex items-center justify-center border border-black shadow-sm">
-              <div className="w-3.5 h-3.5 bg-black rounded-[2px] transform rotate-45 group-hover:rotate-90 transition-transform duration-300"></div>
-            </div>
-            <span className="text-xl font-bold tracking-tight text-[#111315]">Ledgerly</span>
+          <Link className="flex items-center gap-3 group" data-purpose="brand-logo" to="/">
+            <img src="/final.png" alt="Smart Financial Logo" className="h-9 w-auto object-contain" />
+            <span className="text-xl font-extrabold tracking-tight text-[#111315]">
+              Smart Financial<span className="text-brand-dark font-normal text-xs ml-1.5 px-2 py-0.5 rounded-full bg-brand-lime font-mono">AI</span>
+            </span>
           </Link>
 
           {/* Desktop Nav Links */}
           <nav className="hidden md:flex items-center gap-8 text-[15px] font-medium text-neutral-600" data-purpose="nav-links">
-            <a className="hover:text-black transition-colors" href="#product">Product</a>
-            <a className="hover:text-black transition-colors" href="#solutions">Solutions</a>
+            <a className="hover:text-black transition-colors" href="#features">Features</a>
+            <a className="hover:text-black transition-colors" href="#insights">Telemetry</a>
+            <a className="hover:text-black transition-colors" href="#how-it-works">How It Works</a>
+            <a className="hover:text-black transition-colors" href="#ai-assistant">AI Copilot</a>
             <a className="hover:text-black transition-colors" href="#pricing">Pricing</a>
-            <a className="hover:text-black transition-colors" href="#resources">Resources</a>
           </nav>
 
           {/* Auth Actions */}
@@ -128,13 +129,13 @@ export default function LandingPage() {
             ) : (
               <>
                 <Link className="text-neutral-700 hover:text-black transition-colors" to="/login">
-                  Log in
+                  Sign In
                 </Link>
                 <Link
                   className="bg-brand-dark text-white hover:bg-black px-5 py-2.5 rounded-full font-medium transition-all shadow-sm"
                   to="/register"
                 >
-                  Start free
+                  Start Free Trial
                 </Link>
               </>
             )}
@@ -156,17 +157,20 @@ export default function LandingPage() {
         {/* Mobile Navigation Drawer */}
         {isMobileMenuOpen && (
           <div className="md:hidden bg-white/95 backdrop-blur-md border-b border-neutral-200 px-6 py-4 flex flex-col space-y-4">
-            <a onClick={() => setIsMobileMenuOpen(false)} className="text-neutral-700 hover:text-black font-medium" href="#product">
-              Product
+            <a onClick={() => setIsMobileMenuOpen(false)} className="text-neutral-700 hover:text-black font-medium" href="#features">
+              Features
             </a>
-            <a onClick={() => setIsMobileMenuOpen(false)} className="text-neutral-700 hover:text-black font-medium" href="#solutions">
-              Solutions
+            <a onClick={() => setIsMobileMenuOpen(false)} className="text-neutral-700 hover:text-black font-medium" href="#insights">
+              Telemetry
+            </a>
+            <a onClick={() => setIsMobileMenuOpen(false)} className="text-neutral-700 hover:text-black font-medium" href="#how-it-works">
+              How It Works
+            </a>
+            <a onClick={() => setIsMobileMenuOpen(false)} className="text-neutral-700 hover:text-black font-medium" href="#ai-assistant">
+              AI Copilot
             </a>
             <a onClick={() => setIsMobileMenuOpen(false)} className="text-neutral-700 hover:text-black font-medium" href="#pricing">
               Pricing
-            </a>
-            <a onClick={() => setIsMobileMenuOpen(false)} className="text-neutral-700 hover:text-black font-medium" href="#resources">
-              Resources
             </a>
             <div className="pt-2 border-t border-neutral-200 flex flex-col space-y-3">
               {user ? (
@@ -207,14 +211,14 @@ export default function LandingPage() {
                     onClick={() => setIsMobileMenuOpen(false)}
                     className="text-left font-medium text-neutral-900"
                   >
-                    Log in
+                    Sign In
                   </Link>
                   <Link
                     to="/register"
                     onClick={() => setIsMobileMenuOpen(false)}
                     className="text-center bg-brand-dark text-white py-2.5 rounded-full font-medium"
                   >
-                    Start free
+                    Start Free Trial
                   </Link>
                 </>
               )}
@@ -233,7 +237,7 @@ export default function LandingPage() {
               {/* Announcement Tag */}
               <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-neutral-100 border border-neutral-200/80 mb-7 text-xs sm:text-sm font-medium text-neutral-800">
                 <span className="w-2 h-2 rounded-full bg-[#10B981] animate-pulse"></span>
-                <span>New · Ask your books anything</span>
+                <span>New · AI-Powered Double-Entry Accounting</span>
               </div>
               {/* Hero Headline */}
               <h1 className="text-5xl sm:text-6xl md:text-7xl font-extrabold tracking-tight text-[#111315] leading-[1.05] mb-6">
@@ -243,7 +247,7 @@ export default function LandingPage() {
               </h1>
               {/* Hero Subheading */}
               <p className="text-lg sm:text-xl text-neutral-600 font-normal leading-relaxed max-w-xl mb-9">
-                Invoices, expenses, bank feeds and reports in one calm workspace — with an AI that does the boring bookkeeping while you run the business.
+                Multi-business management, double-entry journals, Chart of Accounts, and real-time Trial Balance — backed by an AI assistant that answers queries in plain English and Roman Urdu.
               </p>
               {/* Action Buttons */}
               <div className="flex flex-wrap items-center gap-4 mb-4">
@@ -251,18 +255,18 @@ export default function LandingPage() {
                   className="inline-flex items-center justify-center bg-brand-lime hover:bg-brand-lime-hover text-black font-semibold px-7 py-3.5 rounded-full text-base transition-all shadow-sm"
                   to={user ? "/list" : "/register"}
                 >
-                  {user ? "Go to Dashboard" : "Try it free for 30 days"}
+                  {user ? "Go to Dashboard" : "Start Free Trial"}
                 </Link>
                 <a
                   className="inline-flex items-center justify-center bg-transparent hover:bg-neutral-100 text-neutral-800 font-medium px-7 py-3.5 rounded-full text-base border border-neutral-300 transition-all"
-                  href="#demo"
+                  href="#ai-assistant"
                 >
-                  Watch 2-min demo
+                  Explore AI Assistant
                 </a>
               </div>
               {/* Fine note */}
               <p className="text-xs text-neutral-500 font-medium pl-1">
-                No card needed. Cancel anytime.
+                Multi-business ready · Automatic Debit/Credit validation · Complete audit trail
               </p>
             </div>
 
@@ -272,15 +276,15 @@ export default function LandingPage() {
               <div className="bg-brand-dark text-white rounded-3xl p-6 sm:p-7 shadow-2xl relative border border-neutral-800">
                 {/* Dashboard Header Row */}
                 <div className="flex items-center justify-between mb-4">
-                  <span className="text-xs text-neutral-400 font-medium">Cash flow · This quarter</span>
+                  <span className="text-xs text-neutral-400 font-medium">Smart Financial Ledger · Live Sync</span>
                   <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-emerald-950/80 text-[#34D399] border border-emerald-500/20 text-xs font-semibold">
-                    Live
+                    Balanced
                   </span>
                 </div>
                 {/* Net Balance Highlight */}
                 <div className="mb-6">
                   <div className="text-4xl sm:text-5xl font-extrabold tracking-tight">$48,920</div>
-                  <div className="text-xs text-neutral-400 mt-1">Net balance across 3 accounts</div>
+                  <div className="text-xs text-neutral-400 mt-1">Real-time ledger balance across active business entities</div>
                 </div>
                 {/* Bar Chart Visual representation */}
                 <div className="flex items-end justify-between gap-2.5 h-32 pt-4 pb-2 px-1 mb-6 border-b border-neutral-800/80">
@@ -291,27 +295,27 @@ export default function LandingPage() {
                   <div className="w-full bg-neutral-800/80 rounded-lg h-20"></div>
                   <div className="w-full bg-brand-lime rounded-lg h-28 shadow-[0_0_15px_rgba(216,249,41,0.3)]"></div>
                 </div>
-                {/* Recent Invoices List */}
-                <div className="space-y-2.5 max-w-[65%]">
+                {/* Recent Journal Transactions */}
+                <div className="space-y-2.5 max-w-[70%]">
                   <div className="bg-neutral-900/90 hover:bg-neutral-800/80 transition-colors border border-neutral-800 px-4 py-3 rounded-xl text-xs font-medium text-neutral-300">
-                    Invoice #1042 · Studio Nova
+                    Journal #1042 · Accounts Receivable &amp; Revenue
                   </div>
                   <div className="bg-neutral-900/90 hover:bg-neutral-800/80 transition-colors border border-neutral-800 px-4 py-3 rounded-xl text-xs font-medium text-neutral-300">
-                    Invoice #1043 · Kite Labs
+                    Journal #1043 · Operating Expenses &amp; Cash Bank
                   </div>
                 </div>
                 {/* Floating AI Prompt Notification Card */}
                 <div className="absolute -bottom-6 -right-3 sm:-right-6 w-64 sm:w-72 bg-white text-black rounded-2xl p-4 shadow-2xl border border-neutral-100 z-10" data-purpose="floating-ai-card">
-                  <div className="text-[10px] font-bold tracking-wider text-neutral-400 uppercase mb-1">Ledgerly AI</div>
+                  <div className="text-[10px] font-bold tracking-wider text-neutral-400 uppercase mb-1">Smart Financial AI</div>
                   <p className="text-xs font-bold leading-snug text-neutral-900 mb-3">
-                    I matched 14 bank transactions and flagged 1 duplicate bill. Review?
+                    Validated 14 double-entry items. Debit equals Credit across all accounts.
                   </p>
                   <div className="flex items-center gap-2">
                     <button type="button" className="bg-black hover:bg-neutral-800 text-white text-xs font-semibold px-4 py-1.5 rounded-full transition-colors cursor-pointer">
-                      Review
+                      View Ledger
                     </button>
                     <button type="button" className="border border-neutral-300 hover:bg-neutral-100 text-neutral-700 text-xs font-medium px-4 py-1.5 rounded-full transition-colors cursor-pointer">
-                      Later
+                      Dismiss
                     </button>
                   </div>
                 </div>
@@ -326,7 +330,16 @@ export default function LandingPage() {
       <section className="py-6 overflow-x-auto scrollbar-none bg-transparent" data-purpose="feature-tags-nav">
         <div className="max-w-7xl mx-auto px-6">
           <div className="flex items-center justify-start sm:justify-center gap-2.5 min-w-max">
-            {['Invoicing', 'Expenses', 'Bank feeds', 'Payroll', 'Inventory', 'Tax & VAT', 'Multi-currency', 'Reports'].map((tag, i) => (
+            {[
+              'Multi-Business',
+              'Chart of Accounts',
+              'Double-Entry Journal',
+              'Ledger Balancing',
+              'Trial Balance',
+              'Income Statement',
+              'Balance Sheet',
+              'Smart AI Copilot'
+            ].map((tag, i) => (
               <span
                 key={i}
                 className="px-5 py-2 rounded-full border border-neutral-200 bg-white text-neutral-700 text-sm font-medium hover:border-black cursor-pointer transition-colors shadow-2xs"
@@ -340,103 +353,103 @@ export default function LandingPage() {
       {/* END: FeaturePills */}
 
       {/* BEGIN: BentoSection */}
-      <section className="py-24 bg-transparent" data-purpose="everything-in-one-place" id="product">
+      <section className="py-24 bg-transparent" data-purpose="everything-in-one-place" id="features">
         <div className="max-w-7xl mx-auto px-6">
           {/* Section Headers */}
           <div className="mb-14">
             <span className="text-xs font-bold tracking-widest text-neutral-500 uppercase block mb-3">
-              Everything in one place
+              Core Platform Capabilities
             </span>
             <h2 className="text-4xl sm:text-5xl font-extrabold tracking-tight text-neutral-900 flex flex-wrap items-center gap-3">
               <span>Less spreadsheet. More</span>
-              <span className="inline-block bg-brand-lime px-3.5 py-1 rounded-2xl text-black">business.</span>
+              <span className="inline-block bg-brand-lime px-3.5 py-1 rounded-2xl text-black">financial control.</span>
             </h2>
           </div>
 
           {/* Bento Grid (3 Columns x 2 Rows) */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {/* Card 1: Invoicing (Vibrant Neon Accent) */}
+            {/* Card 1: Multi-Business Management (Vibrant Neon Accent) */}
             <div className="bg-brand-lime text-black rounded-3xl p-8 flex flex-col justify-between min-h-[290px] shadow-sm transition-transform hover:-translate-y-1 duration-200">
               <div>
-                <span className="text-xs font-bold tracking-wider uppercase text-neutral-800">Invoicing</span>
+                <span className="text-xs font-bold tracking-wider uppercase text-neutral-800">Multi-Business Management</span>
                 <h3 className="text-3xl font-extrabold mt-8 mb-3 tracking-tight leading-snug">
-                  Get paid days sooner.
+                  Manage all ventures in one place.
                 </h3>
               </div>
               <p className="text-sm font-semibold text-neutral-800 leading-relaxed">
-                Branded invoices, automatic reminders and one-tap payment links.
+                Create and manage multiple businesses and entities seamlessly with dedicated ledgers and isolated account books.
               </p>
             </div>
 
-            {/* Card 2: Bank Feeds (White Card with Progress Bar) */}
+            {/* Card 2: Double-Entry Validation (White Card with Progress Bar) */}
             <div className="bg-white border border-neutral-200 rounded-3xl p-8 flex flex-col justify-between min-h-[290px] shadow-xs transition-transform hover:-translate-y-1 duration-200">
               <div>
-                <span className="text-xs font-bold tracking-wider uppercase text-neutral-400">Bank feeds</span>
+                <span className="text-xs font-bold tracking-wider uppercase text-neutral-400">Double-Entry Accounting</span>
                 {/* Progress indicator mock */}
                 <div className="mt-4 mb-4">
                   <div className="w-full bg-neutral-100 rounded-full h-2 mb-2 overflow-hidden">
-                    <div className="bg-brand-dark h-full rounded-full w-[86%]"></div>
+                    <div className="bg-brand-dark h-full rounded-full w-[100%]"></div>
                   </div>
-                  <span className="text-xs font-medium text-neutral-500">86% reconciled automatically</span>
+                  <span className="text-xs font-medium text-neutral-500">100% Debit &amp; Credit Balanced</span>
                 </div>
                 <h3 className="text-2xl font-bold tracking-tight text-neutral-900 mt-2">
-                  Reconcile in minutes.
+                  Zero-error ledger validation.
                 </h3>
               </div>
               <p className="text-sm text-neutral-500 leading-relaxed">
-                Transactions match themselves. You only touch the odd ones out.
+                Automatic mathematical verification guarantees debits equal credits before saving any transaction.
               </p>
             </div>
 
-            {/* Card 3: Reports (Dark Obsidian Card) */}
+            {/* Card 3: Financial Reports (Dark Obsidian Card) */}
             <div className="bg-brand-dark text-white rounded-3xl p-8 flex flex-col justify-between min-h-[290px] shadow-lg transition-transform hover:-translate-y-1 duration-200">
               <div>
-                <span className="text-xs font-bold tracking-wider uppercase text-brand-lime">Reports</span>
+                <span className="text-xs font-bold tracking-wider uppercase text-brand-lime">Financial Statements</span>
                 <h3 className="text-3xl font-extrabold mt-8 mb-3 tracking-tight">
-                  Know your numbers.
+                  Instant, audit-ready reports.
                 </h3>
               </div>
               <p className="text-sm text-neutral-400 leading-relaxed">
-                Profit &amp; loss, balance sheet and cash forecast — always current, never exported.
+                Generate real-time Trial Balance, Income Statements (P&amp;L), and Balance Sheets with automated account rollups.
               </p>
             </div>
 
-            {/* Card 4: Expenses */}
+            {/* Card 4: Chart of Accounts */}
             <div className="bg-white border border-neutral-200 rounded-3xl p-8 flex flex-col justify-between min-h-[290px] shadow-xs transition-transform hover:-translate-y-1 duration-200">
               <div>
-                <span className="text-xs font-bold tracking-wider uppercase text-neutral-400">Expenses</span>
+                <span className="text-xs font-bold tracking-wider uppercase text-neutral-400">Chart of Accounts</span>
                 <h3 className="text-2xl font-bold tracking-tight text-neutral-900 mt-8 mb-2">
-                  Snap a receipt. Done.
+                  Customizable account structures.
                 </h3>
               </div>
               <p className="text-sm text-neutral-500 leading-relaxed">
-                Scan, categorise and attach to the right bill.
+                Organize assets, liabilities, equity, revenues, and expenses with complete categorization and code hierarchy.
               </p>
             </div>
 
-            {/* Card 5: Tax */}
+            {/* Card 5: Transaction Management */}
             <div className="bg-white border border-neutral-200 rounded-3xl p-8 flex flex-col justify-between min-h-[290px] shadow-xs transition-transform hover:-translate-y-1 duration-200">
               <div>
-                <span className="text-xs font-bold tracking-wider uppercase text-neutral-400">Tax</span>
+                <span className="text-xs font-bold tracking-wider uppercase text-neutral-400">Transaction Journal</span>
                 <h3 className="text-2xl font-bold tracking-tight text-neutral-900 mt-8 mb-2">
-                  Tax-ready all year.
+                  Full audit trail &amp; history.
                 </h3>
               </div>
               <p className="text-sm text-neutral-500 leading-relaxed">
-                VAT and sales tax tracked as you go, filed without panic.
+                Record, inspect, and adjust transactions with complete chronological tracking and verified balances.
               </p>
             </div>
 
-            {/* Card 6: Team */}
+            {/* Card 6: AI Intelligence */}
             <div className="bg-white border border-neutral-200 rounded-3xl p-8 flex flex-col justify-between min-h-[290px] shadow-xs transition-transform hover:-translate-y-1 duration-200">
               <div>
-                <span className="text-xs font-bold tracking-wider uppercase text-neutral-400">Team</span>
+                <span className="text-xs font-bold tracking-wider uppercase text-neutral-400">Smart Financial AI</span>
                 <h3 className="text-2xl font-bold tracking-tight text-neutral-900 mt-8 mb-2">
-                  Your accountant, invited.
+                  Conversational financial insights.
                 </h3>
               </div>
               <p className="text-sm text-neutral-500 leading-relaxed">
-                Share access with roles — no more emailing files.
+                Ask in plain English or Roman Urdu — the AI converts queries into SQL and gives instant ledger numbers.
               </p>
             </div>
           </div>
@@ -451,13 +464,13 @@ export default function LandingPage() {
           <div className="text-center max-w-3xl mx-auto mb-14">
             <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-neutral-900/5 border border-black/10 text-neutral-800 text-xs font-bold tracking-widest uppercase mb-4 shadow-2xs">
               <span className="w-2 h-2 rounded-full bg-[#10B981] animate-pulse"></span>
-              FINFLOW ANALYTICS // REAL-TIME TELEMETRY
+              SMART FINANCIAL TELEMETRY // REAL-TIME SYNC
             </div>
             <h2 className="text-4xl sm:text-5xl lg:text-6xl font-extrabold tracking-tight text-neutral-900 mb-4">
-              Real-time Business Insights
+              Real-time Ledger Telemetry
             </h2>
             <p className="text-base sm:text-lg text-neutral-600 font-normal leading-relaxed">
-              Instant visibility across all active ledger syncs, live visitors, and continuous interaction streams.
+              Continuous visibility across all synchronized double-entry accounts, live visitors, and platform interactions.
             </p>
           </div>
 
@@ -475,7 +488,7 @@ export default function LandingPage() {
               </div>
               <div className="flex items-center gap-2 text-xs font-mono font-bold tracking-widest text-neutral-400 uppercase">
                 <span className="w-2 h-2 rounded-full bg-cyan-400 animate-pulse"></span>
-                FINFLOW ANALYTICS
+                SMART FINANCIAL ANALYTICS
               </div>
             </div>
 
@@ -530,10 +543,10 @@ export default function LandingPage() {
               {/* Chart Header Meta */}
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-6 text-xs text-neutral-400 font-mono">
                 <span className="tracking-wider text-cyan-400 font-semibold">SYNCHRONOUS THROUGHPUT HISTOGRAM (LAST 8 INTERVALS)</span>
-                <span className="text-neutral-500">Automated Ingestion · Peak: +34.2% Sync Velocity</span>
+                <span className="text-neutral-500">Double-Entry Ingestion · Peak: +34.2% Sync Velocity</span>
               </div>
 
-              {/* 10 Vertical Bars Matching Stitch Design */}
+              {/* 10 Vertical Bars */}
               <div className="h-44 sm:h-52 flex items-end justify-between gap-2 sm:gap-3 px-2 pt-6 pb-2 border-b border-neutral-800">
                 <div className="w-full bg-gradient-to-t from-cyan-600 to-cyan-400 rounded-t-md transition-all duration-300 hover:brightness-125" style={{ height: '25%' }}></div>
                 <div className="w-full bg-gradient-to-t from-cyan-600 to-cyan-400 rounded-t-md transition-all duration-300 hover:brightness-125" style={{ height: '45%' }}></div>
@@ -581,15 +594,15 @@ export default function LandingPage() {
       {/* END: RealTimeInsightsSection */}
 
       {/* BEGIN: HowItWorksSection */}
-      <section className="py-20 border-y border-neutral-200/60 bg-transparent" data-purpose="how-it-works" id="solutions">
+      <section className="py-20 border-y border-neutral-200/60 bg-transparent" data-purpose="how-it-works" id="how-it-works">
         <div className="max-w-7xl mx-auto px-6">
           {/* Section Title */}
           <div className="mb-16">
             <span className="text-xs font-bold tracking-widest text-neutral-500 uppercase block mb-3">
-              How it works
+              How It Works
             </span>
             <h2 className="text-4xl sm:text-5xl font-extrabold tracking-tight text-neutral-900">
-              Set up before your chai cools.
+              Balanced books before your chai cools.
             </h2>
           </div>
 
@@ -598,25 +611,25 @@ export default function LandingPage() {
             {/* Step 1 */}
             <div className="flex flex-col" data-purpose="step-card">
               <div className="step-num-outline mb-4">1</div>
-              <h3 className="text-xl font-bold text-neutral-900 mb-2">Connect your bank</h3>
+              <h3 className="text-xl font-bold text-neutral-900 mb-2">Create Business &amp; Accounts</h3>
               <p className="text-sm text-neutral-600 leading-relaxed">
-                Secure read-only feeds bring in every transaction.
+                Add multiple business workspaces and define your Chart of Accounts in seconds.
               </p>
             </div>
             {/* Step 2 */}
             <div className="flex flex-col" data-purpose="step-card">
               <div className="step-num-outline mb-4">2</div>
-              <h3 className="text-xl font-bold text-neutral-900 mb-2">Let Ledgerly sort it</h3>
+              <h3 className="text-xl font-bold text-neutral-900 mb-2">Post Double-Entry Journals</h3>
               <p className="text-sm text-neutral-600 leading-relaxed">
-                Categories, matches and reminders happen automatically.
+                Record transactions with automatic debit-credit balancing and live ledger updates.
               </p>
             </div>
             {/* Step 3 */}
             <div className="flex flex-col" data-purpose="step-card">
               <div className="step-num-outline mb-4">3</div>
-              <h3 className="text-xl font-bold text-neutral-900 mb-2">Run on real numbers</h3>
+              <h3 className="text-xl font-bold text-neutral-900 mb-2">Generate Reports &amp; Ask AI</h3>
               <p className="text-sm text-neutral-600 leading-relaxed">
-                Open the dashboard and see exactly where you stand.
+                View instant Trial Balance, Income Statements, and get conversational ledger insights.
               </p>
             </div>
           </div>
@@ -625,25 +638,25 @@ export default function LandingPage() {
       {/* END: HowItWorksSection */}
 
       {/* BEGIN: LedgerlyAiBanner */}
-      <section className="py-20" data-purpose="ai-feature-section" id="demo">
+      <section className="py-20" data-purpose="ai-feature-section" id="ai-assistant">
         <div className="max-w-7xl mx-auto px-6">
           {/* Dark Obsidian Container */}
           <div className="bg-brand-dark rounded-4xl sm:rounded-5xl p-8 sm:p-12 lg:p-16 text-white shadow-xl relative overflow-hidden">
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 items-center">
               {/* AI Promo Left */}
               <div className="lg:col-span-5">
-                <span className="text-xs font-bold tracking-widest uppercase text-brand-lime block mb-4">Ledgerly AI</span>
+                <span className="text-xs font-bold tracking-widest uppercase text-brand-lime block mb-4">Smart Financial AI</span>
                 <h2 className="text-4xl sm:text-5xl font-extrabold tracking-tight mb-5 leading-tight">
                   Just ask your<br />books.
                 </h2>
                 <p className="text-base text-neutral-400 font-normal leading-relaxed mb-8 max-w-sm">
-                  Type a question in plain English — or Roman Urdu. Get an answer, a chart and the entry behind it.
+                  Ask financial questions in plain English or Roman Urdu. The AI queries your accounting records and delivers verified ledger calculations.
                 </p>
                 <a
                   className="inline-flex items-center justify-center bg-brand-lime hover:bg-brand-lime-hover text-black font-semibold px-6 py-3 rounded-full text-sm transition-all shadow-md"
-                  href="#demo"
+                  href="#ai-assistant"
                 >
-                  Meet the assistant
+                  Meet the AI Copilot
                 </a>
               </div>
 
@@ -655,16 +668,16 @@ export default function LandingPage() {
                 </div>
                 {/* Assistant Response Bubble (Lime Neon) */}
                 <div className="self-end bg-brand-lime text-black font-medium text-xs sm:text-sm px-5 py-3.5 rounded-2xl max-w-md shadow-md leading-relaxed">
-                  Net profit is $12,480, up 18% on last month. Your biggest cost was software at $3,100.
+                  Is month net profit $12,480 hai, last month se 18% zyada. Total revenue $45,200 aur total expenses $32,720 hain.
                 </div>
                 {/* Follow-up Suggestion Chip */}
                 <div className="self-start bg-neutral-800/80 hover:bg-neutral-800 text-neutral-300 text-xs sm:text-sm px-5 py-3 rounded-2xl max-w-md border border-neutral-700/50">
-                  Show unpaid invoices over 30 days.
+                  Show Trial Balance summary for this business.
                 </div>
                 {/* Search / Query Input Bar */}
                 <div className="pt-2">
                   <div className="w-full bg-neutral-900/90 border border-neutral-700/70 rounded-full px-5 py-3.5 flex items-center justify-between text-neutral-400 text-xs sm:text-sm">
-                    <span>Ask anything about your finances...</span>
+                    <span>Ask anything about your financial data...</span>
                     <ArrowRight className="w-4 h-4 text-neutral-500" />
                   </div>
                 </div>
@@ -680,7 +693,7 @@ export default function LandingPage() {
         <div className="max-w-7xl mx-auto px-6">
           {/* Section Header */}
           <div className="text-center mb-16">
-            <span className="text-xs font-bold tracking-widest text-neutral-500 uppercase block mb-3">Pricing</span>
+            <span className="text-xs font-bold tracking-widest text-neutral-500 uppercase block mb-3">Transparent Plans</span>
             <h2 className="text-4xl sm:text-5xl font-extrabold tracking-tight text-neutral-900">
               Simple plans. Honest prices.
             </h2>
@@ -692,15 +705,15 @@ export default function LandingPage() {
             <div className="bg-white border border-neutral-200 rounded-3xl p-8 flex flex-col justify-between shadow-xs" data-purpose="pricing-card">
               <div>
                 <h3 className="text-2xl font-bold text-neutral-900">Starter</h3>
-                <p className="text-xs text-neutral-500 font-medium mt-1 mb-6">For freelancers</p>
+                <p className="text-xs text-neutral-500 font-medium mt-1 mb-6">For single business ventures</p>
                 <div className="flex items-baseline mb-6">
                   <span className="text-4xl sm:text-5xl font-black text-neutral-900 tracking-tight">$19</span>
                   <span className="text-sm font-semibold text-neutral-500 ml-1">/mo</span>
                 </div>
                 <ul className="space-y-3 text-xs sm:text-sm font-medium text-neutral-600 border-t border-neutral-100 pt-6">
-                  <li>Invoices &amp; expenses</li>
-                  <li>1 bank connection</li>
-                  <li>Basic reports</li>
+                  <li>Double-entry journals &amp; ledgers</li>
+                  <li>Chart of Accounts management</li>
+                  <li>Trial Balance &amp; basic reports</li>
                 </ul>
               </div>
               <div className="pt-8">
@@ -713,7 +726,7 @@ export default function LandingPage() {
               </div>
             </div>
 
-            {/* Plan 2: Growth (Featured / Lime Neon) */}
+            {/* Plan 2: Professional / Growth (Featured / Lime Neon) */}
             <div
               className="bg-brand-lime text-black rounded-3xl p-8 flex flex-col justify-between shadow-xl relative border-2 border-brand-lime transform lg:-translate-y-2"
               data-purpose="pricing-card-featured"
@@ -722,16 +735,17 @@ export default function LandingPage() {
                 <div className="inline-block bg-brand-lime px-3 py-1 rounded-full text-[10px] font-extrabold uppercase tracking-wider mb-2 border border-black/10">
                   Most Popular
                 </div>
-                <h3 className="text-2xl font-black text-neutral-900">Growth</h3>
-                <p className="text-xs text-neutral-800 font-semibold mt-1 mb-6">For growing teams</p>
+                <h3 className="text-2xl font-black text-neutral-900">Professional</h3>
+                <p className="text-xs text-neutral-800 font-semibold mt-1 mb-6">For multi-business owners</p>
                 <div className="flex items-baseline mb-6">
                   <span className="text-4xl sm:text-5xl font-black text-neutral-900 tracking-tight">$49</span>
                   <span className="text-sm font-bold text-neutral-800 ml-1">/mo</span>
                 </div>
                 <ul className="space-y-3 text-xs sm:text-sm font-bold text-neutral-900 border-t border-black/10 pt-6">
                   <li>Everything in Starter</li>
-                  <li>Ledgerly AI assistant</li>
-                  <li>Payroll &amp; multi-currency</li>
+                  <li>Unlimited Multi-Business management</li>
+                  <li>Smart Financial AI copilot</li>
+                  <li>Income Statement &amp; Balance Sheet</li>
                 </ul>
               </div>
               <div className="pt-8">
@@ -739,32 +753,33 @@ export default function LandingPage() {
                   to={user ? "/list" : "/register"}
                   className="block text-center w-full bg-brand-dark hover:bg-black text-white font-semibold py-3 px-6 rounded-full text-xs sm:text-sm transition-all shadow-md"
                 >
-                  Choose Growth
+                  Choose Professional
                 </Link>
               </div>
             </div>
 
-            {/* Plan 3: Scale */}
+            {/* Plan 3: Enterprise / Scale */}
             <div className="bg-white border border-neutral-200 rounded-3xl p-8 flex flex-col justify-between shadow-xs" data-purpose="pricing-card">
               <div>
-                <h3 className="text-2xl font-bold text-neutral-900">Scale</h3>
-                <p className="text-xs text-neutral-500 font-medium mt-1 mb-6">For finance teams</p>
+                <h3 className="text-2xl font-bold text-neutral-900">Enterprise</h3>
+                <p className="text-xs text-neutral-500 font-medium mt-1 mb-6">For accounting firms</p>
                 <div className="flex items-baseline mb-6">
                   <span className="text-4xl sm:text-5xl font-black text-neutral-900 tracking-tight">$99</span>
                   <span className="text-sm font-semibold text-neutral-500 ml-1">/mo</span>
                 </div>
                 <ul className="space-y-3 text-xs sm:text-sm font-medium text-neutral-600 border-t border-neutral-100 pt-6">
-                  <li>Everything in Growth</li>
-                  <li>Custom roles &amp; audit trail</li>
-                  <li>Priority support</li>
+                  <li>Everything in Professional</li>
+                  <li>Audit-grade ledger history</li>
+                  <li>Priority technical support</li>
+                  <li>Custom statement exports</li>
                 </ul>
               </div>
               <div className="pt-8">
                 <Link
-                  to={user ? "/list" : "/register"}
+                  to="/contact"
                   className="block text-center w-full border border-neutral-300 hover:border-black text-neutral-800 font-semibold py-3 px-6 rounded-full text-xs sm:text-sm transition-all"
                 >
-                  Talk to us
+                  Contact Us
                 </Link>
               </div>
             </div>
@@ -787,14 +802,14 @@ export default function LandingPage() {
                 className="bg-brand-dark hover:bg-black text-white font-semibold px-8 py-3.5 rounded-full text-sm sm:text-base transition-all shadow-md"
                 to={user ? "/list" : "/register"}
               >
-                {user ? "Go to Dashboard" : "Start free"}
+                {user ? "Go to Dashboard" : "Start Free Trial"}
               </Link>
-              <a
+              <Link
                 className="bg-transparent hover:bg-black/5 text-neutral-900 border border-black/25 font-semibold px-8 py-3.5 rounded-full text-sm sm:text-base transition-all"
-                href="#demo"
+                to="/contact"
               >
-                Book a demo
-              </a>
+                Get in Touch
+              </Link>
             </div>
           </div>
         </div>
@@ -802,52 +817,52 @@ export default function LandingPage() {
       {/* END: BigBannerCta */}
 
       {/* BEGIN: SiteFooter */}
-      <footer className="bg-brand-dark text-white pt-20 pb-12 border-t border-neutral-800" data-purpose="site-footer" id="resources">
+      <footer className="bg-brand-dark text-white pt-20 pb-12 border-t border-neutral-800" data-purpose="site-footer">
         <div className="max-w-7xl mx-auto px-6">
           <div className="grid grid-cols-1 md:grid-cols-12 gap-12 pb-16 border-b border-neutral-800/80">
             {/* Footer Left Brand Column */}
             <div className="md:col-span-5">
-              <Link className="flex items-center gap-2.5 mb-4 group" to="/">
-                <div className="w-7 h-7 bg-brand-lime rounded-md flex items-center justify-center border border-black shadow-sm">
-                  <div className="w-3.5 h-3.5 bg-black rounded-[2px] transform rotate-45 group-hover:rotate-90 transition-transform duration-300"></div>
-                </div>
-                <span className="text-xl font-bold tracking-tight text-white">Ledgerly</span>
+              <Link className="flex items-center gap-3 mb-4 group" to="/">
+                <img src="/final.png" alt="Smart Financial Logo" className="h-8 w-auto object-contain brightness-110" />
+                <span className="text-xl font-extrabold tracking-tight text-white">Smart Financial</span>
               </Link>
-              <p className="text-xs sm:text-sm text-neutral-400 font-normal max-w-xs">
-                Accounting that feels like a conversation.
+              <p className="text-xs sm:text-sm text-neutral-400 font-normal max-w-xs leading-relaxed">
+                The next-generation double-entry accounting platform engineered for multi-business scaling, precision ledgers, and AI financial intelligence.
               </p>
             </div>
 
             {/* Footer Right Links Columns */}
             <div className="md:col-span-7 grid grid-cols-3 gap-8">
-              {/* Column: Product */}
+              {/* Column: Capabilities */}
               <div>
-                <h4 className="text-xs font-semibold text-neutral-400 uppercase tracking-wider mb-4">Product</h4>
+                <h4 className="text-xs font-semibold text-neutral-400 uppercase tracking-wider mb-4">Core Platform</h4>
                 <ul className="space-y-2.5 text-xs sm:text-sm text-neutral-300">
-                  <li><a className="hover:text-white transition-colors" href="#product">Invoicing</a></li>
-                  <li><a className="hover:text-white transition-colors" href="#product">Expenses</a></li>
-                  <li><a className="hover:text-white transition-colors" href="#product">Reports</a></li>
-                  <li><a className="hover:text-white transition-colors" href="#demo">AI assistant</a></li>
+                  <li><a className="hover:text-white transition-colors" href="#features">Multi-Business</a></li>
+                  <li><a className="hover:text-white transition-colors" href="#features">Double Entry</a></li>
+                  <li><a className="hover:text-white transition-colors" href="#features">Chart of Accounts</a></li>
+                  <li><a className="hover:text-white transition-colors" href="#ai-assistant">AI Copilot</a></li>
                 </ul>
               </div>
 
-              {/* Column: Company */}
+              {/* Column: Statements */}
               <div>
-                <h4 className="text-xs font-semibold text-neutral-400 uppercase tracking-wider mb-4">Company</h4>
+                <h4 className="text-xs font-semibold text-neutral-400 uppercase tracking-wider mb-4">Statements</h4>
                 <ul className="space-y-2.5 text-xs sm:text-sm text-neutral-300">
-                  <li><a className="hover:text-white transition-colors" href="#product">About</a></li>
-                  <li><a className="hover:text-white transition-colors" href="#solutions">Careers</a></li>
-                  <li><a className="hover:text-white transition-colors" href="#pricing">Contact</a></li>
+                  <li><a className="hover:text-white transition-colors" href="#features">Trial Balance</a></li>
+                  <li><a className="hover:text-white transition-colors" href="#features">Income Statement</a></li>
+                  <li><a className="hover:text-white transition-colors" href="#features">Balance Sheet</a></li>
+                  <li><a className="hover:text-white transition-colors" href="#features">Ledger Balancing</a></li>
                 </ul>
               </div>
 
-              {/* Column: Resources */}
+              {/* Column: Quick Links */}
               <div>
-                <h4 className="text-xs font-semibold text-neutral-400 uppercase tracking-wider mb-4">Resources</h4>
+                <h4 className="text-xs font-semibold text-neutral-400 uppercase tracking-wider mb-4">Access</h4>
                 <ul className="space-y-2.5 text-xs sm:text-sm text-neutral-300">
-                  <li><a className="hover:text-white transition-colors" href="#help">Help centre</a></li>
-                  <li><a className="hover:text-white transition-colors" href="#guides">Guides</a></li>
-                  <li><a className="hover:text-white transition-colors" href="#security">Security</a></li>
+                  <li><Link className="hover:text-white transition-colors" to="/login">Sign In</Link></li>
+                  <li><Link className="hover:text-white transition-colors" to="/register">Register</Link></li>
+                  <li><Link className="hover:text-white transition-colors" to="/contact">Contact Us</Link></li>
+                  <li><a className="hover:text-white transition-colors" href="#insights">Telemetry</a></li>
                 </ul>
               </div>
             </div>
@@ -855,7 +870,8 @@ export default function LandingPage() {
 
           {/* Footer Bottom Copyright */}
           <div className="pt-8 flex flex-col sm:flex-row items-center justify-between text-xs text-neutral-500 font-medium">
-            <div>© 2026 Ledgerly. All rights reserved.</div>
+            <div>© 2026 Smart Financial. All rights reserved.</div>
+            <div className="mt-2 sm:mt-0">All systems operational · Double-entry verified</div>
           </div>
         </div>
       </footer>
