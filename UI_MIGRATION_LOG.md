@@ -5,27 +5,29 @@ Branch: `ui-stitch-migration`
 ---
 
 ## 1. Landing Page (`/`)
-- **Stitch Screen**: Project `1850777105332051393`, Screen `515fbeff3b0049ad81b7b84a6f70d224` ("Smart Financials — Complete 6 Features & Real-Time Insights")
+- **Stitch Screen**: Project `1850777105332051393`, Screen `c3590519542b45f69a954f431cbc3fbe` ("Ledgerly — Real-Time Insights & Financial Command")
 - **Target File(s) Changed**:
   - `my-app/src/components/landing/LandingPage.jsx`
-  - `my-app/index.html` (added Bricolage Grotesque & DM Sans Google Fonts)
-  - `my-app/tailwind.config.js` (added `sf` design tokens and font families)
-  - `my-app/src/index.css` (added `:root` variables, glass chips, telemetry bar glow, step stroke, marquee keyframes)
+  - `my-app/index.html` (added Inter Google Font and brand title)
+  - `my-app/tailwind.config.js` (added `brand` palette, `4xl`/`5xl` border radii)
+  - `my-app/src/index.css` (added `.step-num-outline` stroke, `.scrollbar-none`)
 - **New Shared Design Tokens & Styles**:
-  - Palette: `sf-ink` (`#0F1E14`), `sf-ink-card` (`#15271B`), `sf-ink-dark` (`#08110B`), `sf-lime` (`#C8F135`), `sf-lime-soft` (`#D9F926`), `sf-lime-bright` (`#CCFF00`), `sf-cream` (`#F3F4EC`), `sf-cream-muted` (`#E5E7DC`), `sf-gray-muted` (`#6C7A70`).
-  - Typography: `font-display` (Bricolage Grotesque), `font-sans` (DM Sans).
-  - Utilities: `.glass-chip`, `.glass-dark`, `.btn-pulse`, `.animate-marquee`, `.step-stroke`, `.telemetry-bar-glow`, `.tabular-nums`.
+  - Palette: `brand.lime` (`#D8F929`), `brand['lime-hover']` (`#C8E920`), `brand.dark` (`#111315`), `brand.darkCard` (`#181B1E`), `brand.darkBubble` (`#1F2428`), `brand.charcoal` (`#0D0F11`), `brand.muted` (`#6B7280`), `brand.border` (`#E5E7EB`), `brand.surface` (`#FBFBFB`).
+  - Typography: `font-sans` with `Inter`.
+  - Border Radii: `rounded-4xl` (`2rem`), `rounded-5xl` (`2.5rem`).
+  - Utilities: `.step-num-outline` (outlined giant numbers), `.scrollbar-none`.
 - **Logic & Functionality Preserved**:
-  - Session endpoint check: `GET /api/login/session` with `withCredentials: true`.
+  - Session endpoint check: `GET ${import.meta.env.VITE_BACKEND_URL}/api/login/session` with `withCredentials: true`.
   - Firebase visitor count transaction (`site_stats/visitors`).
   - Firebase live stats synchronization (`site_stats`).
   - Firebase global click interaction tracking (`site_stats/clicks`) with 1-second debounce.
-  - Logout handler: `GET /api/auth/logout` with `withCredentials: true`, localStorage clearing, redirection to `/login`.
-  - Conditional rendering: Authenticated user menu (`Welcome, {user}`, `Dashboard` linking to `/list`, `Logout`, `/profile`) vs Guest menu (`Login`, `Start Free Trial` linking to `/register`).
-  - Real metric bindings: `stats.visitors.toLocaleString()` and `stats.clicks.toLocaleString()` bound directly into Telemetry Bento cards.
+  - Logout handler: `GET ${import.meta.env.VITE_BACKEND_URL}/api/auth/logout` with `withCredentials: true`, localStorage clearing, redirection to `/login`.
+  - Conditional rendering: Authenticated user menu (`Welcome, {user}`, `Dashboard` linking to `/list`, `Logout`, `/profile`) vs Guest menu (`Log in` linking to `/login`, `Start free` linking to `/register`).
+  - Mobile menu toggle state and drawer (`isMobileMenuOpen`).
+  - Real metric bindings: `stats.visitors.toLocaleString()` and `stats.clicks.toLocaleString()` bound directly into the FinFlow Telemetry Bento cards.
 - **Skipped / Inert Stitch Elements**:
-  - "Watch 2-Minute Demo" button in hero: Rendered inert / scroll to `#how-it-works` (no video demo modal exists in current app).
-  - Review / Later notification chip buttons in hero: Rendered inert (visual demonstration of AI suggestions).
-  - Invoicing card hover tilt and 9-bar telemetry histogram: Fully rendered and animated with tooltips.
-- **Open Questions / Decisions for User**:
+  - "Watch 2-min demo" / "Meet the assistant" / "Book a demo": Smooth-scrolling anchor to `#demo` / `#insights` (no video demo modal exists in current app).
+  - "Review" / "Later" buttons in the floating AI suggestion card: Rendered inert (visual demonstration of AI suggestions).
+  - Pricing plan buttons ("Choose Starter", "Choose Growth", "Talk to us"): Wired to `/register` or `/list` based on auth state (the backend currently has no separate plan checkout endpoint).
+- **Decisions / Questions for User**:
   - None for Landing Page. All functionality, routes, and styles verified.
