@@ -57,10 +57,22 @@ export default {
           700: '#b91c1c',
           800: '#991b1b',
           900: '#7f1d1d',
+        },
+        sf: {
+          ink: '#0F1E14',
+          'ink-card': '#15271B',
+          'ink-dark': '#08110B',
+          lime: '#C8F135',
+          'lime-soft': '#D9F926',
+          'lime-bright': '#CCFF00',
+          cream: '#F3F4EC',
+          'cream-muted': '#E5E7DC',
+          'gray-muted': '#6C7A70',
         }
       },
       fontFamily: {
-        sans: ['Inter', 'system-ui', 'sans-serif'],
+        display: ['"Bricolage Grotesque"', 'sans-serif'],
+        sans: ['"DM Sans"', 'Inter', 'system-ui', 'sans-serif'],
       },
       spacing: {
         '18': '4.5rem',
