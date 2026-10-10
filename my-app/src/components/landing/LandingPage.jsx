@@ -106,18 +106,6 @@ export default function LandingPage() {
           <img src="/final.png" alt="Smart Financial Logo" style={{ height: '44px', width: 'auto', objectFit: 'contain' }} />
         </Link>
 
-        {/* Desktop Nav Links */}
-        <nav
-          aria-label="Main"
-          className="hidden md:flex"
-          style={{ gap: '36px', fontWeight: 600, color: '#000' }}
-        >
-          <a href="#vaults" style={{ color: '#000', transition: 'color .15s' }}>Vaults</a>
-          <a href="#reports" style={{ color: '#000', transition: 'color .15s' }}>Reports</a>
-          <a href="#ask" style={{ color: '#000', transition: 'color .15s' }}>Ask</a>
-          <a href="#trust" style={{ color: '#000', transition: 'color .15s' }}>Security</a>
-        </nav>
-
         {/* Auth CTA Actions */}
         <div className="hidden md:flex" style={{ gap: '12px', alignItems: 'center' }}>
           {user ? (
@@ -181,41 +169,35 @@ export default function LandingPage() {
               marginTop: '12px'
             }}
           >
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', fontWeight: 600, color: '#000' }}>
-              <a onClick={() => setIsMobileMenuOpen(false)} href="#vaults" style={{ color: '#000' }}>Vaults</a>
-              <a onClick={() => setIsMobileMenuOpen(false)} href="#reports" style={{ color: '#000' }}>Reports</a>
-              <a onClick={() => setIsMobileMenuOpen(false)} href="#ask" style={{ color: '#000' }}>Ask</a>
-              <a onClick={() => setIsMobileMenuOpen(false)} href="#trust" style={{ color: '#000' }}>Security</a>
-              <div style={{ borderTop: '2px solid #0E1A14', paddingTop: '16px', display: 'flex', flexDirection: 'column', gap: '12px' }}>
-                {user ? (
-                  <>
-                    <span style={{ fontSize: '14px', color: '#000' }}>Signed in as {user}</span>
-                    <button
-                      type="button"
-                      onClick={() => { setIsMobileMenuOpen(false); navigate('/list'); }}
-                      className="sf-btn sf-btn-lime"
-                    >
-                      Dashboard
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => { setIsMobileMenuOpen(false); handleLogout(); }}
-                      style={{ color: '#dc2626', fontWeight: 600, textAlign: 'left', background: 'none', border: 'none', padding: '6px 0', cursor: 'pointer' }}
-                    >
-                      Logout
-                    </button>
-                  </>
-                ) : (
-                  <>
-                    <Link onClick={() => setIsMobileMenuOpen(false)} to="/login" style={{ padding: '8px 0', color: '#000' }}>
-                      Log in
-                    </Link>
-                    <Link onClick={() => setIsMobileMenuOpen(false)} to="/register" className="sf-btn sf-btn-ink">
-                      Create account
-                    </Link>
-                  </>
-                )}
-              </div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', fontWeight: 600, color: '#000' }}>
+              {user ? (
+                <>
+                  <span style={{ fontSize: '14px', color: '#000' }}>Signed in as {user}</span>
+                  <button
+                    type="button"
+                    onClick={() => { setIsMobileMenuOpen(false); navigate('/list'); }}
+                    className="sf-btn sf-btn-lime"
+                  >
+                    Dashboard
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => { setIsMobileMenuOpen(false); handleLogout(); }}
+                    style={{ color: '#dc2626', fontWeight: 600, textAlign: 'left', background: 'none', border: 'none', padding: '6px 0', cursor: 'pointer' }}
+                  >
+                    Logout
+                  </button>
+                </>
+              ) : (
+                <>
+                  <Link onClick={() => setIsMobileMenuOpen(false)} to="/login" style={{ padding: '8px 0', color: '#000' }}>
+                    Log in
+                  </Link>
+                  <Link onClick={() => setIsMobileMenuOpen(false)} to="/register" className="sf-btn sf-btn-ink">
+                    Create account
+                  </Link>
+                </>
+              )}
             </div>
           </div>
         )}
