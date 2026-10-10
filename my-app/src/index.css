@@ -186,6 +186,7 @@ html {
   align-items: baseline;
   transition: background .15s ease;
   cursor: pointer;
+  color: #000;
 }
 .sf-chk:hover { background: #C8F135; }
 .sf-chk b {
