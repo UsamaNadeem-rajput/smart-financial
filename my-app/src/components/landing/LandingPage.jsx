@@ -100,31 +100,22 @@ export default function LandingPage() {
           to="/"
           style={{
             display: 'flex',
-            alignItems: 'center',
-            gap: '12px',
-            fontFamily: "'Bricolage Grotesque', sans-serif",
-            fontWeight: 800,
-            fontSize: '25px',
-            letterSpacing: '-0.04em'
+            alignItems: 'center'
           }}
         >
-          <svg width="34" height="34" viewBox="0 0 34 34" aria-hidden="true" style={{ flexShrink: 0 }}>
-            <rect width="34" height="34" rx="6" fill="#0E1A14"></rect>
-            <path d="M10 9v14h9M17 9h7M17 15h7" stroke="#C8F135" strokeWidth="3" strokeLinecap="round" fill="none"></path>
-          </svg>
-          Smart Financial
+          <img src="/final.png" alt="Smart Financial Logo" style={{ height: '44px', width: 'auto', objectFit: 'contain' }} />
         </Link>
 
         {/* Desktop Nav Links */}
         <nav
           aria-label="Main"
           className="hidden md:flex"
-          style={{ gap: '36px', fontWeight: 500 }}
+          style={{ gap: '36px', fontWeight: 600, color: '#000' }}
         >
-          <a href="#vaults" style={{ transition: 'color .15s' }}>Vaults</a>
-          <a href="#reports" style={{ transition: 'color .15s' }}>Reports</a>
-          <a href="#ask" style={{ transition: 'color .15s' }}>Ask</a>
-          <a href="#trust" style={{ transition: 'color .15s' }}>Security</a>
+          <a href="#vaults" style={{ color: '#000', transition: 'color .15s' }}>Vaults</a>
+          <a href="#reports" style={{ color: '#000', transition: 'color .15s' }}>Reports</a>
+          <a href="#ask" style={{ color: '#000', transition: 'color .15s' }}>Ask</a>
+          <a href="#trust" style={{ color: '#000', transition: 'color .15s' }}>Security</a>
         </nav>
 
         {/* Auth CTA Actions */}
@@ -134,7 +125,7 @@ export default function LandingPage() {
               <button
                 type="button"
                 onClick={() => navigate('/list')}
-                style={{ fontWeight: 600, padding: '0 12px', cursor: 'pointer', background: 'none', border: 'none' }}
+                style={{ fontWeight: 600, padding: '0 12px', cursor: 'pointer', background: 'none', border: 'none', color: '#000' }}
               >
                 Dashboard
               </button>
@@ -156,7 +147,7 @@ export default function LandingPage() {
             </>
           ) : (
             <>
-              <Link to="/login" style={{ fontWeight: 600, padding: '0 12px' }}>
+              <Link to="/login" style={{ fontWeight: 600, padding: '0 12px', color: '#000' }}>
                 Log in
               </Link>
               <Link to="/register" className="sf-btn sf-btn-ink" style={{ minHeight: '46px' }}>
@@ -171,7 +162,7 @@ export default function LandingPage() {
           <button
             type="button"
             onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-            style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '6px' }}
+            style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '6px', color: '#000' }}
             aria-label="Toggle menu"
           >
             {isMobileMenuOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
@@ -190,15 +181,15 @@ export default function LandingPage() {
               marginTop: '12px'
             }}
           >
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', fontWeight: 600 }}>
-              <a onClick={() => setIsMobileMenuOpen(false)} href="#vaults">Vaults</a>
-              <a onClick={() => setIsMobileMenuOpen(false)} href="#reports">Reports</a>
-              <a onClick={() => setIsMobileMenuOpen(false)} href="#ask">Ask</a>
-              <a onClick={() => setIsMobileMenuOpen(false)} href="#trust">Security</a>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', fontWeight: 600, color: '#000' }}>
+              <a onClick={() => setIsMobileMenuOpen(false)} href="#vaults" style={{ color: '#000' }}>Vaults</a>
+              <a onClick={() => setIsMobileMenuOpen(false)} href="#reports" style={{ color: '#000' }}>Reports</a>
+              <a onClick={() => setIsMobileMenuOpen(false)} href="#ask" style={{ color: '#000' }}>Ask</a>
+              <a onClick={() => setIsMobileMenuOpen(false)} href="#trust" style={{ color: '#000' }}>Security</a>
               <div style={{ borderTop: '2px solid #0E1A14', paddingTop: '16px', display: 'flex', flexDirection: 'column', gap: '12px' }}>
                 {user ? (
                   <>
-                    <span style={{ fontSize: '14px', color: '#44544B' }}>Signed in as {user}</span>
+                    <span style={{ fontSize: '14px', color: '#000' }}>Signed in as {user}</span>
                     <button
                       type="button"
                       onClick={() => { setIsMobileMenuOpen(false); navigate('/list'); }}
@@ -216,7 +207,7 @@ export default function LandingPage() {
                   </>
                 ) : (
                   <>
-                    <Link onClick={() => setIsMobileMenuOpen(false)} to="/login" style={{ padding: '8px 0' }}>
+                    <Link onClick={() => setIsMobileMenuOpen(false)} to="/login" style={{ padding: '8px 0', color: '#000' }}>
                       Log in
                     </Link>
                     <Link onClick={() => setIsMobileMenuOpen(false)} to="/register" className="sf-btn sf-btn-ink">
@@ -724,41 +715,47 @@ export default function LandingPage() {
       </section>
 
       {/* FOOTER */}
-      <footer style={{ background: '#0E1A14', color: '#F2F5EE', padding: '72px 0 40px' }}>
+      <footer style={{ background: '#F2F5EE', color: '#000', padding: '72px 0 40px', borderTop: '2px solid #0E1A14' }}>
         <div className="sf-wrap">
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: '48px', justifyContent: 'space-between' }}>
             <div style={{ flex: '1 1 280px' }}>
-              <div style={{ fontFamily: "'Bricolage Grotesque', sans-serif", fontWeight: 800, fontSize: '30px', letterSpacing: '-0.04em' }}>
-                Smart Financial
-              </div>
-              <p style={{ color: '#B9C6BD', marginTop: '12px', maxWidth: '320px', fontSize: '16px', lineHeight: 1.55 }}>
+              <Link to="/" style={{ display: 'inline-block', marginBottom: '14px' }}>
+                <img src="/final.png" alt="Smart Financial Logo" style={{ height: '48px', width: 'auto', objectFit: 'contain' }} />
+              </Link>
+              <p style={{ color: '#000', marginTop: '4px', maxWidth: '320px', fontSize: '16px', lineHeight: 1.55 }}>
                 Double-entry accounting with an assistant that reads your books.
               </p>
             </div>
             <div>
-              <span className="ftl">Product</span>
-              <p style={{ marginBottom: '8px' }}><a href="#vaults" style={{ transition: 'color .15s' }}>Vaults</a></p>
-              <p style={{ marginBottom: '8px' }}><a href="#reports" style={{ transition: 'color .15s' }}>Reports</a></p>
-              <p><a href="#ask" style={{ transition: 'color .15s' }}>Assistant</a></p>
+              <span style={{ fontSize: '13px', letterSpacing: '.1em', textTransform: 'uppercase', color: '#000', display: 'block', marginBottom: '14px', fontWeight: 700 }}>
+                Product
+              </span>
+              <p style={{ marginBottom: '8px' }}><a href="#vaults" style={{ color: '#000', transition: 'color .15s' }}>Vaults</a></p>
+              <p style={{ marginBottom: '8px' }}><a href="#reports" style={{ color: '#000', transition: 'color .15s' }}>Reports</a></p>
+              <p><a href="#ask" style={{ color: '#000', transition: 'color .15s' }}>Assistant</a></p>
             </div>
             <div>
-              <span className="ftl">Account</span>
-              <p style={{ marginBottom: '8px' }}><Link to="/login" style={{ transition: 'color .15s' }}>Log in</Link></p>
-              <p style={{ marginBottom: '8px' }}><Link to="/register" style={{ transition: 'color .15s' }}>Create account</Link></p>
-              <p><Link to="/forgot-password" style={{ transition: 'color .15s' }}>Forgot password</Link></p>
+              <span style={{ fontSize: '13px', letterSpacing: '.1em', textTransform: 'uppercase', color: '#000', display: 'block', marginBottom: '14px', fontWeight: 700 }}>
+                Account
+              </span>
+              <p style={{ marginBottom: '8px' }}><Link to="/login" style={{ color: '#000', transition: 'color .15s' }}>Log in</Link></p>
+              <p style={{ marginBottom: '8px' }}><Link to="/register" style={{ color: '#000', transition: 'color .15s' }}>Create account</Link></p>
+              <p><Link to="/forgot-password" style={{ color: '#000', transition: 'color .15s' }}>Forgot password</Link></p>
             </div>
             <div>
-              <span className="ftl">Learn</span>
-              <p style={{ marginBottom: '8px' }}><a href="#trust" style={{ transition: 'color .15s' }}>Security</a></p>
-              <p><Link to="/contact" style={{ transition: 'color .15s' }}>Help</Link></p>
+              <span style={{ fontSize: '13px', letterSpacing: '.1em', textTransform: 'uppercase', color: '#000', display: 'block', marginBottom: '14px', fontWeight: 700 }}>
+                Learn
+              </span>
+              <p style={{ marginBottom: '8px' }}><a href="#trust" style={{ color: '#000', transition: 'color .15s' }}>Security</a></p>
+              <p><Link to="/contact" style={{ color: '#000', transition: 'color .15s' }}>Help</Link></p>
             </div>
           </div>
           <div
             style={{
-              color: '#8FA196',
+              color: '#000',
               fontSize: '14px',
               marginTop: '56px',
-              borderTop: '1px solid #2C3F34',
+              borderTop: '1px solid #0E1A14',
               paddingTop: '24px',
               display: 'flex',
               justifyContent: 'space-between',
@@ -767,7 +764,7 @@ export default function LandingPage() {
               gap: '12px'
             }}
           >
-            <div>© 2026 Smart Financial · Sovereign Ledger</div>
+            <div>© 2026 Sovereign Ledger</div>
             <div>All systems operational · Double-entry verified</div>
           </div>
         </div>
