@@ -434,8 +434,8 @@ export default function LandingPage() {
       </section>
 
       {/* REPORTS SECTION */}
-      <section id="reports" className="sf-wrap" style={{ padding: '110px 32px 90px' }}>
-        <p style={{ fontSize: '14px', fontWeight: 600, letterSpacing: '.1em', textTransform: 'uppercase', color: '#44544B' }}>
+      <section id="reports" className="sf-wrap" style={{ padding: '110px 32px 90px', color: '#000' }}>
+        <p style={{ fontSize: '14px', fontWeight: 600, letterSpacing: '.1em', textTransform: 'uppercase', color: '#000' }}>
           Four statements, generated for you
         </p>
         <h2
@@ -446,38 +446,39 @@ export default function LandingPage() {
             lineHeight: 0.98,
             fontWeight: 800,
             margin: '16px 0 48px',
-            maxWidth: '820px'
+            maxWidth: '820px',
+            color: '#000'
           }}
         >
           The maths is done. You just read the result.
         </h2>
         <div style={{ borderBottom: '1px solid #C9D3C2' }}>
-          <Link to={user ? "/ledger-balancing" : "/login"} className="sf-chk">
-            <b>01</b>
-            <h3 style={{ fontSize: '30px', fontWeight: 700 }}>Ledger</h3>
-            <p style={{ fontSize: '17px', color: '#2C3F34' }}>Every account with its debit total, credit total and the balance left over.</p>
-            <p style={{ fontWeight: 600, fontSize: '16px' }}>Cash: 500.00 − 200.00 = 300.00 debit</p>
+          <Link to={user ? "/ledger-balancing" : "/login"} className="sf-chk" style={{ color: '#000' }}>
+            <b style={{ color: '#000' }}>01</b>
+            <h3 style={{ fontSize: '30px', fontWeight: 700, color: '#000' }}>Ledger</h3>
+            <p style={{ fontSize: '17px', color: '#000' }}>Every account with its debit total, credit total and the balance left over.</p>
+            <p style={{ fontWeight: 600, fontSize: '16px', color: '#000' }}>Cash: 500.00 − 200.00 = 300.00 debit</p>
           </Link>
-          <Link to={user ? "/trial-balance" : "/login"} className="sf-chk">
-            <b>02</b>
-            <h3 style={{ fontSize: '30px', fontWeight: 700 }}>Trial balance</h3>
-            <p style={{ fontSize: '17px', color: '#2C3F34' }}>All account balances in a single list, proving the books agree with themselves.</p>
-            <p style={{ fontWeight: 600, fontSize: '16px' }}>Total debits = total credits</p>
+          <Link to={user ? "/trial-balance" : "/login"} className="sf-chk" style={{ color: '#000' }}>
+            <b style={{ color: '#000' }}>02</b>
+            <h3 style={{ fontSize: '30px', fontWeight: 700, color: '#000' }}>Trial balance</h3>
+            <p style={{ fontSize: '17px', color: '#000' }}>All account balances in a single list, proving the books agree with themselves.</p>
+            <p style={{ fontWeight: 600, fontSize: '16px', color: '#000' }}>Total debits = total credits</p>
           </Link>
-          <Link to={user ? "/income-report" : "/login"} className="sf-chk">
-            <b>03</b>
-            <h3 style={{ fontSize: '30px', fontWeight: 700 }}>Income statement</h3>
-            <p style={{ fontSize: '17px', color: '#2C3F34' }}>Revenue less cost of goods sold gives gross profit. Operating expenses take you to net income.</p>
-            <p style={{ fontWeight: 600, fontSize: '16px' }}>Revenue − COGS − OPEX = net income</p>
+          <Link to={user ? "/income-report" : "/login"} className="sf-chk" style={{ color: '#000' }}>
+            <b style={{ color: '#000' }}>03</b>
+            <h3 style={{ fontSize: '30px', fontWeight: 700, color: '#000' }}>Income statement</h3>
+            <p style={{ fontSize: '17px', color: '#000' }}>Revenue less cost of goods sold gives gross profit. Operating expenses take you to net income.</p>
+            <p style={{ fontWeight: 600, fontSize: '16px', color: '#000' }}>Revenue − COGS − OPEX = net income</p>
           </Link>
-          <Link to={user ? "/balance-sheet" : "/login"} className="sf-chk">
-            <b>04</b>
-            <h3 style={{ fontSize: '30px', fontWeight: 700 }}>Balance sheet</h3>
-            <p style={{ fontSize: '17px', color: '#2C3F34' }}>What you own, what you owe and what is left for the owners, at a glance.</p>
-            <p style={{ fontWeight: 600, fontSize: '16px' }}>Assets = liabilities + equity</p>
+          <Link to={user ? "/balance-sheet" : "/login"} className="sf-chk" style={{ color: '#000' }}>
+            <b style={{ color: '#000' }}>04</b>
+            <h3 style={{ fontSize: '30px', fontWeight: 700, color: '#000' }}>Balance sheet</h3>
+            <p style={{ fontSize: '17px', color: '#000' }}>What you own, what you owe and what is left for the owners, at a glance.</p>
+            <p style={{ fontWeight: 600, fontSize: '16px', color: '#000' }}>Assets = liabilities + equity</p>
           </Link>
         </div>
-        <p style={{ marginTop: '20px', fontSize: '16px', color: '#44544B' }}>Every report downloads as a PDF.</p>
+        <p style={{ marginTop: '20px', fontSize: '16px', color: '#000' }}>Every report downloads as a PDF.</p>
       </section>
 
       {/* ASK YOUR BOOKS (DARK SECTION) */}
