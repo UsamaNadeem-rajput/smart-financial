@@ -59,15 +59,16 @@ export default {
           900: '#7f1d1d',
         },
         brand: {
-          lime: '#D8F929',
-          'lime-hover': '#C8E920',
-          dark: '#111315',
-          darkCard: '#181B1E',
-          darkBubble: '#1F2428',
-          charcoal: '#0D0F11',
-          muted: '#6B7280',
-          border: '#E5E7EB',
-          surface: '#FBFBFB',
+          lime: '#C8F135',
+          'lime-hover': '#b5dd2e',
+          ink: '#0E1A14',
+          paper: '#F2F5EE',
+          muted: '#44544B',
+          border: '#C9D3C2',
+          darkBorder: '#2C3F34',
+          darkMuted: '#8FA196',
+          darkText: '#B9C6BD',
+          dark: '#0E1A14',
         }
       },
       borderRadius: {
@@ -75,7 +76,8 @@ export default {
         '5xl': '2.5rem',
       },
       fontFamily: {
-        sans: ['Inter', 'system-ui', '-apple-system', 'BlinkMacSystemFont', 'Segoe UI', 'Roboto', 'sans-serif'],
+        sans: ['"Instrument Sans"', 'system-ui', '-apple-system', 'sans-serif'],
+        display: ['"Bricolage Grotesque"', 'system-ui', 'sans-serif'],
       },
       spacing: {
         '18': '4.5rem',

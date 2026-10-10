@@ -5,31 +5,28 @@ Branch: `ui-stitch-migration`
 ---
 
 ## 1. Landing Page (`/`)
-- **Stitch Screen**: Project `1850777105332051393`, Screen `c3590519542b45f69a954f431cbc3fbe` ("Ledgerly — Real-Time Insights & Financial Command")
+- **Stitch Screen**: Project `11807552340976852434`, Screen `ed9d33833c3b40b887d817948ea3406d` ("Smart Financial — Home (Exact Replica)")
 - **Target File(s) Changed**:
   - `my-app/src/components/landing/LandingPage.jsx`
-  - `my-app/index.html` (added Inter Google Font and brand title)
-  - `my-app/tailwind.config.js` (added `brand` palette, `4xl`/`5xl` border radii)
-  - `my-app/src/index.css` (added `.step-num-outline` stroke, `.scrollbar-none`)
+  - `my-app/index.html` (added Bricolage Grotesque & Instrument Sans Google Fonts)
+  - `my-app/tailwind.config.js` (added `brand.lime`, `brand.ink`, `brand.paper`, and display/sans typography tokens)
+  - `my-app/src/index.css` (added neo-brutalist `.sf-btn`, `.sf-chk`, `.sf-sec`, `.lh-paper`, `.lh-stamp`, keyframes, pause toggle `.lh-paused`)
 - **New Shared Design Tokens & Styles**:
-  - Palette: `brand.lime` (`#D8F929`), `brand['lime-hover']` (`#C8E920`), `brand.dark` (`#111315`), `brand.darkCard` (`#181B1E`), `brand.darkBubble` (`#1F2428`), `brand.charcoal` (`#0D0F11`), `brand.muted` (`#6B7280`), `brand.border` (`#E5E7EB`), `brand.surface` (`#FBFBFB`).
-  - Typography: `font-sans` with `Inter`.
-  - Border Radii: `rounded-4xl` (`2rem`), `rounded-5xl` (`2.5rem`).
-  - Utilities: `.step-num-outline` (outlined giant numbers), `.scrollbar-none`.
+  - Palette: `brand.lime` (`#C8F135`), `brand.ink` (`#0E1A14`), `brand.paper` (`#F2F5EE`), `brand.muted` (`#44544B`), `brand.border` (`#C9D3C2`), `brand.darkBorder` (`#2C3F34`), `brand.darkMuted` (`#8FA196`), `brand.darkText` (`#B9C6BD`).
+  - Typography: `font-sans` with `Instrument Sans`, `font-display` with `Bricolage Grotesque`.
+  - Utilities: `.sf-wrap`, `.sf-btn`, `.sf-btn-lime`, `.sf-btn-ink`, `.sf-btn-line`, `.sf-chk`, `.sf-sec`, `.ftl`, `.lh-paper`, `.lh-stem`, `.lh-sweep`, `.lh-stamp`, `.lh-paused`.
 - **Logic & Functionality Preserved**:
   - Session endpoint check: `GET ${import.meta.env.VITE_BACKEND_URL}/api/login/session` with `withCredentials: true`.
   - Firebase visitor count transaction (`site_stats/visitors`).
   - Firebase live stats synchronization (`site_stats`).
   - Firebase global click interaction tracking (`site_stats/clicks`) with 1-second debounce.
   - Logout handler: `GET ${import.meta.env.VITE_BACKEND_URL}/api/auth/logout` with `withCredentials: true`, localStorage clearing, redirection to `/login`.
-  - Conditional rendering: Authenticated user menu (`Welcome, {user}`, `Dashboard` linking to `/list`, `Logout`, `/profile`) vs Guest menu (`Log in` linking to `/login`, `Start free` linking to `/register`).
+  - Conditional rendering: Authenticated user menu (`Welcome, {user}`, `Dashboard` linking to `/list`, `Logout`, `/profile`) vs Guest menu (`Log in` linking to `/login`, `Create account` linking to `/register`).
   - Mobile menu toggle state and drawer (`isMobileMenuOpen`).
-  - Real metric bindings: `stats.visitors.toLocaleString()` and `stats.clicks.toLocaleString()` bound directly into the FinFlow Telemetry Bento cards.
+  - Animation play/pause state toggle (`isPaused`).
+  - Real metric bindings: `stats.visitors.toLocaleString()` and `stats.clicks.toLocaleString()` actively displayed in the top proof/telemetry bar.
+  - Direct routes attached to interactive statements: Ledger (`/ledger-balancing`), Trial Balance (`/trial-balance`), Income Statement (`/income-report`), Balance Sheet (`/balance-sheet`).
 - **Skipped / Inert Stitch Elements**:
-  - "Watch 2-min demo" / "Meet the assistant" / "Book a demo": Smooth-scrolling anchor to `#demo` / `#insights` (no video demo modal exists in current app).
-  - "Review" / "Later" buttons in the floating AI suggestion card: Rendered inert (visual demonstration of AI suggestions).
-  - Pricing plan buttons ("Choose Starter", "Choose Growth", "Talk to us"): Wired to `/register` or `/list` based on auth state (the backend currently has no separate plan checkout endpoint).
+  - None. All interactive buttons, cards, pause controls, navigation routes, and reports links are fully wired to active platform routes and handlers.
 - **Decisions / Questions for User**:
-  - Content and branding replaced Stitch's generic "Ledgerly" placeholder text with real Smart Financial AI project information: `/final.png` logo, Multi-Business Management, Double-Entry journals, Chart of Accounts, Trial Balance, Income Statement, Balance Sheet, and Roman Urdu / English AI financial copilot.
-  - All styling, layout, responsive behavior, and Stitch design fidelity remain 100% matched.
-
+  - None for Landing Page. All functionality, routes, and styles verified.
