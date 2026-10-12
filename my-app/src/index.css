@@ -1328,7 +1328,7 @@ html {
   z-index: 30;
 }
 
-.sf-dd {
+.sf-ac-dd {
   position: absolute;
   top: calc(100% + 6px);
   left: 0;
@@ -1344,7 +1344,7 @@ html {
   animation: sfFd .15s ease-out;
 }
 
-.sf-dd p {
+.sf-ac-dd p {
   font-size: 12px;
   font-weight: 600;
   color: #44544B;
