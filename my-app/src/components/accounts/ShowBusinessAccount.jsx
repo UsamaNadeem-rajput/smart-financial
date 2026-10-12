@@ -3,20 +3,13 @@ import { Link, useNavigate } from 'react-router-dom';
 import { useBusiness } from '../../context/BusinessContext';
 import Navbar from '../layout/Navbar';
 import axios from 'axios';
-
 import {
-  Search,
-  Plus,
-  Edit3,
-  Trash2,
-  Filter,
-  DollarSign,
   Wallet,
   PiggyBank,
   CreditCard,
-  Eye,
+  DollarSign,
   TrendingUp,
-  BarChart3
+  CircleDollarSign
 } from 'lucide-react';
 
 const ShowBusinessAccount = () => {
@@ -27,7 +20,7 @@ const ShowBusinessAccount = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedFilter, setSelectedFilter] = useState('all');
-  const [user, setUser] = useState(null);
+  const [selectedAccountId, setSelectedAccountId] = useState(null);
   const apiUrl = import.meta.env.VITE_BACKEND_URL;
 
   useEffect(() => {
@@ -39,6 +32,11 @@ const ShowBusinessAccount = () => {
   }, [accounts, searchTerm, selectedFilter]);
 
   const fetchAccounts = async () => {
+    if (!selectedBusiness?.business_id) {
+      setIsLoading(false);
+      return;
+    }
+
     try {
       // Fetch accounts from backend API
       const response = await axios.get(`${apiUrl}/api/accounts-list/${selectedBusiness.business_id}`, {
@@ -51,7 +49,6 @@ const ShowBusinessAccount = () => {
       if (error.response?.status === 401) {
         navigate('/login');
       }
-      // If API fails, show empty state
       setAccounts([]);
     } finally {
       setIsLoading(false);
@@ -63,18 +60,25 @@ const ShowBusinessAccount = () => {
 
     // Filter by search term
     if (searchTerm) {
+      const q = searchTerm.toLowerCase();
       filtered = filtered.filter(account =>
-        account.account_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        account.type_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        (account.description && account.description.toLowerCase().includes(searchTerm.toLowerCase()))
+        account.account_name.toLowerCase().includes(q) ||
+        (account.type_name && account.type_name.toLowerCase().includes(q)) ||
+        (account.description && account.description.toLowerCase().includes(q))
       );
     }
 
     // Filter by account type
     if (selectedFilter !== 'all') {
-      filtered = filtered.filter(account =>
-        account.type_name.toLowerCase().includes(selectedFilter.toLowerCase())
-      );
+      filtered = filtered.filter(account => {
+        const typeLower = (account.type_name || '').toLowerCase();
+        if (selectedFilter === 'assets') return typeLower.includes('asset');
+        if (selectedFilter === 'liabilities') return typeLower.includes('liabilit');
+        if (selectedFilter === 'equity') return typeLower.includes('equity');
+        if (selectedFilter === 'income') return typeLower.includes('income');
+        if (selectedFilter === 'expenses') return typeLower.includes('expens');
+        return typeLower.includes(selectedFilter.toLowerCase());
+      });
     }
 
     setFilteredAccounts(filtered);
@@ -88,6 +92,7 @@ const ShowBusinessAccount = () => {
         });
         setAccounts(prev => prev.filter(a => a.account_id !== accountId));
         triggerRefresh();
+        alert('Account deleted successfully.');
       } catch (error) {
         console.error('Failed to delete account:', error);
         alert('Failed to delete account. Please try again.');
@@ -96,13 +101,14 @@ const ShowBusinessAccount = () => {
   };
 
   const formatCurrency = (amount) => {
-    return new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency: 'USD'
-    }).format(amount || 0);
+    return Number(amount || 0).toLocaleString('en-US', {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2
+    });
   };
 
   const formatDate = (dateString) => {
+    if (!dateString) return 'N/A';
     return new Date(dateString).toLocaleDateString('en-US', {
       year: 'numeric',
       month: 'short',
@@ -110,31 +116,50 @@ const ShowBusinessAccount = () => {
     });
   };
 
-  const getAccountTypeIcon = (typeName) => {
-    if (typeName.includes('Assets')) return <Wallet className="w-4 h-4 text-success-600" />;
-    if (typeName.includes('Income')) return <PiggyBank className="w-4 h-4 text-primary-600" />;
-    if (typeName.includes('Expense')) return <CreditCard className="w-4 h-4 text-error-600" />;
-
-    return <DollarSign className="w-4 h-4 text-gray-600" />;
+  const getAccountTypeIcon = (typeName = '') => {
+    const t = typeName.toLowerCase();
+    if (t.includes('asset')) return <Wallet className="w-5 h-5" />;
+    if (t.includes('liabilit')) return <CreditCard className="w-5 h-5" />;
+    if (t.includes('equity')) return <CircleDollarSign className="w-5 h-5" />;
+    if (t.includes('income')) return <TrendingUp className="w-5 h-5" />;
+    if (t.includes('expens')) return <PiggyBank className="w-5 h-5" />;
+    return <DollarSign className="w-5 h-5" />;
   };
 
   const accountTypeFilters = [
-    { value: 'all', label: 'All Ledgers' },
+    { value: 'all', label: 'All ledgers' },
     { value: 'assets', label: 'Assets' },
+    { value: 'liabilities', label: 'Liabilities' },
+    { value: 'equity', label: 'Equity' },
     { value: 'income', label: 'Income' },
-    { value: 'expense', label: 'Expense' },
-    { value: 'liability', label: 'Liability' },
-    { value: 'equity', label: 'Equity' }
+    { value: 'expenses', label: 'Expenses' }
   ];
+
+  // Group definitions matching double-entry accounting standard
+  const groupDefs = [
+    { name: 'Assets', match: (t) => t.includes('asset'), rule: 'Balance = debits − credits', normalSide: 'Dr' },
+    { name: 'Liabilities', match: (t) => t.includes('liabilit'), rule: 'Balance = credits − debits', normalSide: 'Cr' },
+    { name: 'Equity', match: (t) => t.includes('equity'), rule: 'Balance = credits − debits', normalSide: 'Cr' },
+    { name: 'Income', match: (t) => t.includes('income'), rule: 'Balance = credits − debits', normalSide: 'Cr' },
+    { name: 'Expenses', match: (t) => t.includes('expens'), rule: 'Balance = debits − credits', normalSide: 'Dr' }
+  ];
+
+  // Active inspected account in right panel
+  const activeAccount =
+    filteredAccounts.find(a => a.account_id === selectedAccountId) ||
+    filteredAccounts[0] ||
+    null;
+
+  const activeGroup = activeAccount
+    ? groupDefs.find(g => g.match((activeAccount.type_name || '').toLowerCase())) || { normalSide: 'Dr', rule: 'Balance = debits − credits' }
+    : { normalSide: 'Dr', rule: 'Balance = debits − credits' };
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-indigo-900">
+      <div style={{ minHeight: '100vh', background: '#F2F5EE' }}>
         <Navbar />
-        <div className="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-center h-64">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-cyan-400"></div>
-          </div>
+        <div className="sf-wrap" style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '60vh' }}>
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-brand-ink"></div>
         </div>
       </div>
     );
@@ -142,242 +167,270 @@ const ShowBusinessAccount = () => {
 
   return (
     <div
-      className="min-h-screen relative overflow-hidden"
       style={{
-        minHeight: "100vh",
-        width: "100%",
+        minHeight: '100vh',
+        background: '#F2F5EE',
+        color: '#0E1A14',
+        fontFamily: "'Instrument Sans', system-ui, -apple-system, sans-serif",
+        fontVariantNumeric: 'tabular-nums',
+        WebkitFontSmoothing: 'antialiased'
       }}
     >
-      {/* Enhanced Professional Background */}
-      <div className="absolute inset-0">
-        {/* Primary gradient background */}
-        <div className="absolute inset-0 bg-gradient-to-br from-slate-900 via-blue-900 to-indigo-900"></div>
+      <Navbar />
 
-        {/* Overlay gradients for depth */}
-        <div className="absolute inset-0 bg-gradient-to-t from-purple-900/30 via-transparent to-blue-800/20"></div>
-        <div className="absolute inset-0 bg-gradient-to-r from-indigo-800/20 via-transparent to-cyan-800/20"></div>
-
-        {/* Professional grid pattern */}
-        <div className="absolute inset-0 opacity-10">
-          <div className="absolute inset-0" style={{
-            backgroundImage: `
-              linear-gradient(90deg, rgba(255,255,255,0.1) 1px, transparent 1px),
-              linear-gradient(0deg, rgba(255,255,255,0.1) 1px, transparent 1px)
-            `,
-            backgroundSize: '50px 50px'
-          }}></div>
+      <main className="sf-wrap sf-coa-wrap">
+        {/* Title & Action Header */}
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', flexWrap: 'wrap', gap: '24px' }}>
+          <div>
+            <h1
+              style={{
+                fontSize: 'clamp(44px, 5.5vw, 76px)',
+                fontWeight: 800,
+                fontFamily: "'Bricolage Grotesque', sans-serif",
+                letterSpacing: '-0.04em',
+                lineHeight: 0.98
+              }}
+            >
+              Chart of Accounts.
+            </h1>
+            <p style={{ color: '#44544B', fontSize: '20px', marginTop: '16px', maxWidth: '660px', lineHeight: 1.55 }}>
+              The index of your books. Each row is a ledger, and opening one shows its whole page: every debit, every credit and the balance after each.
+            </p>
+          </div>
+          <div>
+            <Link to="/creatnewaccount" className="sf-btn sf-btn-lime">
+              + New ledger
+            </Link>
+          </div>
         </div>
 
-        {/* Animated business elements */}
-        <div className="absolute inset-0 overflow-hidden">
-          {/* Floating financial icons */}
-          <div className="absolute top-20 left-10 text-blue-400/20 animate-pulse flex items-center justify-center">
-            <Wallet className="w-10 h-10" />
-          </div>
-          <div className="absolute top-40 right-20 text-cyan-400/20 animate-bounce flex items-center justify-center">
-            <TrendingUp className="w-8 h-8" />
-          </div>
-          <div className="absolute bottom-40 left-32 text-purple-400/20 animate-pulse flex items-center justify-center">
-            <BarChart3 className="w-12 h-12" />
-          </div>
-          <div className="absolute bottom-20 right-40 text-indigo-400/20 animate-bounce flex items-center justify-center">
-            <TrendingUp className="w-8 h-8" />
-          </div>
-          <div className="absolute top-1/2 left-1/4 text-teal-400/20 animate-pulse flex items-center justify-center">
-            <Wallet className="w-6 h-6" />
-          </div>
-          <div className="absolute top-1/3 right-1/3 text-violet-400/20 animate-bounce flex items-center justify-center">
-            <BarChart3 className="w-10 h-10" />
-          </div>
-
-          {/* Subtle geometric shapes */}
-          <div className="absolute top-1/4 right-10 w-32 h-32 border border-white/10 rounded-full animate-pulse"></div>
-          <div className="absolute bottom-1/4 left-10 w-24 h-24 border border-cyan-400/20 rounded-lg rotate-45 animate-spin" style={{ animationDuration: '20s' }}></div>
-          <div className="absolute top-1/2 right-1/4 w-20 h-20 bg-gradient-to-r from-purple-500/10 to-blue-500/10 rounded-full animate-pulse"></div>
-
-          {/* Network connection lines */}
-          <svg className="absolute inset-0 w-full h-full" style={{ filter: 'blur(0.5px)' }}>
-            <defs>
-              <linearGradient id="networkGradient" x1="0%" y1="0%" x2="100%" y2="100%">
-                <stop offset="0%" style={{ stopColor: '#3b82f6', stopOpacity: 0.1 }} />
-                <stop offset="50%" style={{ stopColor: '#8b5cf6', stopOpacity: 0.2 }} />
-                <stop offset="100%" style={{ stopColor: '#06b6d4', stopOpacity: 0.1 }} />
-              </linearGradient>
-            </defs>
-            <path
-              d="M100,100 L300,200 L600,150 L900,300 L1200,200"
-              stroke="url(#networkGradient)"
-              strokeWidth="2"
-              fill="none"
-              className="animate-pulse"
+        {/* Search & Filter Controls */}
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '12px', alignItems: 'center', marginTop: '40px' }}>
+          <div style={{ flex: '1 1 280px', maxWidth: '380px' }}>
+            <label htmlFor="sq" className="sr">Search ledgers</label>
+            <input
+              id="sq"
+              type="search"
+              placeholder="Search ledgers…"
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              style={{
+                width: '100%',
+                minHeight: '46px',
+                padding: '0 14px',
+                fontSize: '16px',
+                border: '2px solid #0E1A14',
+                borderRadius: '6px',
+                background: '#fff'
+              }}
             />
-            <path
-              d="M200,400 L500,300 L800,450 L1100,350"
-              stroke="rgba(59, 130, 246, 0.2)"
-              strokeWidth="1"
-              fill="none"
-              className="animate-pulse"
-              style={{ animationDelay: '1s' }}
-            />
-          </svg>
+          </div>
+          <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }} role="group" aria-label="Filter by type">
+            {accountTypeFilters.map((f) => (
+              <button
+                key={f.value}
+                type="button"
+                onClick={() => setSelectedFilter(f.value)}
+                className={`sf-cp ${selectedFilter === f.value ? 'active' : ''}`}
+              >
+                {f.label}
+              </button>
+            ))}
+          </div>
         </div>
 
-        {/* Subtle overlay for content readability */}
-        <div className="absolute inset-0 bg-black/20"></div>
-      </div>
-
-      {/* Content */}
-      <div className="relative z-10">
-        <Navbar />
-        <div className="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
-          <div className="px-4 py-6 sm:px-0">
-            {/* Header */}
-            <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-8">
-              <div>
-                <h1 className="text-3xl font-bold text-white">Chart of Accounts-Ledgers</h1>
-                <p className="mt-2 text-gray-300">
-                  Manage accounts for "{selectedBusiness?.business_name}"
-                </p>
-              </div>
-              <div className="mt-4 md:mt-0 flex space-x-3">
-                <Link
-                  to="/creatnewaccount"
-                  className="btn-primary flex items-center shadow-lg hover:shadow-xl transition-all duration-300"
-                >
-                  <Plus className="w-4 h-4 mr-2" />
-                  New Ledger
-                </Link>
-              </div>
+        {/* Accounts Content: Master-Detail or Empty */}
+        {filteredAccounts.length === 0 ? (
+          <div
+            style={{
+              textAlign: 'center',
+              padding: '80px 20px',
+              background: '#fff',
+              border: '2px solid #0E1A14',
+              borderRadius: '6px',
+              maxWidth: '600px',
+              margin: '48px auto',
+              boxShadow: '4px 4px 0 #0E1A14'
+            }}
+          >
+            <div
+              style={{
+                width: '64px',
+                height: '64px',
+                background: '#0E1A14',
+                borderRadius: '8px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                margin: '0 auto 20px'
+              }}
+            >
+              <DollarSign className="w-8 h-8 text-brand-lime" />
             </div>
+            <h3 style={{ fontFamily: "'Bricolage Grotesque', sans-serif", fontSize: '28px', fontWeight: 800, marginBottom: '8px' }}>
+              {searchTerm || selectedFilter !== 'all' ? 'No ledgers found' : 'No ledgers yet'}
+            </h3>
+            <p style={{ color: '#44544B', fontSize: '18px', marginBottom: '24px' }}>
+              {searchTerm || selectedFilter !== 'all'
+                ? 'Try adjusting your search or filter criteria'
+                : 'Create your first ledger to start tracking finances'}
+            </p>
+            <Link to="/creatnewaccount" className="sf-btn sf-btn-lime">
+              + New ledger
+            </Link>
+          </div>
+        ) : (
+          /* Master-Detail Split View */
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '44px', alignItems: 'flex-start', marginTop: '32px' }}>
+            {/* Master: The Index */}
+            <div className="sf-coa-idx">
+              <p className="sf-cap">The index · {filteredAccounts.length} {filteredAccounts.length === 1 ? 'ledger' : 'ledgers'}</p>
 
-            {/* Filters and Search */}
-            <div className="bg-white/95 backdrop-blur-sm rounded-2xl p-6 mb-6 border border-white/20 shadow-lg">
-              <div className="flex flex-col md:flex-row md:items-center md:justify-between space-y-4 md:space-y-0">
-                {/* Search */}
-                <div className="relative flex-1 max-w-md">
-                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
-                  <input
-                    type="text"
-                    placeholder="Search accounts..."
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                    className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
-                  />
-                </div>
+              {groupDefs.map((group) => {
+                const groupAccounts = filteredAccounts.filter(a => group.match((a.type_name || '').toLowerCase()));
+                if (groupAccounts.length === 0) return null;
 
-                {/* Filter */}
-                <div className="flex items-center space-x-4">
-                  <Filter className="w-4 h-4 text-gray-400" />
-                  <select
-                    value={selectedFilter}
-                    onChange={(e) => setSelectedFilter(e.target.value)}
-                    className="min-w-40 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
-                  >
-                    {accountTypeFilters.map(filter => (
-                      <option key={filter.value} value={filter.value}>
-                        {filter.label}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-              </div>
-            </div>
+                const groupTotal = groupAccounts.reduce((sum, a) => sum + Number(a.balance || 0), 0);
 
-            {/* Accounts Table */}
-            {filteredAccounts.length === 0 ? (
-              <div className="bg-white/95 backdrop-blur-sm rounded-2xl p-12 text-center border border-white/20 shadow-lg">
-                <div className="w-20 h-20 bg-gradient-to-r from-emerald-500 to-teal-600 rounded-full mx-auto flex items-center justify-center mb-6">
-                  <DollarSign className="h-10 w-10 text-white" />
-                </div>
-                <h3 className="mt-4 text-lg font-medium text-gray-900">
-                  {searchTerm || selectedFilter !== 'all' ? 'No Ledger found' : 'No Ledger yet'}
-                </h3>
-                <p className="mt-2 text-gray-500">
-                  {searchTerm || selectedFilter !== 'all'
-                    ? 'Try adjusting your search or filter criteria'
-                    : 'Create your first account to start tracking finances'
-                  }
-                </p>
-              </div>
-            ) : (
-              <div className="bg-white/95 backdrop-blur-sm rounded-2xl overflow-hidden border border-white/20 shadow-lg">
-                <div className="overflow-x-auto">
-                  <table className="min-w-full divide-y divide-gray-200">
-                    <thead className="bg-gradient-to-r from-emerald-50 to-teal-50">
-                      <tr>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                          Ledger
-                        </th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                          Type
-                        </th>
-                        <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
-                          Balance
-                        </th>
-                        <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
-                          Actions
-                        </th>
-                      </tr>
-                    </thead>
-                    <tbody className="bg-white divide-y divide-gray-200">
-                      {filteredAccounts.map((account) => (
-                        <tr key={account.account_id} className="hover:bg-gradient-to-r hover:from-emerald-50 hover:to-teal-50 transition-colors duration-200">
-                          <td className="px-6 py-4 whitespace-nowrap">
-                            <div>
-                              <div className="text-sm font-medium text-gray-900">
-                                {account.account_name}
-                              </div>
-                              {account.description && (
-                                <div className="text-sm text-gray-500">
-                                  {account.description}
-                                </div>
-                              )}
-                              <div className="text-xs text-gray-400">
-                                Created: {formatDate(account.created_at)}
-                              </div>
-                            </div>
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap">
-                            <div className="flex items-center">
+                return (
+                  <div key={group.name} className="sf-coa-g">
+                    <div className="sf-coa-gh">
+                      <div>
+                        <b>{group.name}</b>
+                        <small>{group.rule}</small>
+                      </div>
+                      <span>{formatCurrency(groupTotal)}</span>
+                    </div>
+
+                    <div role="listbox" aria-label={`${group.name} Ledgers`}>
+                      {groupAccounts.map((account) => {
+                        const isCurrent = activeAccount?.account_id === account.account_id;
+
+                        return (
+                          <div
+                            key={account.account_id}
+                            role="option"
+                            aria-selected={isCurrent}
+                            tabIndex={0}
+                            onClick={() => setSelectedAccountId(account.account_id)}
+                            onKeyDown={(e) => {
+                              if (e.key === 'Enter' || e.key === ' ') {
+                                setSelectedAccountId(account.account_id);
+                              }
+                            }}
+                            className={`sf-coa-rw ${isCurrent ? 'active' : ''}`}
+                          >
+                            <span style={{ color: isCurrent ? '#0E1A14' : '#44544B' }}>
                               {getAccountTypeIcon(account.type_name)}
-                              <span className="ml-2 text-sm text-gray-900">
-                                {account.type_name}
-                              </span>
-                            </div>
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap text-right">
-                            <span className="text-sm font-medium text-gray-900 bg-gray-50 px-3 py-1 rounded-full">
-                              {formatCurrency(account.balance)}
                             </span>
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                            <div className="flex justify-end space-x-2">
-                              <button
-                                onClick={() => navigate('/editaccount', { state: { account } })}
-                                className="p-2 text-gray-400 hover:text-emerald-600 hover:bg-emerald-50 rounded-lg transition-all duration-200"
-                                title="Edit account"
-                              >
-                                <Edit3 className="w-4 h-4" />
-                              </button>
-                              <button
-                                onClick={() => handleDeleteAccount(account.account_id)}
-                                className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-all duration-200"
-                                title="Delete account"
-                              >
-                                <Trash2 className="w-4 h-4" />
-                              </button>
-                            </div>
-                          </td>
+                            <span className="sf-coa-nmx">
+                              <b>{account.account_name}</b>
+                              <i>{account.description || account.type_name}</i>
+                            </span>
+                            <span className="sf-coa-bl">
+                              {formatCurrency(account.balance)}
+                              <small>{group.normalSide}</small>
+                            </span>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+
+            {/* Detail: The Ledger Page */}
+            {activeAccount && (
+              <div className="sf-coa-pn">
+                <p className="sf-cap">The page</p>
+                <div className="sf-coa-panel" aria-live="polite">
+                  <div className="sf-coa-tp">
+                    {getAccountTypeIcon(activeAccount.type_name)}
+                    <span>{activeAccount.type_name}</span>
+                  </div>
+
+                  <h2 className="sf-coa-nm">{activeAccount.account_name}</h2>
+                  <p style={{ color: '#44544B', marginTop: '8px', fontSize: '17px' }}>
+                    {activeAccount.description ? `${activeAccount.description} · ` : ''}Created {formatDate(activeAccount.created_at)}
+                  </p>
+
+                  {/* Balance Box */}
+                  <div className="sf-coa-bal">
+                    <div>
+                      <span className="sf-coa-lb">Closing balance</span>
+                      <span className="sf-coa-bg">
+                        {formatCurrency(activeAccount.balance)} <small style={{ fontSize: '18px', fontWeight: 700 }}>{activeGroup.normalSide}</small>
+                      </span>
+                    </div>
+                    <p className="sf-coa-rl">{activeGroup.rule}</p>
+                  </div>
+
+                  {/* Account Summary Specs */}
+                  <div style={{ overflowX: 'auto', marginTop: '20px' }}>
+                    <table className="sf-coa-table">
+                      <thead>
+                        <tr>
+                          <th>Attribute</th>
+                          <th>Specification</th>
                         </tr>
-                      ))}
-                    </tbody>
-                  </table>
+                      </thead>
+                      <tbody>
+                        <tr>
+                          <td>Account Code / ID</td>
+                          <td><b>#{activeAccount.account_id}</b></td>
+                        </tr>
+                        <tr>
+                          <td>Account Classification</td>
+                          <td><b>{activeAccount.type_name}</b></td>
+                        </tr>
+                        <tr>
+                          <td>Description</td>
+                          <td>{activeAccount.description || 'Standard business ledger account'}</td>
+                        </tr>
+                        <tr>
+                          <td>Normal Balance Side</td>
+                          <td><b>{activeGroup.normalSide === 'Dr' ? 'Debit (Dr)' : 'Credit (Cr)'}</b></td>
+                        </tr>
+                        <tr>
+                          <td>Creation Date</td>
+                          <td>{formatDate(activeAccount.created_at)}</td>
+                        </tr>
+                      </tbody>
+                    </table>
+                  </div>
+
+                  {/* Actions */}
+                  <div className="sf-acts">
+                    <button
+                      type="button"
+                      onClick={() => navigate('/ledger-balancing', { state: { selectedLedger: activeAccount.account_name } })}
+                      className="sf-btn sf-btn-lime"
+                    >
+                      View Ledger Entries →
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => navigate('/editaccount', { state: { account: activeAccount } })}
+                      className="sf-lk"
+                    >
+                      Edit ledger
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => handleDeleteAccount(activeAccount.account_id)}
+                      className="sf-lk"
+                      style={{ color: '#dc2626', borderColor: '#dc2626' }}
+                    >
+                      Delete
+                    </button>
+                  </div>
                 </div>
               </div>
             )}
           </div>
-        </div>
-      </div>
+        )}
+      </main>
     </div>
   );
 };
