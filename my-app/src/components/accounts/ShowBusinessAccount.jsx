@@ -404,7 +404,16 @@ const ShowBusinessAccount = () => {
                   <div className="sf-acts">
                     <button
                       type="button"
-                      onClick={() => navigate('/ledger-balancing', { state: { selectedLedger: activeAccount.account_name } })}
+                      onClick={() =>
+                        navigate('/ledger-balancing', {
+                          state: {
+                            selectedLedger: {
+                              id: activeAccount.account_id,
+                              name: activeAccount.account_name,
+                            },
+                          },
+                        })
+                      }
                       className="sf-btn sf-btn-lime"
                     >
                       View Ledger Entries →

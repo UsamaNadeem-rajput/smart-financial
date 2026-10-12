@@ -454,7 +454,12 @@ export default function TrialBalance() {
                               <td className="ln">
                                 <Link
                                   to="/ledger-balancing"
-                                  state={{ selectedLedger: ledger.account_id }}
+                                  state={{
+                                    selectedLedger: {
+                                      id: ledger.account_id,
+                                      name: ledger.account_name,
+                                    },
+                                  }}
                                   className="sf-tb-ln-lk"
                                 >
                                   {ledger.account_name}

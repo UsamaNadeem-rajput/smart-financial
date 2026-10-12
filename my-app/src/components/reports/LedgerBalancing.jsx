@@ -27,7 +27,10 @@ const LedgerBalancing = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const { selectedBusiness, refreshTrigger } = useBusiness();
-  const selection = location.state?.selectedLedger || 'all';
+  const searchParams = new URLSearchParams(location.search);
+  const queryId = searchParams.get('id') || searchParams.get('account_id');
+  const queryName = searchParams.get('name') || searchParams.get('account_name');
+  const rawSelection = location.state?.selectedLedger ?? (queryId ? { id: queryId, name: queryName } : 'all');
   const apiUrl = import.meta.env.VITE_BACKEND_URL;
 
   const [loading, setLoading] = useState(true);
@@ -35,8 +38,21 @@ const LedgerBalancing = () => {
   const [allLedgers, setAllLedgers] = useState([]);
   const [totals, setTotals] = useState({ total_debits: 0, total_credits: 0, balanced: true });
   const [ledgerDetails, setLedgerDetails] = useState(null);
+  const [currentLedger, setCurrentLedger] = useState({ id: null, name: '' });
 
-  const isAll = selection === 'all';
+  const isAll = rawSelection === 'all';
+
+  let initialTargetId = null;
+  let initialTargetName = '';
+
+  if (typeof rawSelection === 'object' && rawSelection !== null) {
+    initialTargetId = rawSelection.id || rawSelection.account_id || null;
+    initialTargetName = rawSelection.name || rawSelection.account_name || '';
+  } else if (typeof rawSelection === 'number' || (typeof rawSelection === 'string' && /^\d+$/.test(rawSelection.trim()))) {
+    initialTargetId = Number(rawSelection);
+  } else if (typeof rawSelection === 'string' && rawSelection !== 'all') {
+    initialTargetName = rawSelection.trim();
+  }
 
   useEffect(() => {
     const fetchData = async () => {
@@ -48,9 +64,39 @@ const LedgerBalancing = () => {
           const { data } = await axios.get(`${apiUrl}/api/ledger-balancing/${selectedBusiness.business_id}`, { withCredentials: true });
           setAllLedgers(data.ledgers || []);
           setTotals(data.totals || { total_debits: 0, total_credits: 0, balanced: true });
-        } else if (selection?.id) {
-          const { data } = await axios.get(`${apiUrl}/api/ledger-balancing/${selectedBusiness.business_id}/${selection.id}`, { withCredentials: true });
-          setLedgerDetails(data.account ? { ...data.account, ...data.totals, entries: data.entries } : null);
+          setLedgerDetails(null);
+          setCurrentLedger({ id: null, name: '' });
+        } else {
+          let targetId = initialTargetId;
+          let targetName = initialTargetName;
+
+          // If we only have accountName and not accountId, query all ledgers first to look up the ID
+          if (!targetId && targetName) {
+            const { data: allData } = await axios.get(
+              `${apiUrl}/api/ledger-balancing/${selectedBusiness.business_id}`,
+              { withCredentials: true }
+            );
+            const matched = (allData.ledgers || []).find(
+              (l) => l.account_name.toLowerCase() === targetName.toLowerCase()
+            );
+            if (matched) {
+              targetId = matched.account_id;
+              targetName = matched.account_name;
+            }
+          }
+
+          if (targetId) {
+            const { data } = await axios.get(
+              `${apiUrl}/api/ledger-balancing/${selectedBusiness.business_id}/${targetId}`,
+              { withCredentials: true }
+            );
+            setLedgerDetails(data.account ? { ...data.account, ...data.totals, entries: data.entries } : null);
+            const finalName = data.account?.account_name || targetName || `Account #${targetId}`;
+            setCurrentLedger({ id: targetId, name: finalName });
+          } else {
+            setError(targetName ? `Ledger "${targetName}" not found.` : 'No ledger selected.');
+            setLedgerDetails(null);
+          }
         }
       } catch (e) {
         setError(e?.response?.data?.error || e.message || 'Failed to load ledger balancing data');
@@ -60,14 +106,25 @@ const LedgerBalancing = () => {
     };
     fetchData();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [selectedBusiness?.business_id, selection === 'all' ? 'all' : selection?.id, refreshTrigger]);
+  }, [selectedBusiness?.business_id, isAll ? 'all' : initialTargetId || initialTargetName, refreshTrigger]);
 
   const header = useMemo(() => (
     <div className="flex items-center justify-between mb-6">
       <h1 className="text-2xl font-semibold text-white">Ledger Balancing</h1>
-      <button className="text-sm text-cyan-400 hover:text-cyan-300 transition-colors" onClick={() => navigate(-1)}>Back</button>
+      <button
+        className="text-sm text-cyan-400 hover:text-cyan-300 transition-colors"
+        onClick={() => {
+          if (!isAll) {
+            navigate('/ledger-balancing', { state: { selectedLedger: 'all' } });
+          } else {
+            navigate(-1);
+          }
+        }}
+      >
+        {!isAll ? '← View All Ledgers' : 'Back'}
+      </button>
     </div>
-  ), [navigate]);
+  ), [navigate, isAll]);
 
   return (
     <div
@@ -213,8 +270,8 @@ const LedgerBalancing = () => {
                     <div>
                       <div className="text-gray-700">Selected Ledger:</div>
                       <div className="mt-1 inline-flex items-center px-3 py-1 rounded-full bg-gray-100 text-gray-800">
-                        <span className="font-medium">{selection?.name}</span>
-                        <span className="ml-2 text-xs text-gray-500">ID: {selection?.id}</span>
+                        <span className="font-medium">{currentLedger.name || ledgerDetails?.account_name || initialTargetName}</span>
+                        <span className="ml-2 text-xs text-gray-500">ID: {currentLedger.id || ledgerDetails?.account_id || initialTargetId}</span>
                       </div>
                     </div>
                     {ledgerDetails && (
@@ -235,8 +292,8 @@ const LedgerBalancing = () => {
                       {/* Ledger Header */}
                       <div className="border-b-2 border-gray-800 p-4 text-center">
                         <h2 className="text-xl font-bold text-gray-900">LEDGER</h2>
-                        <h3 className="text-lg font-semibold text-gray-700 mt-1">{selection?.name}</h3>
-                        <p className="text-sm text-gray-600">Account ID: {selection?.id}</p>
+                        <h3 className="text-lg font-semibold text-gray-700 mt-1">{currentLedger.name || ledgerDetails?.account_name || initialTargetName}</h3>
+                        <p className="text-sm text-gray-600">Account ID: {currentLedger.id || ledgerDetails?.account_id || initialTargetId}</p>
                       </div>
 
                       {/* T-Account Format */}
