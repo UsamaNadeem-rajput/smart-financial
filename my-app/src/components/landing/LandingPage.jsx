@@ -83,124 +83,209 @@ export default function LandingPage() {
         minHeight: '100vh'
       }}
     >
-      {/* TOP NAVIGATION */}
-      <header
-        className="sf-wrap"
-        style={{
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          flexWrap: 'wrap',
-          gap: '16px',
-          paddingTop: '28px',
-          paddingBottom: '28px'
-        }}
-      >
-        <Link
-          to="/"
-          style={{
-            display: 'flex',
-            alignItems: 'center'
-          }}
-        >
-          <img src="/final.png" alt="Smart Financial Logo" style={{ height: '44px', width: 'auto', objectFit: 'contain' }} />
-        </Link>
+      {/* TOP NAVIGATION (STITCH NAVBAR SPEC) */}
+      <header className="sf-nav-header">
+        <div className="sf-wrap">
+          <nav className="sf-nb" aria-label="Main Navigation">
+            {/* Logo */}
+            <Link to="/" className="sf-logo">
+              <div className="sf-logo-box">
+                <svg
+                  width="22"
+                  height="22"
+                  viewBox="0 0 34 34"
+                  fill="none"
+                  aria-hidden="true"
+                >
+                  <path
+                    d="M10 9v14h9M17 9h7M17 15h7"
+                    stroke="#C8F135"
+                    strokeWidth="3.5"
+                    strokeLinecap="round"
+                  />
+                </svg>
+              </div>
+              <span>Smart Financial</span>
+            </Link>
 
-        {/* Auth CTA Actions */}
-        <div className="hidden md:flex" style={{ gap: '12px', alignItems: 'center' }}>
-          {user ? (
-            <>
-              <button
-                type="button"
-                onClick={() => navigate('/list')}
-                style={{ fontWeight: 600, padding: '0 12px', cursor: 'pointer', background: 'none', border: 'none', color: '#000' }}
-              >
-                Dashboard
-              </button>
-              <button
-                type="button"
-                onClick={handleLogout}
-                style={{ fontWeight: 600, padding: '0 12px', color: '#dc2626', cursor: 'pointer', background: 'none', border: 'none' }}
-              >
-                Logout
-              </button>
-              <Link
-                to="/profile"
-                className="sf-btn sf-btn-ink"
-                style={{ minHeight: '46px', gap: '8px' }}
-              >
-                <User className="w-4 h-4 text-brand-lime" />
-                <span>Welcome, {user}</span>
-              </Link>
-            </>
-          ) : (
-            <>
-              <Link to="/login" style={{ fontWeight: 600, padding: '0 12px', color: '#000' }}>
-                Log in
-              </Link>
-              <Link to="/register" className="sf-btn sf-btn-ink" style={{ minHeight: '46px' }}>
-                Create account
-              </Link>
-            </>
-          )}
-        </div>
+            {/* Mobile Menu Toggle Button */}
+            <button
+              type="button"
+              className="sf-mbtn"
+              onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+              aria-label="Toggle navigation menu"
+            >
+              {isMobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
+              <span>Menu</span>
+            </button>
 
-        {/* Mobile Hamburger Button */}
-        <div className="md:hidden flex items-center">
-          <button
-            type="button"
-            onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-            style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '6px', color: '#000' }}
-            aria-label="Toggle menu"
-          >
-            {isMobileMenuOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
-          </button>
-        </div>
+            {/* Navigation Links */}
+            <ul className={`sf-nv ${isMobileMenuOpen ? "mobile-open" : ""}`}>
+              <li className="sf-it">
+                <Link
+                  to="/"
+                  className="sf-tr cur"
+                  aria-current="page"
+                  onClick={() => setIsMobileMenuOpen(false)}
+                >
+                  Home
+                </Link>
+              </li>
+              {user && (
+                <>
+                  <li className="sf-it">
+                    <Link
+                      to="/list"
+                      className="sf-tr"
+                      onClick={() => setIsMobileMenuOpen(false)}
+                    >
+                      Businesses
+                    </Link>
+                  </li>
+                  <li className="sf-it">
+                    <Link
+                      to="/showbusinessaccount"
+                      className="sf-tr"
+                      onClick={() => setIsMobileMenuOpen(false)}
+                    >
+                      Ledgers
+                    </Link>
+                  </li>
+                  <li className="sf-it">
+                    <Link
+                      to="/transectionForm"
+                      className="sf-tr-post"
+                      onClick={() => setIsMobileMenuOpen(false)}
+                    >
+                      Post transactions
+                    </Link>
+                  </li>
+                </>
+              )}
+              <li className="sf-it">
+                <Link
+                  to="/contact"
+                  className="sf-tr"
+                  onClick={() => setIsMobileMenuOpen(false)}
+                >
+                  Contact
+                </Link>
+              </li>
+            </ul>
 
-        {/* Mobile Navigation Drawer */}
-        {isMobileMenuOpen && (
-          <div
-            className="md:hidden w-full"
-            style={{
-              background: '#fff',
-              border: '2px solid #0E1A14',
-              borderRadius: '6px',
-              padding: '20px',
-              marginTop: '12px'
-            }}
-          >
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', fontWeight: 600, color: '#000' }}>
+            {/* Right Section: Auth CTA / User Profile */}
+            <div className={`sf-rt ${isMobileMenuOpen ? "mobile-open" : ""}`}>
               {user ? (
                 <>
-                  <span style={{ fontSize: '14px', color: '#000' }}>Signed in as {user}</span>
                   <button
                     type="button"
-                    onClick={() => { setIsMobileMenuOpen(false); navigate('/list'); }}
-                    className="sf-btn sf-btn-lime"
+                    onClick={() => {
+                      setIsMobileMenuOpen(false);
+                      navigate("/list");
+                    }}
+                    className="sf-chip"
                   >
                     Dashboard
                   </button>
-                  <button
-                    type="button"
-                    onClick={() => { setIsMobileMenuOpen(false); handleLogout(); }}
-                    style={{ color: '#dc2626', fontWeight: 600, textAlign: 'left', background: 'none', border: 'none', padding: '6px 0', cursor: 'pointer' }}
-                  >
-                    Logout
-                  </button>
+
+                  <div className="sf-it sf-dd">
+                    <button
+                      type="button"
+                      className="sf-av"
+                      aria-haspopup="true"
+                      aria-label={`Account menu for ${user}`}
+                    >
+                      <i>{user.charAt(0).toUpperCase()}</i>
+                      <svg
+                        className="sf-cr"
+                        width="12"
+                        height="12"
+                        viewBox="0 0 12 12"
+                        fill="none"
+                        aria-hidden="true"
+                      >
+                        <path
+                          d="M2 4l4 4 4-4"
+                          stroke="currentColor"
+                          strokeWidth="2"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                        />
+                      </svg>
+                    </button>
+                    <div className="sf-pnl sf-p-usr r">
+                      <div className="sf-pc">
+                        <p className="sf-ph">Signed in as</p>
+                        <p
+                          style={{
+                            padding: "0 16px 12px",
+                            fontWeight: 700,
+                            fontSize: "17px",
+                            fontFamily: "'Bricolage Grotesque', sans-serif",
+                          }}
+                        >
+                          {user}
+                        </p>
+                        <Link
+                          to="/profile"
+                          className="sf-mi sf-sm"
+                          onClick={() => setIsMobileMenuOpen(false)}
+                        >
+                          <span><b>Profile settings</b></span>
+                          <span className="sf-ar" aria-hidden="true">→</span>
+                        </Link>
+                        <Link
+                          to="/list"
+                          className="sf-mi sf-sm"
+                          onClick={() => setIsMobileMenuOpen(false)}
+                        >
+                          <span><b>Your businesses</b></span>
+                          <span className="sf-ar" aria-hidden="true">→</span>
+                        </Link>
+                        <Link
+                          to="/contact"
+                          className="sf-mi sf-sm"
+                          onClick={() => setIsMobileMenuOpen(false)}
+                        >
+                          <span><b>Contact</b></span>
+                          <span className="sf-ar" aria-hidden="true">→</span>
+                        </Link>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setIsMobileMenuOpen(false);
+                            handleLogout();
+                          }}
+                          className="sf-mi sf-sm sf-out"
+                        >
+                          <span><b>Log out</b></span>
+                          <span className="sf-ar" aria-hidden="true">→</span>
+                        </button>
+                      </div>
+                    </div>
+                  </div>
                 </>
               ) : (
                 <>
-                  <Link onClick={() => setIsMobileMenuOpen(false)} to="/login" style={{ padding: '8px 0', color: '#000' }}>
+                  <Link
+                    to="/login"
+                    className="sf-tr"
+                    onClick={() => setIsMobileMenuOpen(false)}
+                  >
                     Log in
                   </Link>
-                  <Link onClick={() => setIsMobileMenuOpen(false)} to="/register" className="sf-btn sf-btn-ink">
+                  <Link
+                    to="/register"
+                    className="sf-tr-post"
+                    onClick={() => setIsMobileMenuOpen(false)}
+                  >
                     Create account
                   </Link>
                 </>
               )}
             </div>
-          </div>
-        )}
+          </nav>
+        </div>
       </header>
 
       {/* HERO SECTION */}

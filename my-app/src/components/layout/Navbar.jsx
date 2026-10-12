@@ -2,25 +2,12 @@ import { useEffect, useState } from "react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import { useBusiness } from "../../context/BusinessContext";
 import axios from "axios";
-import {
-  Building2,
-  Users,
-  FileText,
-  LogOut,
-  Menu,
-  X,
-  Plus,
-  HomeIcon,
-  Contact,
-  ArrowDownIcon,
-  Scale,
-  User,
-} from "lucide-react";
+import { Menu, X } from "lucide-react";
 
 const Navbar = () => {
   const navigate = useNavigate();
   const location = useLocation();
-  const { selectedBusiness, clearBusiness } = useBusiness();
+  const { selectedBusiness, clearBusiness, businesses, selectBusiness } = useBusiness();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [user, setUser] = useState(null);
   const [openDropdown, setOpenDropdown] = useState(null); // Track which dropdown is open
@@ -53,320 +40,464 @@ const Navbar = () => {
       console.error("Logout failed:", error);
       // Force logout even if API call fails
       clearBusiness();
-      // navigate('/login');
       window.location.href = "/";
     }
   };
 
-  const navigation = [
-    { name: "Home", href: "/", icon: HomeIcon },
-    { name: "Businesses", href: "/list", icon: Building2 },
-    { name: "Ledgers", href: "/showbusinessaccount", icon: Users },
-    { name: "Post Transactions", href: "/transectionForm", icon: FileText },
-    {
-      name: "Reports",
-      icon: FileText,
-      children: [
-        {
-          name: "General Journal",
-          href: "/showtransections",
-          icon: FileText,
-        },
-        {
-          name: "Ledger Balances",
-          href: "/ledger-balancing",
-          onClick: (e) => {
-            e.preventDefault();
-            navigate('/ledger-balancing', { state: { selectedLedger: 'all' } });
-          },
-          icon: FileText,
-        },
-        {
-          name: "Trial Balance",
-          href: "/trial-balance",
-          icon: FileText,
-        },
-        {
-          name: "Income Statement",
-          href: "/income-report",
-          icon: FileText,
-        },
-        {
-          name: "Balance Sheet",
-          href: "/balance-sheet",
-          icon: FileText,
-        }
-
-      ],
-    },
-    { name: "contact", href: "/contact", icon: Contact },
-  ];
-
   const isActive = (path) => location.pathname === path;
+  const isReportsActive = [
+    "/showtransections",
+    "/ledger-balancing",
+    "/trial-balance",
+    "/income-report",
+    "/balance-sheet",
+  ].includes(location.pathname);
 
   // Handler for dropdown toggle
   const handleDropdownToggle = (name) => {
     setOpenDropdown((prev) => (prev === name ? null : name));
   };
 
-  const isMobile = () => window.innerWidth < 640;
-
   return (
-    <nav className="bg-gradient-to-br from-slate-900 via-blue-950 to-indigo-950 shadow-sm border-b border-slate-800 text-white">
-      <div className="max-w-screen-2xl mx-auto px-3 sm:px-6 lg:px-8">
-        <div className="flex justify-between h-20">
-          {/* Logo and main navigation */}
-          <div className="flex">
+    <>
+      {/* Top Context Utility Banner */}
+      {selectedBusiness && (
+        <aside className="sf-ub">
+          <div
+            className="sf-wrap"
+            style={{
+              display: "flex",
+              justifyContent: "space-between",
+              alignItems: "center",
+              flexWrap: "wrap",
+              gap: "8px",
+            }}
+          >
             <div>
-              <img src="/final.png" onClick={() => navigate("/")} alt="Logo" className="h-16 w-auto mt-2 mr-2 cursor-pointer " />
+              Working in <b>{selectedBusiness.business_name}</b>. Every page shows this business only.{" "}
+              <Link to="/list">Switch business</Link>
             </div>
-
-            {selectedBusiness && (
-              <div className="hidden sm:ml-8 sm:flex sm:space-x-8">
-                {navigation.map((item) => {
-                  if (item.children) {
-                    return (
-                      <div
-                        key={item.name}
-                        className="relative group"
-                        onMouseEnter={() => {
-                          if (!isMobile()) setOpenDropdown(item.name);
-                        }}
-                        onMouseLeave={() => {
-                          if (!isMobile()) setOpenDropdown(null);
-                        }}
-                      >
-                        <button
-                          type="button"
-                          className="inline-flex items-center px-1 text-[14px] font-medium text-slate-300 hover:text-white cursor-pointer border-b-2 border-transparent hover:border-slate-300 transition-colors duration-200 bg-transparent h-[4.5rem]"
-                          onClick={() => handleDropdownToggle(item.name)}
-                          aria-haspopup="true"
-                          aria-expanded={openDropdown === item.name}
-                        >
-                          <item.icon className="w-4 h-4 mr-2" />
-                          {item.name}
-                        </button>
-                        <div
-                          className={`absolute ${openDropdown === item.name ? "block" : "hidden"
-                            } bg-white border shadow-lg mt-2 rounded-md z-50 min-w-[200px]`}
-                        >
-                          {item.children.map((child) => {
-                            if (child.onClick) {
-                              return (
-                                <button
-                                  key={child.name}
-                                  onClick={(e) => {
-                                    setOpenDropdown(null);
-                                    child.onClick(e);
-                                  }}
-                                  className="w-full text-left block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
-                                >
-                                  <child.icon className="w-4 h-4 mr-2 inline-block" />
-                                  {child.name}
-                                </button>
-                              );
-                            }
-                            return (
-                              <Link
-                                key={child.name}
-                                to={child.href}
-                                className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
-                                onClick={() => setOpenDropdown(null)}
-                              >
-                                <child.icon className="w-4 h-4 mr-2 inline-block" />
-                                {child.name}
-                              </Link>
-                            );
-                          })}
-                        </div>
-                      </div>
-                    );
-                  }
-                  const Icon = item.icon;
-                  return (
-                    <Link
-                      key={item.name}
-                      to={item.href}
-                      className={`inline-flex items-center px-1 h-[4.5rem] text-[14px] font-medium border-b-2 ${isActive(item.href)
-                        ? "border-cyan-400 text-cyan-400"
-                        : "border-transparent text-slate-300 hover:text-white hover:border-slate-300"
-                        } transition-colors duration-200`}
-                    >
-                      <Icon className="w-4 h-4 mr-2" />
-                      {item.name}
-                    </Link>
-                  );
-                })}
-
-              </div>
-            )}
+            <div style={{ fontSize: "12px", opacity: 0.8 }}>
+              Sovereign Ledger v2.4 · Single-Entity Scope
+            </div>
           </div>
+        </aside>
+      )}
 
-          <div className="hidden sm:ml-6 sm:flex sm:items-center sm:space-x-4">
-            {selectedBusiness && (
-              <div className="flex items-center space-x-2 px-3 py-1 bg-slate-800 rounded-lg border border-slate-700">
-                {selectedBusiness.logo_url ? (
-                  <img
-                    src={`${import.meta.env.VITE_BACKEND_URL}${selectedBusiness.logo_url}`}
-                    alt="Biz Logo"
-                    className="h-6 w-6 object-contain rounded bg-white"
+      {/* Main Header & Navbar */}
+      <header className="sf-nav-header">
+        <div className="sf-wrap">
+          <nav className="sf-nb" aria-label="Main Navigation">
+            {/* Logo */}
+            <Link to="/" className="sf-logo">
+              <div className="sf-logo-box">
+                <svg
+                  width="22"
+                  height="22"
+                  viewBox="0 0 34 34"
+                  fill="none"
+                  aria-hidden="true"
+                >
+                  <path
+                    d="M10 9v14h9M17 9h7M17 15h7"
+                    stroke="#C8F135"
+                    strokeWidth="3.5"
+                    strokeLinecap="round"
                   />
-                ) : (
-                  <Building2 className="w-4 h-4 text-cyan-400" />
-                )}
-                <span className="text-sm font-medium text-white">
-                  {selectedBusiness.business_name}
-                </span>
+                </svg>
               </div>
-            )}
+              <span>Smart Financial</span>
+            </Link>
 
-            <div className="flex items-center space-x-4">
-              <Link to="/profile" className="flex items-center space-x-2 text-sm text-slate-300 hover:text-white font-medium transition-colors bg-slate-800 px-3 py-1.5 rounded-full border border-slate-700 hover:border-slate-600">
-                <div className="bg-slate-700 p-1 rounded-full">
-                  <User className="w-4 h-4 text-cyan-400" />
-                </div>
-                <span>Welcome, {user}</span>
-              </Link>
-
-              <button
-                onClick={handleLogout}
-                className="inline-flex items-center px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-md text-red-400 hover:text-red-300 focus:outline-none transition ease-in-out duration-150"
-              >
-                <LogOut className="w-4 h-4 mr-1" />
-                Logout
-              </button>
-            </div>
-          </div>
-
-          {/* Mobile menu button */}
-          <div className="sm:hidden flex items-center">
+            {/* Mobile Menu Toggle Button */}
             <button
+              type="button"
+              className="sf-mbtn"
               onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-              className="inline-flex items-center justify-center p-2 rounded-md text-gray-400 hover:text-gray-500 hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-primary-500"
+              aria-label="Toggle navigation menu"
             >
-              {isMobileMenuOpen ? (
-                <X className="block h-6 w-6" />
-              ) : (
-                <Menu className="block h-6 w-6" />
-              )}
+              {isMobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
+              <span>Menu</span>
             </button>
-          </div>
-        </div>
-      </div>
 
-      {/* Mobile menu */}
-      {isMobileMenuOpen && (
-        <div className="sm:hidden">
-          <div className="pt-2 pb-3 space-y-1">
-            {selectedBusiness &&
-              navigation.map((item) => {
-                const Icon = item.icon;
-                if (item.children) {
-                  return (
-                    <div key={item.name} className="relative">
+            {/* Navigation Links */}
+            <ul className={`sf-nv ${isMobileMenuOpen ? "mobile-open" : ""}`}>
+              <li className="sf-it">
+                <Link
+                  to="/"
+                  className={`sf-tr ${isActive("/") ? "cur" : ""}`}
+                  onClick={() => setIsMobileMenuOpen(false)}
+                >
+                  Home
+                </Link>
+              </li>
+              <li className="sf-it">
+                <Link
+                  to="/list"
+                  className={`sf-tr ${isActive("/list") ? "cur" : ""}`}
+                  onClick={() => setIsMobileMenuOpen(false)}
+                >
+                  Businesses
+                </Link>
+              </li>
+              <li className="sf-it">
+                <Link
+                  to="/showbusinessaccount"
+                  className={`sf-tr ${isActive("/showbusinessaccount") ? "cur" : ""}`}
+                  onClick={() => setIsMobileMenuOpen(false)}
+                >
+                  Ledgers
+                </Link>
+              </li>
+
+              {/* Reports Dropdown Trigger */}
+              <li className={`sf-it sf-dd ${openDropdown === "Reports" ? "open" : ""}`}>
+                <button
+                  type="button"
+                  className={`sf-tr ${isReportsActive ? "cur" : ""}`}
+                  onClick={() => handleDropdownToggle("Reports")}
+                  aria-haspopup="true"
+                  aria-expanded={openDropdown === "Reports"}
+                >
+                  Reports
+                  <svg
+                    className="sf-cr"
+                    width="12"
+                    height="12"
+                    viewBox="0 0 12 12"
+                    fill="none"
+                    aria-hidden="true"
+                  >
+                    <path
+                      d="M2 4l4 4 4-4"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    />
+                  </svg>
+                </button>
+                <div className={`sf-pnl sf-p-rep ${openDropdown === "Reports" ? "open" : ""}`}>
+                  <div className="sf-pc">
+                    <p className="sf-ph">Four statements & accounting records</p>
+                    <div className="sf-g2">
                       <button
-                        className="flex items-center w-full pl-3 pr-4 py-2 text-base font-medium text-slate-200 hover:text-white hover:bg-slate-800/50"
-                        onClick={() => handleDropdownToggle(item.name)}
+                        type="button"
+                        onClick={(e) => {
+                          setOpenDropdown(null);
+                          setIsMobileMenuOpen(false);
+                          e.preventDefault();
+                          navigate("/ledger-balancing", { state: { selectedLedger: "all" } });
+                        }}
+                        className="sf-mi sf-rp"
                       >
-                        <Icon className="w-5 h-5 mr-3" />
-                        {item.name}
-                        <span className="ml-auto">
-                          <ArrowDownIcon className="w-4 h-4" />
+                        <span>
+                          <b>Ledger</b>
+                          <em>Balance = debits − credits</em>
                         </span>
+                        <span className="sf-ar" aria-hidden="true">→</span>
                       </button>
-                      <div
-                        className={`${openDropdown === item.name ? "block" : "hidden"
-                          } bg-slate-800 border border-slate-700 shadow-lg rounded-md z-50`}
+
+                      <Link
+                        to="/trial-balance"
+                        className="sf-mi sf-rp"
+                        onClick={() => {
+                          setOpenDropdown(null);
+                          setIsMobileMenuOpen(false);
+                        }}
                       >
-                        {item.children.map((child) => {
-                          if (child.onClick) {
-                            return (
-                              <button
-                                key={child.name}
-                                onClick={(e) => {
-                                  setOpenDropdown(null);
-                                  setIsMobileMenuOpen(false);
-                                  child.onClick(e);
-                                }}
-                                className="w-full text-left block px-6 py-2 text-sm text-slate-300 hover:bg-slate-700 hover:text-white"
-                              >
-                                <child.icon className="w-4 h-4 mr-2 inline-block" />
-                                {child.name}
-                              </button>
-                            );
-                          }
-                          return (
-                            <Link
-                              key={child.name}
-                              to={child.href}
-                              className="block px-6 py-2 text-sm text-slate-300 hover:bg-slate-700 hover:text-white"
+                        <span>
+                          <b>Trial balance</b>
+                          <em>Debits = credits</em>
+                        </span>
+                        <span className="sf-ar" aria-hidden="true">→</span>
+                      </Link>
+
+                      <Link
+                        to="/income-report"
+                        className="sf-mi sf-rp"
+                        onClick={() => {
+                          setOpenDropdown(null);
+                          setIsMobileMenuOpen(false);
+                        }}
+                      >
+                        <span>
+                          <b>Income statement</b>
+                          <em>Revenue − COGS − OPEX</em>
+                        </span>
+                        <span className="sf-ar" aria-hidden="true">→</span>
+                      </Link>
+
+                      <Link
+                        to="/balance-sheet"
+                        className="sf-mi sf-rp"
+                        onClick={() => {
+                          setOpenDropdown(null);
+                          setIsMobileMenuOpen(false);
+                        }}
+                      >
+                        <span>
+                          <b>Balance sheet</b>
+                          <em>Assets = liabilities + equity</em>
+                        </span>
+                        <span className="sf-ar" aria-hidden="true">→</span>
+                      </Link>
+
+                      <Link
+                        to="/showtransections"
+                        className="sf-mi sf-rp"
+                        style={{ gridColumn: "span 2" }}
+                        onClick={() => {
+                          setOpenDropdown(null);
+                          setIsMobileMenuOpen(false);
+                        }}
+                      >
+                        <span>
+                          <b>General Journal</b>
+                          <em>All journal entries & audit log</em>
+                        </span>
+                        <span className="sf-ar" aria-hidden="true">→</span>
+                      </Link>
+                    </div>
+                    <p className="sf-pf">Every report downloads as a PDF.</p>
+                  </div>
+                </div>
+              </li>
+
+              {/* Primary CTA Button: Post transactions */}
+              <li className="sf-it">
+                <Link
+                  to="/transectionForm"
+                  className="sf-tr-post"
+                  onClick={() => setIsMobileMenuOpen(false)}
+                >
+                  Post transactions
+                </Link>
+              </li>
+
+              {/* Contact Link */}
+              <li className="sf-it">
+                <Link
+                  to="/contact"
+                  className={`sf-tr ${isActive("/contact") ? "cur" : ""}`}
+                  onClick={() => setIsMobileMenuOpen(false)}
+                >
+                  Contact
+                </Link>
+              </li>
+            </ul>
+
+            {/* Right Section: Business Switcher & User Profile */}
+            <div className={`sf-rt ${isMobileMenuOpen ? "mobile-open" : ""}`}>
+              {/* Active Business Selector Trigger */}
+              {selectedBusiness && (
+                <div className={`sf-it sf-dd ${openDropdown === "business" ? "open" : ""}`}>
+                  <button
+                    type="button"
+                    className="sf-chip"
+                    onClick={() => handleDropdownToggle("business")}
+                    aria-haspopup="true"
+                    aria-label={`Active business: ${selectedBusiness.business_name}. Switch business`}
+                  >
+                    {selectedBusiness.logo_url ? (
+                      <img
+                        src={`${import.meta.env.VITE_BACKEND_URL}${selectedBusiness.logo_url}`}
+                        alt="Biz Logo"
+                        className="h-5 w-5 object-contain rounded bg-white"
+                      />
+                    ) : (
+                      <svg
+                        width="18"
+                        height="18"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        aria-hidden="true"
+                      >
+                        <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="2.5" />
+                        <circle cx="12" cy="12" r="4" fill="currentColor" />
+                        <path d="M12 2v4" stroke="currentColor" strokeWidth="2.5" />
+                      </svg>
+                    )}
+                    <span>{selectedBusiness.business_name}</span>
+                    <svg
+                      className="sf-cr"
+                      width="12"
+                      height="12"
+                      viewBox="0 0 12 12"
+                      fill="none"
+                      aria-hidden="true"
+                    >
+                      <path
+                        d="M2 4l4 4 4-4"
+                        stroke="currentColor"
+                        strokeWidth="2"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      />
+                    </svg>
+                  </button>
+                  <div className="sf-pnl sf-p-biz r">
+                    <div className="sf-pc">
+                      <p className="sf-ph">Switch business</p>
+                      <Link
+                        to="/showbusinessaccount"
+                        className="sf-mi sf-bz"
+                        onClick={() => {
+                          setOpenDropdown(null);
+                          setIsMobileMenuOpen(false);
+                        }}
+                      >
+                        <span className="sf-rd on" />
+                        <span>
+                          <b>{selectedBusiness.business_name}</b>
+                          <small>{selectedBusiness.business_type || "Sole Proprietorship"} · Active</small>
+                        </span>
+                        <span className="sf-tg">Active</span>
+                      </Link>
+
+                      {businesses &&
+                        businesses
+                          .filter((b) => b.business_id !== selectedBusiness.business_id)
+                          .slice(0, 3)
+                          .map((b) => (
+                            <button
+                              key={b.business_id}
+                              type="button"
                               onClick={() => {
+                                selectBusiness(b);
                                 setOpenDropdown(null);
                                 setIsMobileMenuOpen(false);
+                                navigate("/showbusinessaccount");
                               }}
+                              className="sf-mi sf-bz"
                             >
-                              <child.icon className="w-4 h-4 mr-2 inline-block" />
-                              {child.name}
-                            </Link>
-                          );
-                        })}
+                              <span className="sf-rd" />
+                              <span>
+                                <b>{b.business_name}</b>
+                                <small>{b.business_type || "Sole Proprietorship"}</small>
+                              </span>
+                              <span className="sf-ar" aria-hidden="true">→</span>
+                            </button>
+                          ))}
+
+                      <div className="sf-pf2">
+                        <Link
+                          to="/business"
+                          onClick={() => {
+                            setOpenDropdown(null);
+                            setIsMobileMenuOpen(false);
+                          }}
+                        >
+                          + New business
+                        </Link>
+                        <Link
+                          to="/list"
+                          onClick={() => {
+                            setOpenDropdown(null);
+                            setIsMobileMenuOpen(false);
+                          }}
+                        >
+                          Manage all →
+                        </Link>
                       </div>
                     </div>
-                  );
-                }
-                return (
-                  <Link
-                    key={item.name}
-                    to={item.href}
-                    className={`block pl-3 pr-4 py-2 text-base font-medium ${isActive(item.href)
-                      ? "text-white bg-slate-800/50 border-r-4 border-cyan-400"
-                      : "text-slate-300 hover:text-white hover:bg-slate-800/50"
-                      }`}
-                    onClick={() => setIsMobileMenuOpen(false)}
-                  >
-                    <div className="flex items-center">
-                      <Icon className="w-5 h-5 mr-3" />
-                      {item.name}
-                    </div>
-                  </Link>
-                );
-              })}
+                  </div>
+                </div>
+              )}
 
-          </div>
-          <div className="pt-4 pb-3 border-t border-slate-700/50">
-            {selectedBusiness && (
-              <div className="flex items-center px-4 py-2">
-                <Building2 className="w-5 h-5 text-cyan-400 mr-2" />
-                <span className="text-sm font-medium text-white">
-                  {selectedBusiness.business_name}
-                </span>
+              {/* User Profile Avatar Trigger */}
+              <div className={`sf-it sf-dd ${openDropdown === "user" ? "open" : ""}`}>
+                <button
+                  type="button"
+                  className="sf-av"
+                  onClick={() => handleDropdownToggle("user")}
+                  aria-haspopup="true"
+                  aria-label={`Account menu for ${user || "user"}`}
+                >
+                  <i>{user ? user.charAt(0).toUpperCase() : "U"}</i>
+                  <svg
+                    className="sf-cr"
+                    width="12"
+                    height="12"
+                    viewBox="0 0 12 12"
+                    fill="none"
+                    aria-hidden="true"
+                  >
+                    <path
+                      d="M2 4l4 4 4-4"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    />
+                  </svg>
+                </button>
+                <div className="sf-pnl sf-p-usr r">
+                  <div className="sf-pc">
+                    <p className="sf-ph">Signed in as</p>
+                    <p
+                      style={{
+                        padding: "0 16px 12px",
+                        fontWeight: 700,
+                        fontSize: "17px",
+                        fontFamily: "'Bricolage Grotesque', sans-serif",
+                      }}
+                    >
+                      {user || "Account"}
+                    </p>
+                    <Link
+                      to="/profile"
+                      className="sf-mi sf-sm"
+                      onClick={() => {
+                        setOpenDropdown(null);
+                        setIsMobileMenuOpen(false);
+                      }}
+                    >
+                      <span><b>Profile settings</b></span>
+                      <span className="sf-ar" aria-hidden="true">→</span>
+                    </Link>
+                    <Link
+                      to="/list"
+                      className="sf-mi sf-sm"
+                      onClick={() => {
+                        setOpenDropdown(null);
+                        setIsMobileMenuOpen(false);
+                      }}
+                    >
+                      <span><b>Your businesses</b></span>
+                      <span className="sf-ar" aria-hidden="true">→</span>
+                    </Link>
+                    <Link
+                      to="/contact"
+                      className="sf-mi sf-sm"
+                      onClick={() => {
+                        setOpenDropdown(null);
+                        setIsMobileMenuOpen(false);
+                      }}
+                    >
+                      <span><b>Contact</b></span>
+                      <span className="sf-ar" aria-hidden="true">→</span>
+                    </Link>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setOpenDropdown(null);
+                        setIsMobileMenuOpen(false);
+                        handleLogout();
+                      }}
+                      className="sf-mi sf-sm sf-out"
+                    >
+                      <span><b>Log out</b></span>
+                      <span className="sf-ar" aria-hidden="true">→</span>
+                    </button>
+                  </div>
+                </div>
               </div>
-            )}
-            <div className="mt-3 space-y-1">
-              <Link
-                to="/profile"
-                className="block px-4 py-2 text-base font-medium text-slate-300 hover:text-white hover:bg-slate-800/50 w-full text-left"
-                onClick={() => setIsMobileMenuOpen(false)}
-              >
-                <div className="flex items-center">
-                  <User className="w-5 h-5 mr-3" />
-                  Profile ({user})
-                </div>
-              </Link>
-              <button
-                onClick={handleLogout}
-                className="block px-4 py-2 text-base font-medium text-red-400 hover:text-red-300 hover:bg-slate-800/50 w-full text-left"
-              >
-                <div className="flex items-center">
-                  <LogOut className="w-5 h-5 mr-3" />
-                  Logout
-                </div>
-              </button>
             </div>
-          </div>
+          </nav>
         </div>
-      )}
-    </nav>
+      </header>
+    </>
   );
 };
 
