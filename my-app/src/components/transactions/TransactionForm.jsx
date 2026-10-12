@@ -434,7 +434,7 @@ export default function TransectionForm() {
                     onKeyDown={(e) => handleAccountNameKeyDown(idx, e)}
                   />
                   {showSuggestionsIdx === idx && suggestions.length > 0 && (
-                    <div className="sf-dd">
+                    <div className="sf-ac-dd">
                       <p>Active ledgers in {selectedBusiness?.business_name || "selected business"}</p>
                       {suggestions.map((s, sidx) => (
                         <button
