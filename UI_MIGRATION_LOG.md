@@ -171,8 +171,6 @@ Branch: `ui-stitch-migration`
   - Checkbox CSS hack from static mockup replaced with clean React inline disclosure state (`confirmDeleteId`) for the delete confirmation card.
 - **Decisions / Questions for User**:
   - None for General Journal. All filter ranges, print/PDF engines, and transaction operations behave identically.
-
-
-
-
-
+- **Recent Refinements**:
+  - Grand Total Bar: Replaced rigid 150px grid columns with a flexible, responsive container (`.sf-gj-gt-totals`, `.sf-gj-gt-item`, `.sf-gj-gt-lbl`, `.sf-gj-gt-val`) so Debit and Credit badges and amounts never overlap or truncate on any viewport.
+  - Loading State & Flicker Elimination: Added `isLoading` state to `ShowTransactions.jsx` so "No entries in this range" never flickers before asynchronous date range results load. Added animated fetching indicator and disabled View/Export buttons while queries are in-flight.

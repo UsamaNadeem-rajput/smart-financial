@@ -1874,47 +1874,55 @@ html {
 
 .sf-gj-gt {
   display: flex;
-  flex-wrap: wrap;
+  justify-content: space-between;
   align-items: center;
+  flex-wrap: wrap;
+  gap: 16px;
   margin-top: 24px;
+  padding: 14px 24px;
   background: #C8F135;
   border: 2px solid #0E1A14;
   border-radius: 6px;
   box-shadow: 3px 3px 0 #0E1A14;
-}
-.sf-gj-gt .c1 {
-  flex: 0 0 170px;
-  padding: 12px 6px 12px 16px;
   box-sizing: border-box;
+}
+.sf-gj-gt-title {
   font-family: 'Bricolage Grotesque', sans-serif;
   font-weight: 800;
   font-size: 18px;
   letter-spacing: -0.02em;
   color: #0E1A14;
 }
-.sf-gj-gt .c2 {
-  flex: 1;
-  display: grid;
-  grid-template-columns: 1fr 150px 150px;
+.sf-gj-gt-totals {
+  display: flex;
   align-items: center;
-  padding: 10px 0;
+  gap: 28px;
+  flex-wrap: wrap;
 }
-.sf-gj-gt .n {
-  text-align: right;
-  padding-right: 16px;
+.sf-gj-gt-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+.sf-gj-gt-lbl {
+  font-size: 12px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: #2F3E34;
+  background: rgba(14, 26, 20, 0.08);
+  padding: 3px 8px;
+  border-radius: 4px;
+  line-height: 1;
+}
+.sf-gj-gt-val {
   font-family: 'Bricolage Grotesque', sans-serif;
   font-weight: 800;
   font-size: 18px;
   letter-spacing: -0.02em;
   color: #0E1A14;
   font-variant-numeric: tabular-nums;
-  display: flex;
-  align-items: baseline;
-  justify-content: flex-end;
-  gap: 6px;
-}
-.sf-gj-gt .c3 {
-  flex: 0 0 130px;
+  white-space: nowrap;
 }
 
 .sf-gj-es {
@@ -1935,6 +1943,12 @@ html {
   color: #44544B;
 }
 
+@keyframes sf-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
 @media (max-width: 900px) {
   .sf-gj-hdr {
     display: none;
@@ -1946,8 +1960,14 @@ html {
     flex-direction: row;
     padding: 0 0 16px 6px;
   }
-  .sf-gj-gt .c1, .sf-gj-gt .c3 {
-    flex: 1 1 100%;
+  .sf-gj-gt {
+    padding: 14px 16px;
+    gap: 12px;
+  }
+  .sf-gj-gt-totals {
+    gap: 16px;
+    width: 100%;
+    justify-content: space-between;
   }
   .sf-gj-vb col.a {
     width: 110px;
