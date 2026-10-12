@@ -116,5 +116,35 @@ Branch: `ui-stitch-migration`
 - **Decisions / Questions for User**:
   - Accounts are automatically categorized into standard double-entry groups (Assets, Liabilities, Equity, Income, Expenses) based on `type_name` while preserving custom account types.
 
+---
+
+## 5. Post Transaction Voucher (`/transectionForm`)
+- **Stitch Screen**: Project `18290502498789531250`, Screen `3a8e10556b0c41afaf2fccadc77a94ee` ("Smart Financial — Post transaction")
+- **Target File(s) Changed**:
+  - `my-app/src/components/transactions/TransactionForm.jsx`
+  - `my-app/src/index.css` (added `.sf-vc`, `.sf-stub`, `.sf-vn`, `.sf-stub-cap`, `.sf-vbody`, `.sf-r3`, `.sf-hd3`, `.sf-am`, `.sf-ac`, `.sf-dd`, `.sf-op`, `.sf-rm`, `.sf-addr`, `.sf-tots`, `.sf-lb`, `.sf-tn`, `.sf-trk`, `.sf-st`, `.sf-acts2`, `.sf-rc`, `.sf-rcb`, `.sf-vmdl`, `.sf-vmc`, `.sf-vmh`, `.sf-vmb`)
+- **New Shared Design Tokens & Styles**:
+  - Neo-Brutalist Voucher Slip Layout: `.sf-vc` container with 2px ink border, 6px 6px shadow, and left-right master split.
+  - Perforated Stub: `.sf-stub` with dashed right border, pseudo-element semicircular punch-outs (`::before`, `::after`), huge 76px display voucher number (`.sf-vn`), automatic next voucher indicator, date selector, and time badge.
+  - Transaction Entry Grid: `.sf-r3` 4-column responsive grid (Ledger Name, Debit $, Credit $, Remove ✕).
+  - Searchable Autocomplete: `.sf-ac` with animated dropdown `.sf-dd`, keyboard arrow navigation, active highlight, and live account balance display (`.sf-op`).
+  - Mutual Lock Behavior: Debit entry locks Credit field, Credit entry locks Debit field with dashed textured styling.
+  - Live Balance Telemetry: Dual progress track bars (`.sf-trk`) measuring Debit vs Credit ratio, display totals (`.sf-tn`), and dynamic status banner (`.sf-st` ok/bad/idle).
+  - Actions: Neo-brutalist buttons ("Save and New", "Save and Close", "Close"), and collapsible "Recalculate balances" utility details panel (`.sf-rc`).
+  - Voucher Confirmation Modal: Animated `.sf-vmdl` with lime header, transaction metadata breakdown, and instant workflow continuation.
+- **Logic & Functionality Preserved**:
+  - Voucher Number Sync: `GET /api/next-transaction-id/${selectedBusiness.business_id}`.
+  - Search Autocomplete: `GET /api/search-accounts?query=${value}&business_id=${business_id}`.
+  - Transaction Submission: `POST /api/transactions` with exact double-entry payload (`transaction_id`, `business_id`, `debit`, `credit`, `date`, `entries`).
+  - Recalculate Balances: `POST /api/recalculate-balances/${business_id}`.
+  - Business Context: `useBusiness()` hook integration.
+  - Success Audio & State: `/success.mp3` audio chime, automatic form reset for "Save and New", back navigation for "Save and Close".
+  - Row Validations: Debits must equal credits, account names must be valid, minimum 2 rows enforced.
+- **Skipped / Inert Stitch Elements**:
+  - None. All controls, dropdowns, inputs, progress bars, audio, and recalculation utilities are fully wired to active platform APIs.
+- **Decisions / Questions for User**:
+  - None for Post Transaction. The voucher layout and dual lock mechanisms match the Stitch design and behave identically to existing backend contracts.
+
+
 
 

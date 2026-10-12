@@ -2,7 +2,6 @@ import React, { useState, useEffect } from "react";
 import Navbar from "../layout/Navbar";
 import { useBusiness } from "../../context/BusinessContext";
 import { AnimatePresence, motion } from "framer-motion";
-import { Wallet, TrendingUp, BarChart3 } from 'lucide-react';
 
 // Helper to get local date string in YYYY-MM-DD
 function getLocalDateString() {
@@ -13,10 +12,10 @@ function getLocalDateString() {
 
 // Helper to format numbers with commas
 function formatNumberWithCommas(value) {
-  if (value === null || value === undefined || value === '') return '';
-  const parts = value.toString().split('.');
-  parts[0] = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, ',');
-  return parts.join('.');
+  if (value === null || value === undefined || value === "") return "";
+  const parts = value.toString().split(".");
+  parts[0] = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+  return parts.join(".");
 }
 
 export default function TransectionForm() {
@@ -38,8 +37,8 @@ export default function TransectionForm() {
   const { selectedBusiness } = useBusiness();
 
   // Filter rows that have actual data (account name and either debit or credit)
-  const validRows = rows.filter(row =>
-    row.accountName.trim() !== "" && (row.debit !== "" || row.credit !== "")
+  const validRows = rows.filter(
+    (row) => row.accountName.trim() !== "" && (row.debit !== "" || row.credit !== "")
   );
 
   const debitTotal = validRows.reduce((a, b) => a + (Number(b.debit) || 0), 0);
@@ -47,9 +46,7 @@ export default function TransectionForm() {
   const isSubmitDisabled =
     validRows.length === 0 || debitTotal === 0 || creditTotal === 0 || debitTotal !== creditTotal;
 
-  const allAccountNamesFilled = validRows.every(
-    (row) => row.accountName.trim() !== ""
-  );
+  const allAccountNamesFilled = validRows.every((row) => row.accountName.trim() !== "");
   const allAccountsValid = validRows.every((row) => !!row.accountId);
 
   const getNextTransactionId = async () => {
@@ -64,7 +61,7 @@ export default function TransectionForm() {
         return data.next_transaction_id;
       }
     } catch (err) {
-      console.error('Error fetching next transaction ID:', err);
+      console.error("Error fetching next transaction ID:", err);
     }
     return 1;
   };
@@ -130,14 +127,11 @@ export default function TransectionForm() {
     };
 
     try {
-      const res = await fetch(
-        `${import.meta.env.VITE_BACKEND_URL}/api/transactions`,
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(payload),
-        }
-      );
+      const res = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/transactions`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
       const data = await res.json();
       if (data.success) {
         setSuccessData({
@@ -145,7 +139,7 @@ export default function TransectionForm() {
           date,
           debitTotal,
           creditTotal,
-          rowsCount: rows.filter(r => r.accountName && (r.debit || r.credit)).length,
+          rowsCount: rows.filter((r) => r.accountName && (r.debit || r.credit)).length,
         });
         setShowSuccess(true);
         if (typeof onSuccess === "function") onSuccess();
@@ -180,9 +174,14 @@ export default function TransectionForm() {
       alert("Network error: " + err.message);
     }
   };
+
   const playSound = () => {
-    const audio = new Audio("/success.mp3");
-    audio.play();
+    try {
+      const audio = new Audio("/success.mp3");
+      audio.play().catch(() => {});
+    } catch {
+      // Audio playback might be restricted without direct user trigger
+    }
   };
 
   const handleSaveAndNew = () => {
@@ -208,7 +207,6 @@ export default function TransectionForm() {
     setSubmitMode("close");
     handleSubmit(async () => {
       await incrementNumber();
-      // Reset form on success so the background is clean
       setRows([
         { accountName: "", debit: "", credit: "" },
         { accountName: "", debit: "", credit: "" },
@@ -217,7 +215,6 @@ export default function TransectionForm() {
       setShowSuggestionsIdx(null);
       setDate(getLocalDateString());
       setTime(new Date().toLocaleTimeString());
-      // Do NOT navigate back here; wait for "Close" on popup
     });
   };
 
@@ -229,19 +226,19 @@ export default function TransectionForm() {
 
   const handleAccountNameKeyDown = (idx, e) => {
     if (showSuggestionsIdx !== idx || suggestions.length === 0) return;
-    if (e.key === 'ArrowDown') {
+    if (e.key === "ArrowDown") {
       e.preventDefault();
       setHighlightedSuggestion((prev) => (prev + 1) % suggestions.length);
-    } else if (e.key === 'ArrowUp') {
+    } else if (e.key === "ArrowUp") {
       e.preventDefault();
       setHighlightedSuggestion((prev) => (prev - 1 + suggestions.length) % suggestions.length);
-    } else if (e.key === 'Enter') {
+    } else if (e.key === "Enter") {
       if (highlightedSuggestion >= 0 && highlightedSuggestion < suggestions.length) {
         const s = suggestions[highlightedSuggestion];
         handleSuggestionClick(idx, s.account_name, s.account_id);
         setHighlightedSuggestion(-1);
       }
-    } else if (e.key === 'Escape') {
+    } else if (e.key === "Escape") {
       setShowSuggestionsIdx(null);
       setHighlightedSuggestion(-1);
     }
@@ -283,35 +280,31 @@ export default function TransectionForm() {
     setShowSuggestionsIdx(null);
   };
 
-  const addRow = () =>
-    setRows([...rows, { accountName: "", debit: "", credit: "" }]);
+  const addRow = () => setRows([...rows, { accountName: "", debit: "", credit: "" }]);
+
   const removeRow = (idx) => {
     if (rows.length <= 2) return; // Keep at least 2 rows
     setRows(rows.filter((_, i) => i !== idx));
   };
 
   const handleDebitChange = (idx, value) => {
-    // Remove commas for storage
-    const raw = value.replace(/,/g, '');
-    if (!/^\d*(\.\d*)?$/.test(raw) && raw !== '') return; // Only allow numbers
+    const raw = value.replace(/,/g, "");
+    if (!/^\d*(\.\d*)?$/.test(raw) && raw !== "") return; // Only allow numbers
     const newRows = [...rows];
     newRows[idx].debit = raw;
-    // Clear credit if debit is entered
-    if (raw !== '') {
-      newRows[idx].credit = '';
+    if (raw !== "") {
+      newRows[idx].credit = "";
     }
     setRows(newRows);
   };
 
   const handleCreditChange = (idx, value) => {
-    // Remove commas for storage
-    const raw = value.replace(/,/g, '');
-    if (!/^\d*(\.\d*)?$/.test(raw) && raw !== '') return; // Only allow numbers
+    const raw = value.replace(/,/g, "");
+    if (!/^\d*(\.\d*)?$/.test(raw) && raw !== "") return; // Only allow numbers
     const newRows = [...rows];
     newRows[idx].credit = raw;
-    // Clear debit if credit is entered
-    if (raw !== '') {
-      newRows[idx].debit = '';
+    if (raw !== "") {
+      newRows[idx].debit = "";
     }
     setRows(newRows);
   };
@@ -321,360 +314,389 @@ export default function TransectionForm() {
   };
 
   const handleCreditKeyDown = (idx, e) => {
-    if (e.key === "Enter" && rows[idx].accountName && rows[idx].credit)
-      addRow();
+    if (e.key === "Enter" && rows[idx].accountName && rows[idx].credit) addRow();
   };
 
+  const maxTotal = Math.max(debitTotal, creditTotal, 1);
+  const debitRatio = debitTotal > 0 ? Math.min(100, (debitTotal / maxTotal) * 100) : 0;
+  const creditRatio = creditTotal > 0 ? Math.min(100, (creditTotal / maxTotal) * 100) : 0;
+  const isBalanced = debitTotal === creditTotal && debitTotal > 0;
+
   return (
-    <>
-      <div
-        className="min-h-screen relative overflow-hidden"
-        style={{
-          minHeight: "100vh",
-          width: "100vw",
-        }}
-      >
-        {/* Enhanced Professional Background */}
-        <div className="absolute inset-0">
-          {/* Primary gradient background */}
-          <div className="absolute inset-0 bg-gradient-to-br from-slate-900 via-blue-900 to-indigo-900"></div>
+    <div style={{ backgroundColor: "#F2F5EE", minHeight: "100vh", color: "#0E1A14" }}>
+      <Navbar />
 
-          {/* Overlay gradients for depth */}
-          <div className="absolute inset-0 bg-gradient-to-t from-purple-900/30 via-transparent to-blue-800/20"></div>
-          <div className="absolute inset-0 bg-gradient-to-r from-indigo-800/20 via-transparent to-cyan-800/20"></div>
-
-          {/* Professional grid pattern */}
-          <div className="absolute inset-0 opacity-10">
-            <div className="absolute inset-0" style={{
-              backgroundImage: `
-                linear-gradient(90deg, rgba(255,255,255,0.1) 1px, transparent 1px),
-                linear-gradient(0deg, rgba(255,255,255,0.1) 1px, transparent 1px)
-              `,
-              backgroundSize: '50px 50px'
-            }}></div>
-          </div>
-
-          {/* Animated business elements */}
-          <div className="absolute inset-0 overflow-hidden">
-            {/* Floating financial icons */}
-            <div className="absolute top-20 left-10 text-blue-400/20 animate-pulse flex items-center justify-center">
-              <Wallet className="w-10 h-10" />
-            </div>
-            <div className="absolute top-40 right-20 text-cyan-400/20 animate-bounce flex items-center justify-center">
-              <TrendingUp className="w-8 h-8" />
-            </div>
-            <div className="absolute bottom-40 left-32 text-purple-400/20 animate-pulse flex items-center justify-center">
-              <BarChart3 className="w-12 h-12" />
-            </div>
-            <div className="absolute bottom-20 right-40 text-indigo-400/20 animate-bounce flex items-center justify-center">
-              <TrendingUp className="w-8 h-8" />
-            </div>
-            <div className="absolute top-1/2 left-1/4 text-teal-400/20 animate-pulse flex items-center justify-center">
-              <Wallet className="w-6 h-6" />
-            </div>
-            <div className="absolute top-1/3 right-1/3 text-violet-400/20 animate-bounce flex items-center justify-center">
-              <BarChart3 className="w-10 h-10" />
-            </div>
-
-            {/* Subtle geometric shapes */}
-            <div className="absolute top-1/4 right-10 w-32 h-32 border border-white/10 rounded-full animate-pulse"></div>
-            <div className="absolute bottom-1/4 left-10 w-24 h-24 border border-cyan-400/20 rounded-lg rotate-45 animate-spin" style={{ animationDuration: '20s' }}></div>
-            <div className="absolute top-1/2 right-1/4 w-20 h-20 bg-gradient-to-r from-purple-500/10 to-blue-500/10 rounded-full animate-pulse"></div>
-
-            {/* Network connection lines */}
-            <svg className="absolute inset-0 w-full h-full" style={{ filter: 'blur(0.5px)' }}>
-              <defs>
-                <linearGradient id="networkGradient" x1="0%" y1="0%" x2="100%" y2="100%">
-                  <stop offset="0%" style={{ stopColor: '#3b82f6', stopOpacity: 0.1 }} />
-                  <stop offset="50%" style={{ stopColor: '#8b5cf6', stopOpacity: 0.2 }} />
-                  <stop offset="100%" style={{ stopColor: '#06b6d4', stopOpacity: 0.1 }} />
-                </linearGradient>
-              </defs>
-              <path
-                d="M100,100 L300,200 L600,150 L900,300 L1200,200"
-                stroke="url(#networkGradient)"
-                strokeWidth="2"
-                fill="none"
-                className="animate-pulse"
-              />
-              <path
-                d="M200,400 L500,300 L800,450 L1100,350"
-                stroke="rgba(59, 130, 246, 0.2)"
-                strokeWidth="1"
-                fill="none"
-                className="animate-pulse"
-                style={{ animationDelay: '1s' }}
-              />
-            </svg>
-          </div>
-
-          {/* Subtle overlay for content readability */}
-          <div className="absolute inset-0 bg-black/20"></div>
-        </div>
-
-        {/* Content */}
-        <div className="relative z-10">
-          <Navbar />
-          <div className="container">
-            <div
-              className="container my-5 text-bg-light p-4 rounded"
-              style={{ maxWidth: "100%", minWidth: "300px" }}
+      <main className="sf-wrap" style={{ paddingTop: "44px", paddingBottom: "88px" }}>
+        {/* Header Section */}
+        <div
+          style={{
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "flex-end",
+            flexWrap: "wrap",
+            gap: "24px",
+            marginBottom: "32px",
+          }}
+        >
+          <div>
+            <h1
+              style={{
+                fontFamily: "'Bricolage Grotesque', sans-serif",
+                fontSize: "clamp(42px, 6vw, 76px)",
+                fontWeight: 800,
+                letterSpacing: "-0.04em",
+                lineHeight: 0.98,
+                margin: 0,
+                color: "#0E1A14",
+              }}
             >
-              <h2 className="mb-4">Transaction Form</h2>
-
-              {/* Top Row: Date, Time, Transaction ID */}
-              <div className="row g-3 align-items-center mb-4">
-                <div className="col-md-8 col-12 d-flex flex-wrap gap-3 align-items-center">
-                  <div className="d-flex align-items-center gap-2">
-                    <label className="form-label m-0">Date:</label>
-                    <input
-                      type="date"
-                      value={date}
-                      onChange={handleDateChange}
-                      className="form-control"
-                      style={{ minWidth: "150px" }}
-                    />
-                  </div>
-                  <div className="d-flex align-items-center gap-2">
-                    <label className="form-label m-0">Time:</label>
-                    <span
-                      className="form-control bg-light"
-                      style={{ minWidth: "120px" }}
-                    >
-                      {time}
-                    </span>
-                  </div>
-                </div>
-                <div className="col-md-4 col-12 d-flex justify-content-md-end">
-                  <div className="d-flex align-items-center gap-2 w-100">
-                    <label className="form-label m-0">Transaction ID:</label>
-                    <input
-                      type="number"
-                      value={number}
-                      readOnly
-                      className="form-control"
-                      style={{ minWidth: "150px" }}
-                    />
-                  </div>
-                </div>
-              </div>
-
-              {/* Table */}
-              <table className="table table-striped table-hover table-bordered border-secondary">
-                <thead className="table-dark">
-                  <tr>
-                    <th>Ledgers Name</th>
-                    <th>Debit</th>
-                    <th>Credit</th>
-                    <th>Remove</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {rows.map((row, idx) => (
-                    <tr key={idx}>
-                      <td style={{ position: "relative" }}>
-                        <input
-                          className="form-control"
-                          type="text"
-                          value={row.accountName}
-                          onChange={(e) => handleAccountNameChange(idx, e.target.value)}
-                          autoComplete="off"
-                          onBlur={() => setTimeout(() => { setShowSuggestionsIdx(null); setHighlightedSuggestion(-1); }, 100)}
-                          onFocus={() => { row.accountName && setShowSuggestionsIdx(idx); }}
-                          onKeyDown={(e) => handleAccountNameKeyDown(idx, e)}
-                        />
-                        {showSuggestionsIdx === idx && suggestions.length > 0 && (
-                          <ul
-                            className="list-group position-absolute shadow"
-                            style={{ zIndex: 10, maxHeight: "150px", overflowY: "auto", minWidth: "100%", width: "max-content", maxWidth: "85vw" }}
-                          >
-                            {suggestions.map((s, sidx) => (
-                              <li
-                                key={s.account_id}
-                                className={`list-group-item list-group-item-action${highlightedSuggestion === sidx ? ' active' : ''}`}
-                                onMouseDown={() => handleSuggestionClick(idx, s.account_name, s.account_id)}
-                              >
-                                <div className="d-flex flex-column flex-sm-row justify-content-between align-items-start align-items-sm-center">
-                                  <span>{s.account_name}</span>
-                                  <small className="text-muted">
-                                    Balance: ${(s.balance || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-                                  </small>
-                                </div>
-                              </li>
-                            ))}
-                          </ul>
-                        )}
-                      </td>
-                      <td>
-                        <input
-                          type="text"
-                          className="form-control"
-                          value={formatNumberWithCommas(row.debit)}
-                          onChange={(e) => handleDebitChange(idx, e.target.value)}
-                          onKeyDown={(e) => handleDebitKeyDown(idx, e)}
-                          disabled={row.credit !== ''}
-                        />
-                      </td>
-                      <td>
-                        <input
-                          type="text"
-                          className="form-control"
-                          value={formatNumberWithCommas(row.credit)}
-                          onChange={(e) => handleCreditChange(idx, e.target.value)}
-                          onKeyDown={(e) => handleCreditKeyDown(idx, e)}
-                          disabled={row.debit !== ''}
-                        />
-                      </td>
-                      <td className="text-center">
-                        <button
-                          type="button"
-                          className="btn btn-link btn-sm"
-                          onClick={() => removeRow(idx)}
-                        >
-                          <i className="fas fa-times"></i>
-                        </button>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-
-              {/* Totals */}
-              <div className="d-flex flex-wrap justify-content-end gap-3 mt-4">
-                <div className="d-flex align-items-center">
-                  <label className="me-2">Debit Total:</label>
-                  <input
-                    type="text"
-                    className="form-control"
-                    value={formatNumberWithCommas(debitTotal)}
-                    readOnly
-                  />
-                </div>
-                <div className="d-flex align-items-center">
-                  <label className="me-2">Credit Total:</label>
-                  <input
-                    type="text"
-                    className="form-control"
-                    value={formatNumberWithCommas(creditTotal)}
-                    readOnly
-                  />
-                </div>
-              </div>
-
-              {/* Buttons */}
-              <div className="d-flex flex-wrap justify-content-between align-items-center mt-5 gap-3">
-                <div>
-                  <button
-                    type="button"
-                    className="btn btn-warning ms-2"
-                    onClick={recalculateBalances}
-                    disabled={isLoading}
-                    title="Recalculate all account balances"
-                  >
-                    Recalculate Balances
-                  </button>
-                </div>
-                <div className="d-flex flex-wrap gap-2">
-                  <button
-                    className="btn btn-success"
-                    onClick={handleSaveAndNew}
-                    disabled={isSubmitDisabled || !allAccountNamesFilled || !allAccountsValid || isLoading}
-                  >
-                    {isLoading ? (
-                      <>
-                        <span className="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
-                        Saving...
-                      </>
-                    ) : (
-                      "Save and New"
-                    )}
-                  </button>
-                  <button
-                    className="btn btn-primary"
-                    onClick={handleSaveAndClose}
-                    disabled={isSubmitDisabled || !allAccountNamesFilled || !allAccountsValid || isLoading}
-                  >
-                    {isLoading ? (
-                      <>
-                        <span className="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
-                        Saving...
-                      </>
-                    ) : (
-                      "Save and Close"
-                    )}
-                  </button>
-                  <button
-                    className="btn btn-secondary"
-                    onClick={handleClose}
-                    disabled={!allAccountNamesFilled || isLoading}
-                  >
-                    Close
-                  </button>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-        <AnimatePresence>
-          {showSuccess && successData && (
-            <motion.div
-              className="fixed inset-0 z-50 flex items-center justify-center"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
+              Post a transaction.
+            </h1>
+            <p
+              style={{
+                color: "#44544B",
+                fontSize: "20px",
+                marginTop: "16px",
+                maxWidth: "680px",
+                lineHeight: 1.5,
+              }}
             >
-              <div className="absolute inset-0 bg-black/60 backdrop-blur-sm"></div>
-              <motion.div
-                className="relative z-10 w-[95%] max-w-xl rounded-2xl p-6 shadow-2xl"
-                initial={{ scale: 0.9, y: 20, opacity: 0 }}
-                animate={{ scale: 1, y: 0, opacity: 1 }}
-                exit={{ scale: 0.95, y: 10, opacity: 0 }}
-                transition={{ type: "spring", stiffness: 260, damping: 24 }}
+              One voucher, as many rows as it needs. Saving stays locked until debits equal credits.
+            </p>
+          </div>
+          {selectedBusiness && (
+            <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+              <span
                 style={{
-                  background:
-                    "linear-gradient(135deg, rgba(0, 0, 0, 0.7), rgba(6, 6, 6, 0.15))",
-                  border: "1px solid rgba(255,255,255,0.15)",
+                  display: "inline-flex",
+                  padding: "8px 14px",
+                  border: "2px solid #0E1A14",
+                  borderRadius: "6px",
+                  background: "#fff",
+                  fontWeight: 600,
+                  fontSize: "15px",
+                  boxShadow: "3px 3px 0 #0E1A14",
                 }}
               >
-                <div className="flex items-center gap-3 mb-4">
-                  <div className="w-12 h-12 rounded-full bg-emerald-500/20 flex items-center justify-center">
-                    <span className="text-2xl">✅</span>
+                {selectedBusiness.business_name}
+              </span>
+            </div>
+          )}
+        </div>
+
+        {/* Voucher Container */}
+        <div className="sf-vc">
+          {/* Left Voucher Stub */}
+          <div className="sf-stub">
+            <p className="sf-stub-cap">Voucher no.</p>
+            <p className="sf-vn">{number}</p>
+            <p className="sf-stub-cap" style={{ marginTop: "4px" }}>
+              Numbered for you, one after the last in {selectedBusiness?.business_name || "active business"}.
+            </p>
+
+            <label htmlFor="dt">Date</label>
+            <input id="dt" type="date" value={date} onChange={handleDateChange} />
+
+            <label htmlFor="tm">Time</label>
+            <input id="tm" type="text" value={time} readOnly />
+          </div>
+
+          {/* Right Voucher Body */}
+          <div className="sf-vbody">
+            {/* Header Columns */}
+            <div className="sf-r3 sf-hd3">
+              <span>Ledger name</span>
+              <span style={{ textAlign: "right" }}>Debit ($)</span>
+              <span style={{ textAlign: "right" }}>Credit ($)</span>
+              <span></span>
+            </div>
+
+            {/* Entry Rows */}
+            {rows.map((row, idx) => (
+              <div className="sf-r3" key={idx}>
+                {/* Ledger selector */}
+                <div className="sf-ac">
+                  <input
+                    type="text"
+                    value={row.accountName}
+                    placeholder="Search a ledger…"
+                    autoComplete="off"
+                    onChange={(e) => handleAccountNameChange(idx, e.target.value)}
+                    onBlur={() =>
+                      setTimeout(() => {
+                        setShowSuggestionsIdx(null);
+                        setHighlightedSuggestion(-1);
+                      }, 150)
+                    }
+                    onFocus={() => {
+                      if (row.accountName) setShowSuggestionsIdx(idx);
+                    }}
+                    onKeyDown={(e) => handleAccountNameKeyDown(idx, e)}
+                  />
+                  {showSuggestionsIdx === idx && suggestions.length > 0 && (
+                    <div className="sf-dd">
+                      <p>Active ledgers in {selectedBusiness?.business_name || "selected business"}</p>
+                      {suggestions.map((s, sidx) => (
+                        <button
+                          key={s.account_id}
+                          type="button"
+                          className={`sf-op ${highlightedSuggestion === sidx ? "active" : ""}`}
+                          onMouseDown={() => handleSuggestionClick(idx, s.account_name, s.account_id)}
+                        >
+                          <span>{s.account_name}</span>
+                          <b>
+                            ${Number(s.balance || 0).toLocaleString("en-US", {
+                              minimumFractionDigits: 2,
+                              maximumFractionDigits: 2,
+                            })}{" "}
+                            {Number(s.balance || 0) >= 0 ? "Dr" : "Cr"}
+                          </b>
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
+
+                {/* Debit Input */}
+                <div>
+                  <input
+                    className="sf-am"
+                    type="text"
+                    inputMode="decimal"
+                    value={formatNumberWithCommas(row.debit)}
+                    placeholder="0.00"
+                    disabled={row.credit !== ""}
+                    onChange={(e) => handleDebitChange(idx, e.target.value)}
+                    onKeyDown={(e) => handleDebitKeyDown(idx, e)}
+                  />
+                </div>
+
+                {/* Credit Input */}
+                <div>
+                  <input
+                    className="sf-am"
+                    type="text"
+                    inputMode="decimal"
+                    value={formatNumberWithCommas(row.credit)}
+                    placeholder="0.00"
+                    disabled={row.debit !== ""}
+                    onChange={(e) => handleCreditChange(idx, e.target.value)}
+                    onKeyDown={(e) => handleCreditKeyDown(idx, e)}
+                  />
+                </div>
+
+                {/* Remove Row Button */}
+                <button
+                  type="button"
+                  className="sf-rm"
+                  aria-label="Remove row"
+                  disabled={rows.length <= 2}
+                  onClick={() => removeRow(idx)}
+                  title={rows.length <= 2 ? "A voucher requires at least two rows" : "Remove entry"}
+                >
+                  ✕
+                </button>
+              </div>
+            ))}
+
+            {/* Row Controls */}
+            <div className="sf-addr">
+              <button
+                type="button"
+                className="sf-lk"
+                style={{
+                  background: "transparent",
+                  border: "none",
+                  borderBottom: "2px solid #0E1A14",
+                  cursor: "pointer",
+                  padding: "0 0 2px",
+                  fontSize: "16px",
+                  fontWeight: 600,
+                  fontFamily: "inherit",
+                  color: "#0E1A14",
+                }}
+                onClick={addRow}
+              >
+                + Add row
+              </button>
+              <p style={{ color: "#44544B", fontSize: "14px", margin: 0 }}>
+                Typing a debit locks the credit on that row, and the other way round.
+              </p>
+            </div>
+
+            {/* Running Totals */}
+            <div className="sf-tots">
+              <div>
+                <span className="sf-lb">Debit total</span>
+                <span className="sf-tn">${formatNumberWithCommas(debitTotal.toFixed(2))}</span>
+                <div className="sf-trk">
+                  <i style={{ width: `${debitRatio}%` }}></i>
+                </div>
+              </div>
+              <div>
+                <span className="sf-lb">Credit total</span>
+                <span className="sf-tn">${formatNumberWithCommas(creditTotal.toFixed(2))}</span>
+                <div className="sf-trk">
+                  <i className={isBalanced ? "ok" : "wr"} style={{ width: `${creditRatio}%` }}></i>
+                </div>
+              </div>
+            </div>
+
+            {/* Balance Status Banner */}
+            {validRows.length === 0 ? (
+              <p className="sf-st sf-idle" role="status">
+                Enter ledger entries to balance the voucher.
+              </p>
+            ) : isBalanced ? (
+              <p className="sf-st sf-ok" role="status">
+                ✓ Balanced. Debits equal credits (${formatNumberWithCommas(debitTotal.toFixed(2))}), so you can save.
+              </p>
+            ) : (
+              <p className="sf-st sf-bad" role="status">
+                ⚠ Unbalanced. Difference: ${formatNumberWithCommas(Math.abs(debitTotal - creditTotal).toFixed(2))} (
+                {debitTotal > creditTotal ? "Debits exceed Credits" : "Credits exceed Debits"}).
+              </p>
+            )}
+
+            {/* Action Buttons */}
+            <div className="sf-acts2">
+              <button
+                type="button"
+                className="sf-btn sf-btn-lime"
+                style={
+                  isSubmitDisabled || !allAccountNamesFilled || !allAccountsValid || isLoading
+                    ? { opacity: 0.45, cursor: "not-allowed", transform: "none" }
+                    : {}
+                }
+                onClick={handleSaveAndNew}
+                disabled={isSubmitDisabled || !allAccountNamesFilled || !allAccountsValid || isLoading}
+              >
+                {isLoading && submitMode === "new" ? "Saving…" : "Save and New"}
+              </button>
+
+              <button
+                type="button"
+                className="sf-btn sf-btn-ink"
+                style={
+                  isSubmitDisabled || !allAccountNamesFilled || !allAccountsValid || isLoading
+                    ? { opacity: 0.45, cursor: "not-allowed", transform: "none" }
+                    : {}
+                }
+                onClick={handleSaveAndClose}
+                disabled={isSubmitDisabled || !allAccountNamesFilled || !allAccountsValid || isLoading}
+              >
+                {isLoading && submitMode === "close" ? "Saving…" : "Save and Close"}
+              </button>
+
+              <button
+                type="button"
+                className="sf-btn sf-btn-line"
+                onClick={handleClose}
+                disabled={isLoading}
+              >
+                Close
+              </button>
+
+              <details className="sf-rc">
+                <summary>Recalculate balances</summary>
+                <div className="sf-rcb">
+                  <p style={{ margin: 0, lineHeight: 1.4 }}>
+                    Re-computes every ledger balance in {selectedBusiness?.business_name || "active business"} from
+                    its entries. Use it only if balances ever look wrong.
+                  </p>
+                  <button
+                    type="button"
+                    className="sf-btn sf-btn-ink"
+                    style={{ minHeight: "44px", marginTop: "12px", width: "100%", fontSize: "15px" }}
+                    onClick={recalculateBalances}
+                    disabled={isLoading}
+                  >
+                    Recalculate all ledgers
+                  </button>
+                </div>
+              </details>
+            </div>
+          </div>
+        </div>
+      </main>
+
+      {/* Success Modal */}
+      <AnimatePresence>
+        {showSuccess && successData && (
+          <motion.div
+            className="sf-vmdl"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            role="dialog"
+            aria-modal="true"
+          >
+            <motion.div
+              className="sf-vmc"
+              initial={{ scale: 0.95, y: 15, opacity: 0 }}
+              animate={{ scale: 1, y: 0, opacity: 1 }}
+              exit={{ scale: 0.95, y: 15, opacity: 0 }}
+              transition={{ type: "spring", stiffness: 300, damping: 25 }}
+            >
+              <div className="sf-vmh">
+                <span>Saved. Ledger balances updated.</span>
+                <button
+                  type="button"
+                  onClick={() => setShowSuccess(false)}
+                  style={{
+                    background: "transparent",
+                    border: "none",
+                    fontSize: "18px",
+                    fontWeight: 700,
+                    cursor: "pointer",
+                    color: "#0E1A14",
+                    lineHeight: 1,
+                  }}
+                  aria-label="Dismiss modal"
+                >
+                  ✕
+                </button>
+              </div>
+              <div className="sf-vmb">
+                <p
+                  style={{
+                    fontFamily: "'Bricolage Grotesque', sans-serif",
+                    fontWeight: 800,
+                    fontSize: "40px",
+                    letterSpacing: "-0.04em",
+                    margin: "0 0 16px",
+                    color: "#0E1A14",
+                  }}
+                >
+                  Voucher {successData.transactionId}
+                </p>
+                <dl>
+                  <div>
+                    <dt>Total amount</dt>
+                    <dd>${formatNumberWithCommas(Number(successData.debitTotal).toFixed(2))}</dd>
                   </div>
                   <div>
-                    <div className="text-lg fw-bold text-white">Transaction Saved</div>
-                    <div className="text-white/70">
-                      ID {successData.transactionId} · {new Date(successData.date).toLocaleDateString()}
-                    </div>
+                    <dt>Entries</dt>
+                    <dd>{successData.rowsCount}</dd>
                   </div>
-                </div>
-                <div className="row g-3 mb-4">
-                  <div className="col-6">
-                    <div className="p-3 rounded-lg bg-white/10 text-white">
-                      <div className="small text-white/70">Debit Total</div>
-                      <div className="h5 mb-0">
-                        {formatNumberWithCommas(successData.debitTotal)}
-                      </div>
-                    </div>
+                  <div>
+                    <dt>Date</dt>
+                    <dd>{new Date(successData.date).toLocaleDateString()}</dd>
                   </div>
-                  <div className="col-6">
-                    <div className="p-3 rounded-lg bg-white/10 text-white">
-                      <div className="small text-white/70">Credit Total</div>
-                      <div className="h5 mb-0">
-                        {formatNumberWithCommas(successData.creditTotal)}
-                      </div>
-                    </div>
-                  </div>
-                  <div className="col-12">
-                    <div className="p-3 rounded-lg bg-white/10 text-white d-flex justify-content-between">
-                      <div className="small text-white/70">Entries</div>
-                      <div className="fw-bold">{successData.rowsCount}</div>
-                    </div>
-                  </div>
-                </div>
-                <div className="d-flex justify-content-end gap-2">
-                  {submitMode !== 'close' && (
+                </dl>
+                <div
+                  style={{
+                    display: "flex",
+                    gap: "16px",
+                    alignItems: "center",
+                    marginTop: "24px",
+                    flexWrap: "wrap",
+                  }}
+                >
+                  {submitMode !== "close" && (
                     <button
-                      className={`btn ${submitMode === "new" ? "btn-success" : "btn-outline-success"}`}
+                      type="button"
+                      className="sf-btn sf-btn-lime"
                       onClick={async () => {
                         setShowSuccess(false);
                         await incrementNumber();
@@ -688,11 +710,12 @@ export default function TransectionForm() {
                         setTime(new Date().toLocaleTimeString());
                       }}
                     >
-                      Add Another
+                      New transaction
                     </button>
                   )}
                   <button
-                    className={`btn ${submitMode === "close" ? "btn-primary" : "btn-outline-primary"}`}
+                    type="button"
+                    className="sf-btn sf-btn-ink"
                     onClick={async () => {
                       setShowSuccess(false);
                       await incrementNumber();
@@ -702,20 +725,11 @@ export default function TransectionForm() {
                     Close
                   </button>
                 </div>
-                <div className="position-absolute top-0 end-0 translate-middle pt-3 pe-3">
-                  <button
-                    className="btn btn-sm btn-light"
-                    onClick={() => setShowSuccess(false)}
-                    aria-label="Dismiss"
-                  >
-                    ✕
-                  </button>
-                </div>
-              </motion.div>
+              </div>
             </motion.div>
-          )}
-        </AnimatePresence>
-      </div>
-    </>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </div>
   );
 }
