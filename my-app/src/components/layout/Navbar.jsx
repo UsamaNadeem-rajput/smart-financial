@@ -192,7 +192,7 @@ const Navbar = () => {
                         className="sf-mi sf-rp"
                       >
                         <span>
-                          <b>Ledger</b>
+                          <b>Ledger Balancing</b>
                           <em>Balance = debits − credits</em>
                         </span>
                         <span className="sf-ar" aria-hidden="true">→</span>

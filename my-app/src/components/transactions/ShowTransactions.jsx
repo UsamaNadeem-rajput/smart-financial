@@ -1,11 +1,9 @@
 import { useState, useEffect } from "react";
-import { AnimatePresence, motion } from "framer-motion";
+import { Link, useNavigate } from "react-router-dom";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 import Navbar from "../layout/Navbar";
 import { useBusiness } from "../../context/BusinessContext";
-import { useNavigate } from "react-router-dom";
-import { Banknote, PieChart, Receipt, BookOpen, Calculator, FileText } from 'lucide-react';
 
 // Helper to get local date string in YYYY-MM-DD
 function getLocalDateString() {
@@ -28,29 +26,52 @@ function formatAmount(val) {
 // Helper to format date as YYYY-mmm-DD (e.g., 2024-jan-27)
 function formatCustomDate(dateStr) {
   if (!dateStr) return "";
-  const parts = dateStr.split('-');
+  const parts = dateStr.split("-");
   if (parts.length !== 3) return dateStr;
   const year = parts[0];
   const monthIndex = parseInt(parts[1], 10) - 1;
   const day = parts[2];
 
-  const monthNames = ["jan", "feb", "mar", "apr", "may", "jun", "jul", "aug", "sep", "oct", "nov", "dec"];
+  const monthNames = [
+    "jan",
+    "feb",
+    "mar",
+    "apr",
+    "may",
+    "jun",
+    "jul",
+    "aug",
+    "sep",
+    "oct",
+    "nov",
+    "dec",
+  ];
   if (monthIndex < 0 || monthIndex > 11) return dateStr;
   const month = monthNames[monthIndex];
 
   return `${year}-${month}-${day}`;
 }
 
+// Helper to format voucher display date (e.g., 01 Oct 2026)
+function formatVoucherDate(dateStr) {
+  if (!dateStr) return "No Date";
+  const d = new Date(dateStr);
+  if (isNaN(d.getTime())) return dateStr;
+  return d.toLocaleDateString("en-GB", {
+    day: "2-digit",
+    month: "short",
+    year: "numeric",
+  });
+}
+
 // Helper to convert image URL to data URL using proxy endpoint (bypasses CORS for print/PDF)
 async function getImageAsDataUrl(logoPath, backendUrl) {
   try {
-    // Extract filename from the logo path (e.g., "/logoupload/filename.png" -> "filename.png")
-    const filename = logoPath.split('/').pop();
-    // Use the proxy endpoint which has CORS headers
+    const filename = logoPath.split("/").pop();
     const proxyUrl = `${backendUrl}/api/business/logo-proxy/${filename}`;
 
-    const response = await fetch(proxyUrl, { credentials: 'include' });
-    if (!response.ok) throw new Error('Failed to fetch image');
+    const response = await fetch(proxyUrl, { credentials: "include" });
+    if (!response.ok) throw new Error("Failed to fetch image");
     const blob = await response.blob();
     return new Promise((resolve, reject) => {
       const reader = new FileReader();
@@ -59,42 +80,40 @@ async function getImageAsDataUrl(logoPath, backendUrl) {
       reader.readAsDataURL(blob);
     });
   } catch (error) {
-    console.error('Error converting image to data URL:', error);
+    console.error("Error converting image to data URL:", error);
     return null;
   }
 }
 
-
 export default function TransactionEntryTable() {
+  const navigate = useNavigate();
   const [fromDate, setFromDate] = useState(getLocalDateString());
   const [toDate, setToDate] = useState(getLocalDateString());
   const [entries, setEntries] = useState([]);
   const [totals, setTotals] = useState({ debit: 0, credit: 0 });
   const [hasViewed, setHasViewed] = useState(false);
-  const [showNoTransactionPopup, setShowNoTransactionPopup] = useState(false);
+  const [confirmDeleteId, setConfirmDeleteId] = useState(null);
   const { selectedBusiness, refreshTrigger, triggerRefresh } = useBusiness();
 
-  const fetchData = async () => {
-    if (!fromDate || !toDate || !selectedBusiness?.business_id) return 0;
+  const fetchData = async (overrideFrom = fromDate, overrideTo = toDate) => {
+    if (!overrideFrom || !overrideTo || !selectedBusiness?.business_id) return 0;
     try {
       const res = await fetch(
-        `${import.meta.env.VITE_BACKEND_URL
-        }/api/showtransactions?from=${fromDate}&to=${toDate}&business_id=${selectedBusiness.business_id
-        }`
+        `${import.meta.env.VITE_BACKEND_URL}/api/showtransactions?from=${overrideFrom}&to=${overrideTo}&business_id=${selectedBusiness.business_id}`
       );
       const data = await res.json();
 
-      const flat = data.entries.flatMap((tx) => {
-        const entries = tx.entries.map((entry) => ({
-          transaction_id: tx.transaction_id, // ✅ real unique id
+      const flat = (data.entries || []).flatMap((tx) => {
+        const rowEntries = tx.entries.map((entry) => ({
+          transaction_id: tx.transaction_id,
           frontend_transaction_id: tx.frontend_transaction_id,
           transaction_date: tx.date,
           account_name: entry.account_name,
           debit: entry.type === "debit" ? formatAmount(entry.amount) : "",
           credit: entry.type === "credit" ? formatAmount(entry.amount) : "",
         }));
-        entries.push({
-          transaction_id: tx.transaction_id, // ✅ total row ke liye bhi
+        rowEntries.push({
+          transaction_id: tx.transaction_id,
           frontend_transaction_id: tx.frontend_transaction_id,
           transaction_date: tx.date,
           account_name: `Total for Transaction ${tx.frontend_transaction_id}`,
@@ -102,16 +121,14 @@ export default function TransactionEntryTable() {
           credit: formatAmount(tx.totals.credit),
           isTotal: true,
         });
-        return entries;
+        return rowEntries;
       });
 
-      flat.sort(
-        (a, b) => a.frontend_transaction_id - b.frontend_transaction_id
-      );
+      flat.sort((a, b) => a.frontend_transaction_id - b.frontend_transaction_id);
       setEntries(flat);
       setTotals({
-        debit: data.totals.debit || 0,
-        credit: data.totals.credit || 0,
+        debit: data.totals?.debit || 0,
+        credit: data.totals?.credit || 0,
       });
       return flat.length;
     } catch (err) {
@@ -123,7 +140,6 @@ export default function TransactionEntryTable() {
   };
 
   useEffect(() => {
-    // Only clear data when business changes. Date changes should not trigger clear/fetch until "View" is clicked.
     setHasViewed(false);
     setEntries([]);
     setTotals({ debit: 0, credit: 0 });
@@ -134,6 +150,39 @@ export default function TransactionEntryTable() {
       fetchData();
     }
   }, [refreshTrigger]);
+
+  const handleView = async (customFrom, customTo) => {
+    setHasViewed(true);
+    setConfirmDeleteId(null);
+    await fetchData(customFrom || fromDate, customTo || toDate);
+  };
+
+  const handleEdit = (transactionId) => {
+    navigate(`/transaction-edit/${transactionId}`);
+  };
+
+  const handleDelete = async (transactionId) => {
+    try {
+      const res = await fetch(
+        `${import.meta.env.VITE_BACKEND_URL}/api/delete-transaction/${transactionId}?business_id=${selectedBusiness.business_id}`,
+        {
+          method: "DELETE",
+        }
+      );
+
+      const data = await res.json();
+      if (res.ok) {
+        alert("Transaction deleted successfully");
+        fetchData();
+        triggerRefresh();
+      } else {
+        alert(data.error || "Failed to delete transaction");
+      }
+    } catch (err) {
+      console.error("Error deleting transaction:", err);
+      alert("An error occurred while deleting the transaction.");
+    }
+  };
 
   const handlePrint = async () => {
     const printWindow = window.open("", "", "height=600,width=800");
@@ -147,7 +196,6 @@ export default function TransactionEntryTable() {
     const logoPath = selectedBusiness?.logo_url;
     const backendUrl = import.meta.env.VITE_BACKEND_URL;
 
-    // Convert logo to data URL using proxy endpoint to bypass CORS
     let logoDataUrl = null;
     if (logoPath) {
       logoDataUrl = await getImageAsDataUrl(logoPath, backendUrl);
@@ -164,7 +212,7 @@ export default function TransactionEntryTable() {
               align-items: center; 
               margin-bottom: 25px; 
               padding-bottom: 15px;
-              border-bottom: 2px solid #4169e1;
+              border-bottom: 2px solid #0E1A14;
             }
             .logo-container { 
               width: 80px; 
@@ -191,7 +239,7 @@ export default function TransactionEntryTable() {
             }
             .report-title { 
               font-size: 16px; 
-              color: #4169e1;
+              color: #0E1A14;
               font-weight: 600;
             }
             .date-range {
@@ -207,7 +255,7 @@ export default function TransactionEntryTable() {
             }
             table { width: 100%; border-collapse: collapse; margin-top: 15px; }
             th { 
-              background-color: #4169e1; 
+              background-color: #0E1A14; 
               color: #fff; 
               padding: 10px 8px; 
               text-align: left; 
@@ -224,12 +272,12 @@ export default function TransactionEntryTable() {
               font-weight: 600; 
             }
             .total-row { 
-              background-color: #4169e1; 
-              color: white;
+              background-color: #0E1A14; 
+              color: white; 
               font-weight: bold; 
             }
             .total-row td {
-              border-color: #4169e1;
+              border-color: #0E1A14;
             }
             .separator-row td { border: none; padding: 4px; }
             .text-right { text-align: right; }
@@ -242,7 +290,7 @@ export default function TransactionEntryTable() {
         <body>
           <div class="print-header">
             <div class="logo-container">
-              ${logoDataUrl ? `<img src="${logoDataUrl}" class="logo" alt="Logo" id="printLogo" />` : '<div style="font-size: 24px; color: #4169e1; font-weight: bold;">SF</div>'}
+              ${logoDataUrl ? `<img src="${logoDataUrl}" class="logo" alt="Logo" id="printLogo" />` : '<div style="font-size: 24px; color: #0E1A14; font-weight: bold;">SF</div>'}
             </div>
             <div class="header-center">
               <div class="business-name">${selectedBusiness?.business_name || "Your Business Name"}</div>
@@ -301,9 +349,8 @@ export default function TransactionEntryTable() {
 
     printWindow.document.close();
 
-    // Wait for image to load before printing
     if (logoDataUrl) {
-      const img = printWindow.document.getElementById('printLogo');
+      const img = printWindow.document.getElementById("printLogo");
       if (img) {
         await new Promise((resolve) => {
           if (img.complete) {
@@ -313,14 +360,11 @@ export default function TransactionEntryTable() {
             img.onerror = resolve;
           }
         });
-        // Small delay to ensure rendering is complete
-        await new Promise(resolve => setTimeout(resolve, 300));
+        await new Promise((resolve) => setTimeout(resolve, 300));
       }
     }
 
     printWindow.focus();
-
-    // Fix: Wait for content to render, then print. Use onafterprint to close.
     setTimeout(() => {
       printWindow.print();
     }, 500);
@@ -338,18 +382,15 @@ export default function TransactionEntryTable() {
     const logoPath = selectedBusiness?.logo_url;
     const backendUrl = import.meta.env.VITE_BACKEND_URL;
 
-    // Convert logo to data URL using proxy endpoint to bypass CORS
     let logoDataUrl = null;
     if (logoPath) {
       logoDataUrl = await getImageAsDataUrl(logoPath, backendUrl);
     }
 
-    // === HEADER SECTION ===
     const headerY = y;
     const logoWidth = 25;
     let logoHeight = 25;
 
-    // Add logo on the left
     if (logoDataUrl) {
       try {
         const img = new Image();
@@ -359,26 +400,23 @@ export default function TransactionEntryTable() {
           img.onerror = reject;
         });
         logoHeight = (img.height * logoWidth) / img.width;
-        doc.addImage(logoDataUrl, 'PNG', 10, headerY - 5, logoWidth, logoHeight);
+        doc.addImage(logoDataUrl, "PNG", 10, headerY - 5, logoWidth, logoHeight);
       } catch (e) {
-        console.error('Failed to add logo to PDF:', e);
-        // Fallback: Draw placeholder box
+        console.error("Failed to add logo to PDF:", e);
         doc.setFillColor(255, 255, 255);
-        doc.rect(10, headerY - 5, logoWidth, logoWidth, 'F');
-        doc.setTextColor(65, 105, 225);
+        doc.rect(10, headerY - 5, logoWidth, logoWidth, "F");
+        doc.setTextColor(14, 26, 20);
         doc.setFontSize(16);
-        doc.text("KF", 10 + logoWidth / 2, headerY + 8, { align: "center" });
+        doc.text("SF", 10 + logoWidth / 2, headerY + 8, { align: "center" });
       }
     } else {
-      // Draw placeholder for no logo
       doc.setFillColor(255, 255, 255);
-      doc.rect(10, headerY - 5, logoWidth, logoWidth, 'F');
-      doc.setTextColor(65, 105, 225);
+      doc.rect(10, headerY - 5, logoWidth, logoWidth, "F");
+      doc.setTextColor(14, 26, 20);
       doc.setFontSize(16);
-      doc.text("KF", 10 + logoWidth / 2, headerY + 8, { align: "center" });
+      doc.text("SF", 10 + logoWidth / 2, headerY + 8, { align: "center" });
     }
 
-    // Business name and report title (centered)
     doc.setTextColor(0, 0, 0);
     doc.setFontSize(16);
     doc.setFont(undefined, "bold");
@@ -391,28 +429,34 @@ export default function TransactionEntryTable() {
 
     doc.setFontSize(12);
     doc.setFont(undefined, "normal");
-    doc.setTextColor(65, 105, 225);
+    doc.setTextColor(14, 26, 20);
     doc.text("General Journal", pageWidth / 2, headerY + 7, { align: "center" });
 
     doc.setFontSize(9);
     doc.setTextColor(100, 100, 100);
+    doc.text(
+      `${formatCustomDate(fromDate)} to ${formatCustomDate(toDate)}`,
+      pageWidth / 2,
+      headerY + 13,
+      { align: "center" }
+    );
 
-    doc.text(`${formatCustomDate(fromDate)} to ${formatCustomDate(toDate)}`, pageWidth / 2, headerY + 13, { align: "center" });
-
-    // Date info on the right
     doc.setFontSize(8);
     doc.setTextColor(100, 100, 100);
-    doc.text(`Generated on: ${formatCustomDate(getLocalDateString())}`, pageWidth - 10, headerY, { align: "right" });
+    doc.text(
+      `Generated on: ${formatCustomDate(getLocalDateString())}`,
+      pageWidth - 10,
+      headerY,
+      { align: "right" }
+    );
 
-    // Draw header separator line
     const lineY = Math.max(headerY + logoHeight, headerY + 18);
-    doc.setDrawColor(65, 105, 225);
+    doc.setDrawColor(14, 26, 20);
     doc.setLineWidth(0.5);
     doc.line(10, lineY, pageWidth - 10, lineY);
 
     y = lineY + 5;
 
-    // Build table
     const grouped = entries.reduce((acc, entry) => {
       if (!acc[entry.frontend_transaction_id])
         acc[entry.frontend_transaction_id] = [];
@@ -427,8 +471,7 @@ export default function TransactionEntryTable() {
         group.forEach((entry, idx) => {
           tableRows.push([
             idx === 0 && !entry.isTotal
-              ? `${frontend_transaction_id}\n(${formatCustomDate(entry.transaction_date) || "No Date"
-              })`
+              ? `${frontend_transaction_id}\n(${formatCustomDate(entry.transaction_date) || "No Date"})`
               : "",
             entry.account_name,
             formatAmount(entry.debit),
@@ -454,7 +497,7 @@ export default function TransactionEntryTable() {
 
     autoTable(doc, {
       startY: y + 10,
-      head: [["Transaction ID/  Date", "Ledger Name", "Debit", "Credit"]],
+      head: [["Transaction ID / Date", "Ledger Name", "Debit", "Credit"]],
       body: tableRows,
       columnStyles: {
         0: { cellWidth: 35 },
@@ -467,7 +510,7 @@ export default function TransactionEntryTable() {
         textColor: [0, 0, 0],
       },
       headStyles: {
-        fillColor: [65, 105, 225],
+        fillColor: [14, 26, 20],
         textColor: [255, 255, 255],
       },
       didDrawCell: (data) => {
@@ -505,380 +548,335 @@ export default function TransactionEntryTable() {
     doc.save(`transactions_${fromDate}_to_${toDate}.pdf`);
   };
 
-  const navigate = useNavigate();
-
-  const handleEdit = (transactionId) => {
-    navigate(`/transaction-edit/${transactionId}`);
-  };
-
-  const handleView = async () => {
-    setHasViewed(true);
-    const count = await fetchData();
-    if (!count) {
-      setShowNoTransactionPopup(true);
+  // Group entries by frontend_transaction_id
+  const groupedTransactions = entries.reduce((acc, entry) => {
+    if (!acc[entry.frontend_transaction_id]) {
+      acc[entry.frontend_transaction_id] = [];
     }
-  };
+    acc[entry.frontend_transaction_id].push(entry);
+    return acc;
+  }, {});
 
-  const handleDelete = async (transactionId) => {
-    if (!window.confirm("Are you sure you want to delete this transaction? This will permanently remove it from your reports and update ledger balances.")) {
-      return;
-    }
-
-    try {
-      const res = await fetch(
-        `${import.meta.env.VITE_BACKEND_URL}/api/delete-transaction/${transactionId}?business_id=${selectedBusiness.business_id}`,
-        {
-          method: 'DELETE',
-        }
-      );
-
-      const data = await res.json();
-      if (res.ok) {
-        alert("Transaction deleted successfully");
-        fetchData(); // Refresh the table
-        triggerRefresh();
-      } else {
-        alert(data.error || "Failed to delete transaction");
-      }
-    } catch (err) {
-      console.error("Error deleting transaction:", err);
-      alert("An error occurred while deleting the transaction.");
-    }
-  };
+  const transactionList = Object.entries(groupedTransactions);
+  const transactionCount = transactionList.length;
+  const isJournalBalanced =
+    totals.debit > 0 && Number(totals.debit) === Number(totals.credit);
 
   return (
     <div
-      className="min-h-screen relative overflow-hidden"
       style={{
+        backgroundColor: "#F2F5EE",
         minHeight: "100vh",
-        width: "100vw",
+        color: "#0E1A14",
+        fontFamily: "'Instrument Sans', system-ui, sans-serif",
       }}
     >
-      {/* Enhanced Professional Background */}
-      <div className="absolute inset-0">
-        {/* Primary gradient background */}
-        <div className="absolute inset-0 bg-gradient-to-br from-slate-900 via-blue-900 to-indigo-900"></div>
+      <Navbar />
 
-        {/* Overlay gradients for depth */}
-        <div className="absolute inset-0 bg-gradient-to-t from-purple-900/30 via-transparent to-blue-800/20"></div>
-        <div className="absolute inset-0 bg-gradient-to-r from-indigo-800/20 via-transparent to-cyan-800/20"></div>
+      <main className="sf-wrap" style={{ paddingTop: "40px", paddingBottom: "90px" }}>
+        {/* Breadcrumb & Header Title */}
+        <p style={{ color: "#44544B", fontSize: "15px", margin: 0 }}>
+          <Link to="/transectionForm" style={{ borderBottom: "1px solid #0E1A14", color: "#0E1A14" }}>
+            Post transactions
+          </Link>{" "}
+          / General journal
+        </p>
+        <h1
+          style={{
+            fontFamily: "'Bricolage Grotesque', sans-serif",
+            fontSize: "clamp(44px, 6vw, 76px)",
+            fontWeight: 800,
+            letterSpacing: "-0.04em",
+            lineHeight: 0.98,
+            marginTop: "14px",
+            marginBottom: 0,
+            color: "#0E1A14",
+          }}
+        >
+          General Journal.
+        </h1>
+        <p
+          style={{
+            color: "#44544B",
+            fontSize: "20px",
+            marginTop: "16px",
+            maxWidth: "720px",
+            lineHeight: 1.5,
+          }}
+        >
+          Every entry in date order, with both sides side by side. Check it, correct it, or print it for your auditor.
+        </p>
 
-        {/* Professional grid pattern */}
-        <div className="absolute inset-0 opacity-10">
-          <div
-            className="absolute inset-0"
-            style={{
-              backgroundImage: `
-                linear-gradient(90deg, rgba(255,255,255,0.1) 1px, transparent 1px),
-                linear-gradient(0deg, rgba(255,255,255,0.1) 1px, transparent 1px)
-              `,
-              backgroundSize: "50px 50px",
-            }}
-          ></div>
-        </div>
-
-        {/* Animated transaction display elements */}
-        <div className="absolute inset-0 overflow-hidden">
-          {/* Floating transaction display icons */}
-          <div className="absolute top-20 left-10 text-blue-400/20 animate-pulse flex items-center justify-center">
-            <Banknote className="w-10 h-10" />
-          </div>
-          <div className="absolute top-40 right-20 text-cyan-400/20 animate-bounce flex items-center justify-center">
-            <PieChart className="w-8 h-8" />
-          </div>
-          <div className="absolute bottom-40 left-32 text-purple-400/20 animate-pulse flex items-center justify-center">
-            <Receipt className="w-12 h-12" />
-          </div>
-          <div className="absolute bottom-20 right-40 text-indigo-400/20 animate-bounce flex items-center justify-center">
-            <BookOpen className="w-8 h-8" />
-          </div>
-          <div className="absolute top-1/2 left-1/4 text-teal-400/20 animate-pulse flex items-center justify-center">
-            <Calculator className="w-6 h-6" />
-          </div>
-          <div className="absolute top-1/3 right-1/3 text-violet-400/20 animate-bounce flex items-center justify-center">
-            <FileText className="w-10 h-10" />
-          </div>
-
-          {/* Subtle geometric shapes */}
-          <div className="absolute top-1/4 right-10 w-32 h-32 border border-white/10 rounded-full animate-pulse"></div>
-          <div className="absolute bottom-1/4 left-10 w-24 h-24 border border-cyan-400/20 rounded-lg rotate-45 animate-spin" style={{ animationDuration: "20s" }}></div>
-          <div className="absolute top-1/2 right-1/4 w-20 h-20 bg-gradient-to-r from-purple-500/10 to-blue-500/10 rounded-full animate-pulse"></div>
-
-          {/* Network connection lines */}
-          <svg className="absolute inset-0 w-full h-full" style={{ filter: "blur(0.5px)" }}>
-            <defs>
-              <linearGradient id="networkGradient" x1="0%" y1="0%" x2="100%" y2="100%">
-                <stop offset="0%" style={{ stopColor: "#3b82f6", stopOpacity: 0.1 }} />
-                <stop offset="50%" style={{ stopColor: "#8b5cf6", stopOpacity: 0.2 }} />
-                <stop offset="100%" style={{ stopColor: "#06b6d4", stopOpacity: 0.1 }} />
-              </linearGradient>
-            </defs>
-            <path
-              d="M100,100 L300,200 L600,150 L900,300 L1200,200"
-              stroke="url(#networkGradient)"
-              strokeWidth="2"
-              fill="none"
-              className="animate-pulse"
+        {/* Filter Bar */}
+        <form
+          className="sf-gj-fb"
+          onSubmit={(e) => {
+            e.preventDefault();
+            handleView();
+          }}
+        >
+          <div>
+            <label className="f" htmlFor="fd">
+              From date
+            </label>
+            <input
+              id="fd"
+              type="date"
+              value={fromDate}
+              max={toDate}
+              onChange={(e) => setFromDate(e.target.value)}
             />
-            <path
-              d="M200,400 L500,300 L800,450 L1100,350"
-              stroke="rgba(59, 130, 246, 0.2)"
-              strokeWidth="1"
-              fill="none"
-              className="animate-pulse"
-              style={{ animationDelay: "1s" }}
-            />
-          </svg>
-        </div>
-
-        {/* Subtle overlay for content readability */}
-        <div className="absolute inset-0 bg-black/20"></div>
-      </div>
-
-      {/* Content */}
-      <div className="relative z-10">
-        <Navbar />
-        <div className="container mt-4 text-white">
-          <h2>General Journal</h2>
-
-          <div className="mb-3 row">
-            <div className="col-md-3">
-              <label>From Date:</label>
-              <input
-                type="date"
-                value={fromDate}
-                onChange={(e) => setFromDate(e.target.value)}
-                className="form-control"
-                max={toDate}
-              />
-            </div>
-            <div className="col-md-3">
-              <label>To Date:</label>
-              <input
-                type="date"
-                value={toDate}
-                onChange={(e) => setToDate(e.target.value)}
-                className="form-control"
-                min={fromDate}
-              />
-            </div>
           </div>
-
-          <div className="mb-3 d-flex gap-2">
-            <button className="btn btn-secondary" onClick={handlePrint}>
+          <div>
+            <label className="f" htmlFor="td">
+              To date
+            </label>
+            <input
+              id="td"
+              type="date"
+              value={toDate}
+              min={fromDate}
+              onChange={(e) => setToDate(e.target.value)}
+            />
+          </div>
+          <button
+            type="submit"
+            className="sf-btn sf-btn-lime"
+            style={{ minWidth: "120px", minHeight: "50px", fontSize: "16px" }}
+            disabled={!fromDate || !toDate || !selectedBusiness?.business_id}
+          >
+            View
+          </button>
+          <div className="sf-gj-sp">
+            <button
+              type="button"
+              className="sf-btn"
+              style={{ background: "#fff", color: "#0E1A14", minHeight: "50px" }}
+              onClick={handlePrint}
+              disabled={entries.length === 0}
+            >
               Print
             </button>
-            <button className="btn btn-success" onClick={handleSavePDF}>
+            <button
+              type="button"
+              className="sf-btn sf-btn-ink"
+              style={{ minHeight: "50px" }}
+              onClick={handleSavePDF}
+              disabled={entries.length === 0}
+            >
               Save as PDF
             </button>
-            <button
-              className="btn btn-primary w-48"
-              onClick={handleView}
-              disabled={!fromDate || !toDate || !selectedBusiness?.business_id}
-            >
-              View
-            </button>
           </div>
+        </form>
+        <p style={{ color: "#44544B", fontSize: "14px", marginTop: "10px" }}>
+          Print and PDF include your business name, logo and this date range.
+        </p>
 
-          <div id="transaction-table">
-            <div className="print-header d-none d-print-flex justify-content-between align-items-center mb-3">
-              <div>
-                <h2 className="text-2xl font-bold text-primary-600">
-                  FinanceFlow
-                </h2>
+        {/* Summary Metrics */}
+        {hasViewed && (
+          <div className="sf-gj-sm">
+            <p style={{ margin: 0 }}>
+              <b>{transactionCount} transactions</b> from {formatVoucherDate(fromDate)} to{" "}
+              {formatVoucherDate(toDate)}
+            </p>
+            <p style={{ margin: 0 }}>
+              Debits <b>{formatAmount(totals.debit)}</b> = Credits <b>{formatAmount(totals.credit)}</b>{" "}
+              <span className={`sf-gj-bal ${isJournalBalanced ? "" : "bad"}`}>
+                {isJournalBalanced ? "Journal balances" : "Unbalanced"}
+              </span>
+            </p>
+          </div>
+        )}
+
+        {/* Journal Entries List */}
+        {transactionList.length > 0 && (
+          <div id="transaction-table" style={{ marginTop: "12px" }}>
+            {/* Table Header (Desktop) */}
+            <div className="sf-gj-hdr" aria-hidden="true">
+              <div className="c1">Transaction</div>
+              <div className="c2">
+                <span>Ledger</span>
+                <span className="n">Debit ($)</span>
+                <span className="n">Credit ($)</span>
               </div>
-              <div className="text-center flex-grow-1">
-                <h4 className="mb-0">
-                  {selectedBusiness?.business_name || "Your Business Name"}
-                </h4>
-                <small>{new Date().toLocaleDateString()}</small>
-              </div>
-              <div style={{ width: "50px" }}></div>
+              <div className="c3">Actions</div>
             </div>
 
-            {entries.length > 0 ? (
-              <div className="table-responsive overflow-x-auto">
-              <table className="table table-bordered">
-                <thead className="table-dark">
-                  <tr>
-                    <th style={{ width: "150px", maxWidth: "150px" }}>
-                      Transaction ID / Date
-                    </th>
-                    <th>Ledger Name</th>
-                    <th>Debit</th>
-                    <th>Credit</th>
-                    <th>Actions</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {(() => {
-                    const grouped = entries.reduce((acc, entry) => {
-                      if (!acc[entry.frontend_transaction_id])
-                        acc[entry.frontend_transaction_id] = [];
-                      acc[entry.frontend_transaction_id].push(entry);
+            {/* Vouchers */}
+            {transactionList.map(([frontend_id, group]) => {
+              const mainEntries = group.filter((e) => !e.isTotal);
+              const totalRow = group.find((e) => e.isTotal);
+              const txId = group[0]?.transaction_id;
+              const txDate = group[0]?.transaction_date;
+              const isDeleting = confirmDeleteId === txId;
 
-                      return acc;
-                    }, {});
-                    return Object.entries(grouped).flatMap(
-                      ([frontend_transaction_id, group]) =>
-                        group.map((entry, idx) => (
-                          <tr
-                            key={`${frontend_transaction_id}-${idx}`}
-                            className={
-                              entry.isTotal
-                                ? "font-bold transaction-total-row"
-                                : ""
-                            }
-                          >
-                            {idx === 0 && !entry.isTotal && (
-                              <td
-                                rowSpan={group.length}
-                                style={{ width: "150px", maxWidth: "150px" }}
-                              >
-                                {frontend_transaction_id}
-                                <br />
-                                <span
-                                  style={{ fontSize: "0.8em", color: "#888" }}
-                                >
-                                  {group[0].transaction_date || "No Date"}
-                                </span>
-                              </td>
-                            )}
-                            <td>{entry.account_name}</td>
-                            <td>{formatAmount(entry.debit)}</td>
-                            <td>{formatAmount(entry.credit)}</td>
-                            {idx === 0 && !entry.isTotal && (
-                              <td rowSpan={group.length}>
-                                <div className="d-flex flex-column gap-2" style={{ width: "90px" }}>
-                                  <button
-                                    className="btn btn-sm btn-primary w-100"
-                                    onClick={() =>
-                                      handleEdit(entry.transaction_id)
-                                    }
-                                  >
-                                    Edit
-                                  </button>
-                                  <button
-                                    className="btn btn-sm btn-danger w-100"
-                                    onClick={() =>
-                                      handleDelete(entry.transaction_id)
-                                    }
-                                  >
-                                    Delete
-                                  </button>
-                                </div>
-                              </td>
-                            )}
+              // Collect affected ledger names for confirmation message
+              const ledgerNames = Array.from(new Set(mainEntries.map((e) => e.account_name))).join(", ");
+
+              return (
+                <article
+                  key={frontend_id}
+                  className="sf-gj-v"
+                  aria-label={`Transaction ${frontend_id}`}
+                >
+                  <div className="sf-gj-vm">
+                    <span className="sf-gj-vn">#{frontend_id}</span>
+                    <span className="sf-gj-vd">{formatVoucherDate(txDate)}</span>
+                  </div>
+
+                  <div className="sf-gj-vb">
+                    <table>
+                      <colgroup>
+                        <col />
+                        <col className="a" />
+                        <col className="a" />
+                      </colgroup>
+                      <tbody>
+                        {mainEntries.map((entry, idx) => {
+                          const isCredit = !!entry.credit && !entry.debit;
+                          return (
+                            <tr key={idx} className={isCredit ? "cr" : "dr"}>
+                              <td className="ln">{entry.account_name}</td>
+                              <td className="n">{entry.debit ? formatAmount(entry.debit) : ""}</td>
+                              <td className="n">{entry.credit ? formatAmount(entry.credit) : ""}</td>
+                            </tr>
+                          );
+                        })}
+                      </tbody>
+                      {totalRow && (
+                        <tfoot>
+                          <tr>
+                            <th scope="row">
+                              Total for transaction #{frontend_id}{" "}
+                              <span className="sf-gj-bal">Balanced</span>
+                            </th>
+                            <td className="n">{formatAmount(totalRow.debit)}</td>
+                            <td className="n">{formatAmount(totalRow.credit)}</td>
                           </tr>
-                        ))
-                    );
-                  })()}
-                  <tr className="font-bold total-row">
-                    <td colSpan={2} className="text-right">
-                      Total
-                    </td>
-                    <td>{formatAmount(totals.debit)}</td>
-                    <td>{formatAmount(totals.credit)}</td>
-                    <td></td>
-                  </tr>
-                </tbody>
-              </table>
+                        </tfoot>
+                      )}
+                    </table>
+                  </div>
+
+                  <div className="sf-gj-va">
+                    <button
+                      type="button"
+                      className="sf-gj-ed"
+                      onClick={() => handleEdit(txId)}
+                    >
+                      Edit
+                    </button>
+                    <button
+                      type="button"
+                      className="sf-gj-dl"
+                      onClick={() => setConfirmDeleteId(isDeleting ? null : txId)}
+                    >
+                      Delete
+                    </button>
+                  </div>
+
+                  {/* Inline Delete Confirmation */}
+                  {isDeleting && (
+                    <div className="sf-gj-cf" role="alert">
+                      <p style={{ fontWeight: 700, fontSize: "18px", margin: 0, color: "#0E1A14" }}>
+                        Delete transaction #{frontend_id}?
+                      </p>
+                      <p style={{ marginTop: "6px", marginBottom: 0, color: "#44544B", fontSize: "15px" }}>
+                        It is hidden, not erased. The balances of {ledgerNames} are recalculated straight away.
+                      </p>
+                      <div className="sf-gj-acts">
+                        <button
+                          type="button"
+                          className="sf-btn sf-btn-ink"
+                          style={{ minHeight: "44px", padding: "0 20px", fontSize: "15px" }}
+                          onClick={() => {
+                            setConfirmDeleteId(null);
+                            handleDelete(txId);
+                          }}
+                        >
+                          Yes, delete it
+                        </button>
+                        <button
+                          type="button"
+                          className="sf-lk"
+                          style={{
+                            background: "none",
+                            border: "none",
+                            borderBottom: "2px solid #0E1A14",
+                            cursor: "pointer",
+                            fontFamily: "inherit",
+                            fontSize: "15px",
+                            fontWeight: 600,
+                            color: "#0E1A14",
+                            padding: "0 0 2px",
+                          }}
+                          onClick={() => setConfirmDeleteId(null)}
+                        >
+                          Cancel
+                        </button>
+                      </div>
+                    </div>
+                  )}
+                </article>
+              );
+            })}
+
+            {/* Grand Total Bar */}
+            <div className="sf-gj-gt">
+              <div className="c1">Grand total</div>
+              <div className="c2">
+                <span></span>
+                <span className="n">{formatAmount(totals.debit)}</span>
+                <span className="n">{formatAmount(totals.credit)}</span>
               </div>
-            ) : (
-              hasViewed ? null : null
-            )}
+              <div className="c3"></div>
+            </div>
           </div>
-        </div>
-      </div>
-      <AnimatePresence>
-        {showNoTransactionPopup && (
-          <motion.div
-            className="fixed inset-0 z-50 flex items-center justify-center p-4"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            style={{
-              position: 'fixed',
-              top: 0,
-              left: 0,
-              right: 0,
-              bottom: 0,
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              zIndex: 9999
-            }}
-          >
-            <div
-              className="absolute inset-0 bg-black/60 backdrop-blur-sm"
-              onClick={() => setShowNoTransactionPopup(false)}
+        )}
+
+        {/* Empty State when viewed and no records found */}
+        {hasViewed && transactionList.length === 0 && (
+          <div style={{ marginTop: "40px" }}>
+            <p
               style={{
-                position: 'absolute',
-                top: 0,
-                left: 0,
-                width: '100%',
-                height: '100%',
-                backgroundColor: 'rgba(0,0,0,0.6)',
-                backdropFilter: 'blur(4px)'
-              }}
-            ></div>
-            <motion.div
-              className="relative z-10 w-full max-w-sm rounded-2xl p-6 shadow-2xl"
-              initial={{ scale: 0.9, y: 20, opacity: 0 }}
-              animate={{ scale: 1, y: 0, opacity: 1 }}
-              exit={{ scale: 0.95, y: 10, opacity: 0 }}
-              transition={{ type: "spring", stiffness: 260, damping: 24 }}
-              style={{
-                background: "linear-gradient(135deg, rgba(30, 30, 30, 0.9), rgba(10, 10, 10, 0.95))",
-                border: "1px solid rgba(255,255,255,0.1)",
-                borderRadius: "16px",
-                padding: "24px",
-                boxShadow: "0 25px 50px -12px rgba(0, 0, 0, 0.5)",
-                color: "white",
-                position: 'relative'
+                fontSize: "13px",
+                fontWeight: 700,
+                color: "#44544B",
+                textTransform: "uppercase",
+                letterSpacing: "0.05em",
+                marginBottom: "12px",
               }}
             >
-              <div className="flex flex-col items-center text-center">
-                <div className="w-16 h-16 rounded-full bg-blue-500/20 flex items-center justify-center mb-4" style={{
-                  width: '64px',
-                  height: '64px',
-                  borderRadius: '50%',
-                  backgroundColor: 'rgba(59, 130, 246, 0.2)',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  marginBottom: '16px',
-                  margin: '0 auto'
-                }}>
-                  <span style={{ fontSize: '32px' }}>ℹ️</span>
-                </div>
-                <h3 className="text-xl font-bold text-white mb-2" style={{ fontSize: '1.25rem', fontWeight: 'bold', marginBottom: '8px', color: 'white' }}>No Transactions Found</h3>
-                <p className="text-gray-300 mb-6" style={{ color: '#d1d5db', marginBottom: '24px' }}>
-                  There are no transactions recorded for the selected date range. Please try a different date or add new transactions.
-                </p>
-                <button
-                  onClick={() => setShowNoTransactionPopup(false)}
-                  className="px-6 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors font-medium shadow-lg hover:shadow-blue-500/30"
-                  style={{
-                    padding: '8px 24px',
-                    backgroundColor: '#2563eb',
-                    color: 'white',
-                    border: 'none',
-                    borderRadius: '8px',
-                    cursor: 'pointer',
-                    fontWeight: '500',
-                    transition: 'background-color 0.2s'
-                  }}
-                  onMouseOver={(e) => e.target.style.backgroundColor = '#1d4ed8'}
-                  onMouseOut={(e) => e.target.style.backgroundColor = '#2563eb'}
-                >
-                  Okay, Got it
-                </button>
-              </div>
-            </motion.div>
-          </motion.div>
+              State · nothing found
+            </p>
+            <div className="sf-gj-es" role="status">
+              <h2 style={{ fontFamily: "'Bricolage Grotesque', sans-serif", fontWeight: 800, margin: 0 }}>
+                No entries in this range.
+              </h2>
+              <p>
+                There are no transactions in {selectedBusiness?.business_name || "this business"} between{" "}
+                {formatVoucherDate(fromDate)} and {formatVoucherDate(toDate)}. Try a wider date range.
+              </p>
+              <button
+                type="button"
+                className="sf-btn sf-btn-lime"
+                style={{ marginTop: "20px" }}
+                onClick={() => {
+                  const d = new Date();
+                  d.setDate(d.getDate() - 30);
+                  const thirtyDaysAgo = d.toISOString().split("T")[0];
+                  const today = getLocalDateString();
+                  setFromDate(thirtyDaysAgo);
+                  setToDate(today);
+                  handleView(thirtyDaysAgo, today);
+                }}
+              >
+                Show the last 30 days
+              </button>
+            </div>
+          </div>
         )}
-      </AnimatePresence>
+      </main>
     </div>
   );
 }

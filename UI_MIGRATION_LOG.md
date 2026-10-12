@@ -145,6 +145,34 @@ Branch: `ui-stitch-migration`
 - **Decisions / Questions for User**:
   - None for Post Transaction. The voucher layout and dual lock mechanisms match the Stitch design and behave identically to existing backend contracts.
 
+---
+
+## 6. General Journal (`/showtransections`)
+- **Stitch Screen**: Project `18290502498789531250`, Screen `5d6f580796f14782af14a18106abf034` ("Smart Financial — General Journal")
+- **Target File(s) Changed**:
+  - `my-app/src/components/transactions/ShowTransactions.jsx`
+  - `my-app/src/index.css` (added `.sf-gj-fb`, `.sf-gj-sp`, `.sf-gj-sm`, `.sf-gj-bal`, `.sf-gj-hdr`, `.sf-gj-v`, `.sf-gj-vm`, `.sf-gj-vn`, `.sf-gj-vd`, `.sf-gj-vb`, `.sf-gj-va`, `.sf-gj-ed`, `.sf-gj-dl`, `.sf-gj-cf`, `.sf-gj-acts`, `.sf-gj-gt`, `.sf-gj-es`)
+- **New Shared Design Tokens & Styles**:
+  - Filter Bar: `.sf-gj-fb` card with From/To date selectors, primary "View" CTA, "Print" action, and "Save as PDF" action with business branding note.
+  - Telemetry Counter: `.sf-gj-sm` displaying transaction count and balanced debits/credits badge (`.sf-gj-bal`).
+  - Desktop Column Header: `.sf-gj-hdr` with Transaction, Ledger, Debit, Credit, and Actions headings.
+  - Transaction Voucher Articles: `.sf-gj-v` list with `#Voucher` display ID, date badge, double-entry layout (indented Credit accounts, debit/credit tabular amounts, and subtotal balanced row).
+  - Actions & Inline Deletion: Direct edit navigation (`/transaction-edit/:id`) and inline disclosure confirmation card (`.sf-gj-cf`) with affected ledger list and recalculation reassurance.
+  - Grand Total Bar: `.sf-gj-gt` lime banner with grand total sums for debits and credits.
+  - Empty State: `.sf-gj-es` dashed container with "Show the last 30 days" quick action.
+- **Logic & Functionality Preserved**:
+  - API Fetch: `GET ${import.meta.env.VITE_BACKEND_URL}/api/showtransactions?from=${fromDate}&to=${toDate}&business_id=${business_id}`.
+  - API Delete: `DELETE ${import.meta.env.VITE_BACKEND_URL}/api/delete-transaction/${id}?business_id=${business_id}` with state refresh.
+  - PDF Generation: `jsPDF` with `autoTable`, business header, logo proxy (`/api/business/logo-proxy/:filename`), and table layout.
+  - Print Workflow: Multi-voucher print window generator with custom stylesheet and logo loading.
+  - Navigation: Edit transaction route `/transaction-edit/:id`.
+  - Context & Refresh: `useBusiness()` hook integration and `triggerRefresh()`.
+- **Skipped / Inert Stitch Elements**:
+  - Checkbox CSS hack from static mockup replaced with clean React inline disclosure state (`confirmDeleteId`) for the delete confirmation card.
+- **Decisions / Questions for User**:
+  - None for General Journal. All filter ranges, print/PDF engines, and transaction operations behave identically.
+
+
 
 
 
