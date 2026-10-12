@@ -92,6 +92,7 @@ export default function TransactionEntryTable() {
   const [entries, setEntries] = useState([]);
   const [totals, setTotals] = useState({ debit: 0, credit: 0 });
   const [hasViewed, setHasViewed] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
   const [confirmDeleteId, setConfirmDeleteId] = useState(null);
   const { selectedBusiness, refreshTrigger, triggerRefresh } = useBusiness();
 
@@ -152,9 +153,16 @@ export default function TransactionEntryTable() {
   }, [refreshTrigger]);
 
   const handleView = async (customFrom, customTo) => {
-    setHasViewed(true);
     setConfirmDeleteId(null);
-    await fetchData(customFrom || fromDate, customTo || toDate);
+    setIsLoading(true);
+    try {
+      await fetchData(customFrom || fromDate, customTo || toDate);
+      setHasViewed(true);
+    } catch (err) {
+      console.error("Error fetching transactions:", err);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const handleEdit = (transactionId) => {
@@ -643,9 +651,9 @@ export default function TransactionEntryTable() {
             type="submit"
             className="sf-btn sf-btn-lime"
             style={{ minWidth: "120px", minHeight: "50px", fontSize: "16px" }}
-            disabled={!fromDate || !toDate || !selectedBusiness?.business_id}
+            disabled={isLoading || !fromDate || !toDate || !selectedBusiness?.business_id}
           >
-            View
+            {isLoading ? "Loading…" : "View"}
           </button>
           <div className="sf-gj-sp">
             <button
@@ -653,7 +661,7 @@ export default function TransactionEntryTable() {
               className="sf-btn"
               style={{ background: "#fff", color: "#0E1A14", minHeight: "50px" }}
               onClick={handlePrint}
-              disabled={entries.length === 0}
+              disabled={isLoading || entries.length === 0}
             >
               Print
             </button>
@@ -662,7 +670,7 @@ export default function TransactionEntryTable() {
               className="sf-btn sf-btn-ink"
               style={{ minHeight: "50px" }}
               onClick={handleSavePDF}
-              disabled={entries.length === 0}
+              disabled={isLoading || entries.length === 0}
             >
               Save as PDF
             </button>
@@ -672,8 +680,55 @@ export default function TransactionEntryTable() {
           Print and PDF include your business name, logo and this date range.
         </p>
 
+        {/* Loading Indicator */}
+        {isLoading && (
+          <div
+            style={{
+              marginTop: "32px",
+              padding: "48px 24px",
+              textAlign: "center",
+              background: "#fff",
+              border: "2px solid #0E1A14",
+              borderRadius: "6px",
+              boxShadow: "3px 3px 0 #0E1A14",
+              display: "flex",
+              flexDirection: "column",
+              alignItems: "center",
+              justifyContent: "center",
+              gap: "14px",
+            }}
+            role="status"
+            aria-live="polite"
+          >
+            <div
+              style={{
+                width: "36px",
+                height: "36px",
+                border: "3px solid #E2E8F0",
+                borderTopColor: "#0E1A14",
+                borderRadius: "50%",
+                animation: "sf-spin 0.7s linear infinite",
+              }}
+            />
+            <p
+              style={{
+                margin: 0,
+                fontFamily: "'Bricolage Grotesque', sans-serif",
+                fontWeight: 800,
+                fontSize: "18px",
+                color: "#0E1A14",
+              }}
+            >
+              Fetching transactions...
+            </p>
+            <p style={{ margin: 0, fontSize: "14px", color: "#44544B" }}>
+              Loading journal records from {formatVoucherDate(fromDate)} to {formatVoucherDate(toDate)}
+            </p>
+          </div>
+        )}
+
         {/* Summary Metrics */}
-        {hasViewed && (
+        {!isLoading && hasViewed && (
           <div className="sf-gj-sm">
             <p style={{ margin: 0 }}>
               <b>{transactionCount} transactions</b> from {formatVoucherDate(fromDate)} to{" "}
@@ -689,7 +744,7 @@ export default function TransactionEntryTable() {
         )}
 
         {/* Journal Entries List */}
-        {transactionList.length > 0 && (
+        {!isLoading && transactionList.length > 0 && (
           <div id="transaction-table" style={{ marginTop: "12px" }}>
             {/* Table Header (Desktop) */}
             <div className="sf-gj-hdr" aria-hidden="true">
@@ -822,25 +877,23 @@ export default function TransactionEntryTable() {
 
             {/* Grand Total Bar */}
             <div className="sf-gj-gt">
-              <div className="c1">Grand total</div>
-              <div className="c2">
-                <span></span>
-                <span className="n">
-                  <span style={{ fontSize: "11px", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.05em", color: "#2F3E34" }}>Debit</span>
-                  {formatAmount(totals.debit)}
-                </span>
-                <span className="n">
-                  <span style={{ fontSize: "11px", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.05em", color: "#2F3E34" }}>Credit</span>
-                  {formatAmount(totals.credit)}
-                </span>
+              <div className="sf-gj-gt-title">Grand total</div>
+              <div className="sf-gj-gt-totals">
+                <div className="sf-gj-gt-item">
+                  <span className="sf-gj-gt-lbl">Debit</span>
+                  <span className="sf-gj-gt-val">{formatAmount(totals.debit)}</span>
+                </div>
+                <div className="sf-gj-gt-item">
+                  <span className="sf-gj-gt-lbl">Credit</span>
+                  <span className="sf-gj-gt-val">{formatAmount(totals.credit)}</span>
+                </div>
               </div>
-              <div className="c3"></div>
             </div>
           </div>
         )}
 
         {/* Empty State when viewed and no records found */}
-        {hasViewed && transactionList.length === 0 && (
+        {!isLoading && hasViewed && transactionList.length === 0 && (
           <div style={{ marginTop: "40px" }}>
             <p
               style={{
