@@ -67,3 +67,30 @@ Branch: `ui-stitch-migration`
 - **Decisions / Questions for User**:
   - General Journal route (`/showtransections`) was preserved and styled in the reports mega menu so no existing platform capability was lost.
 
+---
+
+## 3. Businesses Dashboard (`/list`)
+- **Stitch Screen**: Project `11807552340976852434`, Screen `956d782bd69a4571bba08d71317070b6` ("Smart Financial — Businesses (Dashboard)")
+- **Target File(s) Changed**:
+  - `my-app/src/components/business/List.jsx`
+  - `my-app/src/index.css` (added `.sf-biz-list`, `.sf-biz-rw`, `.sf-biz-panel`, `.sf-bd`, `.sf-nm`, `.sf-meta`, `.sf-scope`, `.sf-acts`, `.sf-lk`)
+- **New Shared Design Tokens & Styles**:
+  - Split View Layout: `.sf-biz-list` (left business selection list, 460px max-width), `.sf-biz-panel` (right inspector panel, 560px min-height, 36px padding).
+  - Business Item Card: `.sf-biz-rw` (neo-brutalist border-box, inset 8px border on active, hover `#E4EBDC`).
+  - Active & Status Badges: `.sf-bd` / `.sf-bd-on` (`Currently active` / `Not active` badge).
+  - Metadata & Scopes: `.sf-nm` (headline display name), `.sf-meta` with dotted leaders (`border-bottom: 2px dotted #9FB09A`), `.sf-scope` list tags.
+- **Logic & Functionality Preserved**:
+  - Session verification: `axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/login/session`, { withCredentials: true })`, redirects to `/login` if unauthenticated.
+  - Business loading: `axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/showbusinesses`, { withCredentials: true })`.
+  - Selection handler: `handleSelectBusiness` sets `selectedBusiness` via `selectBusiness(business)` in context and navigates to `/showbusinessaccount`.
+  - Delete handler: `handleDeleteBusiness` confirms deletion via `window.confirm`, calls `axios.delete(`${import.meta.env.VITE_BACKEND_URL}/api/business/${businessId}`)`, updates context, clears `selectedBusiness` if deleted.
+  - Edit handler: `navigate('/business', { state: { business: currentBiz } })`.
+  - Create business: links to `/business`.
+  - Formats: `formatBusinessType` and `formatDate` helper functions.
+  - Interactive split-panel switching via `inspectedBusinessId` state.
+- **Skipped / Inert Stitch Elements**:
+  - Inline "Ask the active business a question" input at the bottom of the Stitch screen was omitted to avoid creating an unbacked API endpoint, as user assistance is globally handled by `FloatingChatbot.jsx` across the application.
+- **Decisions / Questions for User**:
+  - Split inspector view defaults to the currently active business in context or the first business in the account. Clicking any item on the left smoothly updates the right inspection panel.
+
+
