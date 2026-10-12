@@ -54,12 +54,15 @@ Branch: `ui-stitch-migration`
     - Business switcher: switches active business via `selectBusiness(b)` and navigates to `/showbusinessaccount`, "+ New business" (`/business`), "Manage all →" (`/list`)
     - Mobile responsive drawer toggle (`isMobileMenuOpen`)
   - In `LandingPage.jsx`:
+    - Clean landing navbar layout: Middle navigation links (Home, Businesses, Ledgers, Post transactions, Contact) removed per user instruction so they do not show in either logged-in or logged-out states on the landing page.
     - Authenticated state (`user`) vs guest state (`!user`)
     - Visitor tracking & clicks transactions to Firebase
     - Dashboard button (`navigate('/list')`)
+    - User account dropdown (`.sf-av`) with profile, businesses, contact, and logout links
     - Logout handler (`handleLogout`)
     - Guest actions ("Log in" -> `/login`, "Create account" -> `/register`)
 - **Skipped / Inert Stitch Elements**:
+  - Middle navigation links on landing page (`.sf-nv`) omitted per user request.
   - Static preview cards rendered below the navbar in the Stitch documentation screen were excluded per user instructions ("This Design Is Looking like page but there is only visualized infromation about Navbar So Copy Only Design Instead of Copy whole page").
 - **Decisions / Questions for User**:
   - General Journal route (`/showtransections`) was preserved and styled in the reports mega menu so no existing platform capability was lost.
