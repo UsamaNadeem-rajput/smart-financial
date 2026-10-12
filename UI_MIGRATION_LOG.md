@@ -30,3 +30,37 @@ Branch: `ui-stitch-migration`
   - None. All interactive buttons, cards, pause controls, navigation routes, and reports links are fully wired to active platform routes and handlers.
 - **Decisions / Questions for User**:
   - None for Landing Page. All functionality, routes, and styles verified.
+
+---
+
+## 2. Navbar Design & Spec (Global Navbar & Home Navbar)
+- **Stitch Screen**: Project `11807552340976852434`, Screen `1c20d0663e5f429a83306b9da56c4419` ("Smart Financial — Navbar Design & Spec")
+- **Target File(s) Changed**:
+  - `my-app/src/components/layout/Navbar.jsx` (Global application navbar)
+  - `my-app/src/components/landing/LandingPage.jsx` (Home page navbar)
+  - `my-app/src/index.css` (added Stitch Navbar spec classes, micro-animations, dropdown panels, and responsive styles)
+- **New Shared Design Tokens & Styles**:
+  - Header & Banner: `.sf-ub` (top single-entity context utility banner), `.sf-nav-header` (76px height, 2px border `#0E1A14`), `.sf-nb`
+  - Brand & Triggers: `.sf-logo`, `.sf-logo-box` (34x34px neo-brutalist container with stroke `#C8F135`), `.sf-tr` (interactive scaleY hover sweep pseudo-element animation), `.sf-tr.cur` (active route underline), `.sf-cr` (180deg rotating caret)
+  - Action Buttons: `.sf-tr-post` (accent lime CTA button with 2px ink shadow, hover translateY(-2px)), `.sf-chip` (active business switcher pill), `.sf-av` (user avatar with initial badge)
+  - Dropdowns & Cards: `.sf-pnl` (animated dropdown popover with fade and 8px slide), `.sf-pc` (neo-brutalist container with 6px 6px shadow), `.sf-p-rep` (620px mega menu), `.sf-p-biz` (380px business switcher), `.sf-p-usr` (290px account menu), `.sf-mi` (dropdown item with sliding arrow `.sf-ar` and lime highlight)
+- **Logic & Functionality Preserved**:
+  - In `Navbar.jsx`:
+    - Session API call: `axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/login/session`, { withCredentials: true })`
+    - Logout handler: `axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/auth/logout`, { withCredentials: true })`, `localStorage.clear()`, `clearBusiness()`, redirection to `/`
+    - Context bindings: `useBusiness()` (`selectedBusiness`, `clearBusiness`, `businesses`, `selectBusiness`)
+    - Navigation routes: Home (`/`), Businesses (`/list`), Ledgers (`/showbusinessaccount`), Post transactions (`/transectionForm`), Contact (`/contact`), Profile (`/profile`)
+    - Reports menu: Ledger (`/ledger-balancing` with state `{ selectedLedger: 'all' }`), Trial balance (`/trial-balance`), Income statement (`/income-report`), Balance sheet (`/balance-sheet`), General journal (`/showtransections`)
+    - Business switcher: switches active business via `selectBusiness(b)` and navigates to `/showbusinessaccount`, "+ New business" (`/business`), "Manage all →" (`/list`)
+    - Mobile responsive drawer toggle (`isMobileMenuOpen`)
+  - In `LandingPage.jsx`:
+    - Authenticated state (`user`) vs guest state (`!user`)
+    - Visitor tracking & clicks transactions to Firebase
+    - Dashboard button (`navigate('/list')`)
+    - Logout handler (`handleLogout`)
+    - Guest actions ("Log in" -> `/login`, "Create account" -> `/register`)
+- **Skipped / Inert Stitch Elements**:
+  - Static preview cards rendered below the navbar in the Stitch documentation screen were excluded per user instructions ("This Design Is Looking like page but there is only visualized infromation about Navbar So Copy Only Design Instead of Copy whole page").
+- **Decisions / Questions for User**:
+  - General Journal route (`/showtransections`) was preserved and styled in the reports mega menu so no existing platform capability was lost.
+
