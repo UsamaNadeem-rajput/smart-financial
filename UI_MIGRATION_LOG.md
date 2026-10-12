@@ -205,3 +205,4 @@ Branch: `ui-stitch-migration`
 - **Recent Refinements**:
   - Total Sizing & Labeling: Reduced font size of totals from 30px to 18px and added explicit "Debit" and "Credit" pill labels.
   - Overlap Prevention: Converted `.sf-tb-tr1` and `.sf-tb-bars` to a responsive flex layout with dedicated items and auto-wrapping, guaranteeing that values and labels never collide across any screen width.
+  - Cross-Page Ledger Navigation Fix: Fixed navigation from `ShowBusinessAccount` ("View Ledger Entries") and `TrialBalance` to pass complete `{ id, name }` state. Updated `LedgerBalancing.jsx` to dynamically resolve ledgers passed by ID, object, URL search query, or account name so the individual ledger T-Account entries and summary never render blank.
