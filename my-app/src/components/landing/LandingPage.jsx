@@ -119,60 +119,6 @@ export default function LandingPage() {
               <span>Menu</span>
             </button>
 
-            {/* Navigation Links */}
-            <ul className={`sf-nv ${isMobileMenuOpen ? "mobile-open" : ""}`}>
-              <li className="sf-it">
-                <Link
-                  to="/"
-                  className="sf-tr cur"
-                  aria-current="page"
-                  onClick={() => setIsMobileMenuOpen(false)}
-                >
-                  Home
-                </Link>
-              </li>
-              {user && (
-                <>
-                  <li className="sf-it">
-                    <Link
-                      to="/list"
-                      className="sf-tr"
-                      onClick={() => setIsMobileMenuOpen(false)}
-                    >
-                      Businesses
-                    </Link>
-                  </li>
-                  <li className="sf-it">
-                    <Link
-                      to="/showbusinessaccount"
-                      className="sf-tr"
-                      onClick={() => setIsMobileMenuOpen(false)}
-                    >
-                      Ledgers
-                    </Link>
-                  </li>
-                  <li className="sf-it">
-                    <Link
-                      to="/transectionForm"
-                      className="sf-tr-post"
-                      onClick={() => setIsMobileMenuOpen(false)}
-                    >
-                      Post transactions
-                    </Link>
-                  </li>
-                </>
-              )}
-              <li className="sf-it">
-                <Link
-                  to="/contact"
-                  className="sf-tr"
-                  onClick={() => setIsMobileMenuOpen(false)}
-                >
-                  Contact
-                </Link>
-              </li>
-            </ul>
-
             {/* Right Section: Auth CTA / User Profile */}
             <div className={`sf-rt ${isMobileMenuOpen ? "mobile-open" : ""}`}>
               {user ? (
