@@ -202,4 +202,6 @@ Branch: `ui-stitch-migration`
   - Replaced static HTML checkboxes with React state (`hideZeroActivity`) for smooth, reactive zero-ledger filtering.
 - **Decisions / Questions for User**:
   - None for Trial Balance. All calculations, groupings, links, and styling behave identically to Stitch specifications.
-
+- **Recent Refinements**:
+  - Total Sizing & Labeling: Reduced font size of totals from 30px to 18px and added explicit "Debit" and "Credit" pill labels.
+  - Overlap Prevention: Converted `.sf-tb-tr1` and `.sf-tb-bars` to a responsive flex layout with dedicated items and auto-wrapping, guaranteeing that values and labels never collide across any screen width.

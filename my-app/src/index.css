@@ -2260,33 +2260,64 @@ html {
 }
 
 .sf-tb-tr1 {
-  display: grid;
-  grid-template-columns: 1fr 190px 190px;
+  display: flex;
+  justify-content: space-between;
   align-items: center;
-  padding: 16px 14px;
+  flex-wrap: wrap;
+  gap: 16px;
+  padding: 14px 24px;
   background: #C8F135;
+  box-sizing: border-box;
 }
 
-.sf-tb-tr1 b {
-  font-family: 'Bricolage Grotesque', sans-serif;
-  font-weight: 800;
-  font-size: 30px;
-  letter-spacing: -0.03em;
-  color: #0E1A14;
+.sf-tb-tr1-left {
   display: flex;
   align-items: center;
   gap: 12px;
   flex-wrap: wrap;
 }
 
-.sf-tb-tr1 .n {
-  text-align: right;
+.sf-tb-tr1-title {
   font-family: 'Bricolage Grotesque', sans-serif;
   font-weight: 800;
-  font-size: 30px;
-  letter-spacing: -0.03em;
+  font-size: 20px;
+  letter-spacing: -0.02em;
+  color: #0E1A14;
+}
+
+.sf-tb-tr1-totals {
+  display: flex;
+  align-items: center;
+  gap: 28px;
+  flex-wrap: wrap;
+}
+
+.sf-tb-tr1-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.sf-tb-tr1-lbl {
+  font-size: 12px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: #2F3E34;
+  background: rgba(14, 26, 20, 0.08);
+  padding: 3px 8px;
+  border-radius: 4px;
+  line-height: 1;
+}
+
+.sf-tb-tr1-val {
+  font-family: 'Bricolage Grotesque', sans-serif;
+  font-weight: 800;
+  font-size: 18px;
+  letter-spacing: -0.02em;
   color: #0E1A14;
   font-variant-numeric: tabular-nums;
+  white-space: nowrap;
 }
 
 .sf-tb-ok {
@@ -2318,13 +2349,27 @@ html {
 }
 
 .sf-tb-bars {
-  display: grid;
-  grid-template-columns: 1fr 190px 190px;
-  padding: 14px;
-  background: #fff;
+  display: flex;
+  justify-content: space-between;
   align-items: center;
+  flex-wrap: wrap;
+  gap: 14px;
+  padding: 14px 24px;
+  background: #fff;
   border-top: 2px solid #0E1A14;
+  box-sizing: border-box;
+}
+
+.sf-tb-bars-tracks {
+  display: flex;
+  align-items: center;
   gap: 12px;
+  width: 280px;
+  max-width: 100%;
+}
+
+.sf-tb-bars-tracks .sf-tb-trk {
+  flex: 1;
 }
 
 .sf-tb-trk {
@@ -2419,9 +2464,7 @@ html {
     padding: 24px 16px;
   }
   .sf-tb-hd,
-  .sf-tb-gp summary,
-  .sf-tb-tr1,
-  .sf-tb-bars {
+  .sf-tb-gp summary {
     grid-template-columns: 1fr 110px 110px;
   }
   .sf-tb-table td.n {
@@ -2431,9 +2474,20 @@ html {
   .sf-tb-table tfoot th.ln {
     padding-left: 14px;
   }
-  .sf-tb-tr1 b,
-  .sf-tb-tr1 .n {
-    font-size: 20px;
+  .sf-tb-tr1 {
+    padding: 14px 16px;
+    gap: 12px;
+  }
+  .sf-tb-tr1-totals {
+    gap: 16px;
+    width: 100%;
+    justify-content: space-between;
+  }
+  .sf-tb-bars {
+    padding: 12px 16px;
+  }
+  .sf-tb-bars-tracks {
+    width: 100%;
   }
 }
 
