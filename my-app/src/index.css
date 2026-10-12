@@ -1748,22 +1748,22 @@ html {
 .sf-gj-vm {
   flex: 0 0 170px;
   box-sizing: border-box;
-  padding: 22px 0 22px 6px;
+  padding: 16px 0 16px 6px;
 }
 .sf-gj-vn {
   display: block;
   font-family: 'Bricolage Grotesque', sans-serif;
   font-weight: 800;
-  font-size: 40px;
-  letter-spacing: -0.04em;
-  line-height: 1;
+  font-size: 20px;
+  letter-spacing: -0.03em;
+  line-height: 1.2;
   color: #0E1A14;
 }
 .sf-gj-vd {
   display: block;
-  font-size: 14px;
+  font-size: 13px;
   color: #44544B;
-  margin-top: 6px;
+  margin-top: 4px;
   font-weight: 500;
 }
 
@@ -1876,20 +1876,20 @@ html {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  margin-top: 28px;
+  margin-top: 24px;
   background: #C8F135;
   border: 2px solid #0E1A14;
   border-radius: 6px;
-  box-shadow: 4px 4px 0 #0E1A14;
+  box-shadow: 3px 3px 0 #0E1A14;
 }
 .sf-gj-gt .c1 {
   flex: 0 0 170px;
-  padding: 20px 6px 20px 20px;
+  padding: 12px 6px 12px 16px;
   box-sizing: border-box;
   font-family: 'Bricolage Grotesque', sans-serif;
   font-weight: 800;
-  font-size: 26px;
-  letter-spacing: -0.03em;
+  font-size: 18px;
+  letter-spacing: -0.02em;
   color: #0E1A14;
 }
 .sf-gj-gt .c2 {
@@ -1897,17 +1897,21 @@ html {
   display: grid;
   grid-template-columns: 1fr 150px 150px;
   align-items: center;
-  padding: 14px 0;
+  padding: 10px 0;
 }
 .sf-gj-gt .n {
   text-align: right;
   padding-right: 16px;
   font-family: 'Bricolage Grotesque', sans-serif;
   font-weight: 800;
-  font-size: 30px;
-  letter-spacing: -0.03em;
+  font-size: 18px;
+  letter-spacing: -0.02em;
   color: #0E1A14;
   font-variant-numeric: tabular-nums;
+  display: flex;
+  align-items: baseline;
+  justify-content: flex-end;
+  gap: 6px;
 }
 .sf-gj-gt .c3 {
   flex: 0 0 130px;

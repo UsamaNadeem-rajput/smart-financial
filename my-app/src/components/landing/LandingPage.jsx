@@ -251,7 +251,7 @@ export default function LandingPage() {
             >
               A ledger that checks its own work.
             </h1>
-            <p className="lh-rise" style={{ animationDelay: '.12s', fontSize: '22px', marginTop: '28px', color: '#2C3F34', lineHeight: 1.55 }}>
+            <p className="lh-rise" style={{ animationDelay: '.12s', fontSize: '18px', marginTop: '28px', color: '#2C3F34', lineHeight: 1.55 }}>
               Every entry is kept in double-entry form, and the trial balance proves that debits equal credits before you rely on a single number.
             </p>
             <div className="lh-rise" style={{ animationDelay: '.24s', display: 'flex', gap: '28px', alignItems: 'center', flexWrap: 'wrap', marginTop: '36px' }}>
