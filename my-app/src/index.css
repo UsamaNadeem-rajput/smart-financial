@@ -1627,4 +1627,334 @@ html {
   }
 }
 
+/* ==========================================================================
+   Smart Financial — General Journal Spec Styles
+   ========================================================================== */
+.sf-gj-fb {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+  align-items: flex-end;
+  margin-top: 32px;
+  padding: 20px 24px;
+  background: #fff;
+  border: 2px solid #0E1A14;
+  border-radius: 6px;
+  box-shadow: 4px 4px 0 #0E1A14;
+}
+
+.sf-gj-fb label.f {
+  display: block;
+  font-weight: 600;
+  font-size: 14px;
+  margin-bottom: 6px;
+  color: #0E1A14;
+}
+
+.sf-gj-fb input[type="date"] {
+  min-height: 50px;
+  padding: 0 14px;
+  font-size: 16px;
+  font-family: inherit;
+  border: 2px solid #0E1A14;
+  border-radius: 6px;
+  background: #fff;
+  color: #0E1A14;
+  transition: box-shadow 0.15s;
+}
+
+.sf-gj-fb input[type="date"]:focus {
+  outline: none;
+  box-shadow: 0 0 0 3px #C8F135;
+}
+
+.sf-gj-sp {
+  margin-left: auto;
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.sf-gj-sm {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  margin-top: 28px;
+  padding-bottom: 12px;
+  font-size: 17px;
+}
+
+.sf-gj-bal {
+  display: inline-block;
+  font-size: 12px;
+  font-weight: 700;
+  padding: 3px 8px;
+  border: 2px solid #0E1A14;
+  border-radius: 4px;
+  background: #C8F135;
+  margin-left: 8px;
+  vertical-align: middle;
+  letter-spacing: -0.01em;
+  color: #0E1A14;
+}
+.sf-gj-bal.bad {
+  background: #F2B66B;
+}
+
+.sf-gj-hdr {
+  display: flex;
+  align-items: stretch;
+  border-bottom: 2px solid #0E1A14;
+  font-size: 13px;
+  font-weight: 700;
+  color: #44544B;
+  padding: 10px 0;
+  margin-top: 8px;
+}
+.sf-gj-hdr .c1 {
+  flex: 0 0 170px;
+  box-sizing: border-box;
+  padding-left: 6px;
+}
+.sf-gj-hdr .c2 {
+  flex: 1;
+  min-width: 0;
+  display: grid;
+  grid-template-columns: 1fr 150px 150px;
+}
+.sf-gj-hdr .n {
+  text-align: right;
+  padding-right: 16px;
+}
+.sf-gj-hdr .c3 {
+  flex: 0 0 130px;
+  box-sizing: border-box;
+}
+
+.sf-gj-v {
+  display: flex;
+  align-items: stretch;
+  position: relative;
+  flex-wrap: wrap;
+  border-bottom: 1px solid #B8C4B1;
+  transition: background 0.15s;
+}
+.sf-gj-v:hover {
+  background: #E4EBDC;
+}
+
+.sf-gj-vm {
+  flex: 0 0 170px;
+  box-sizing: border-box;
+  padding: 22px 0 22px 6px;
+}
+.sf-gj-vn {
+  display: block;
+  font-family: 'Bricolage Grotesque', sans-serif;
+  font-weight: 800;
+  font-size: 40px;
+  letter-spacing: -0.04em;
+  line-height: 1;
+  color: #0E1A14;
+}
+.sf-gj-vd {
+  display: block;
+  font-size: 14px;
+  color: #44544B;
+  margin-top: 6px;
+  font-weight: 500;
+}
+
+.sf-gj-vb {
+  flex: 1;
+  min-width: 0;
+  padding: 14px 0;
+}
+.sf-gj-vb table {
+  width: 100%;
+  border-collapse: collapse;
+  table-layout: fixed;
+}
+.sf-gj-vb col.a {
+  width: 150px;
+}
+.sf-gj-vb td, .sf-gj-vb th {
+  padding: 8px 16px 8px 0;
+  font-size: 17px;
+  text-align: left;
+  font-weight: 400;
+}
+.sf-gj-vb td.n {
+  text-align: right;
+  width: 150px;
+  padding-right: 16px;
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
+}
+.sf-gj-vb td.ln {
+  padding-left: 0;
+  color: #0E1A14;
+}
+.sf-gj-vb tr.cr td.ln {
+  padding-left: 34px;
+  color: #2B3D33;
+}
+.sf-gj-vb tfoot th, .sf-gj-vb tfoot td {
+  border-top: 2px solid #0E1A14;
+  font-weight: 700;
+  padding-top: 12px;
+  padding-bottom: 6px;
+  font-size: 16px;
+  color: #0E1A14;
+}
+
+.sf-gj-va {
+  flex: 0 0 130px;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 14px;
+  padding: 24px 0 20px 8px;
+}
+.sf-gj-ed {
+  font-weight: 600;
+  border-bottom: 2px solid #0E1A14;
+  cursor: pointer;
+  padding-bottom: 1px;
+  color: #0E1A14;
+  background: transparent;
+  border-top: none;
+  border-left: none;
+  border-right: none;
+  font-family: inherit;
+  font-size: 16px;
+  text-decoration: none;
+  transition: background 0.15s;
+}
+.sf-gj-ed:hover {
+  background: #C8F135;
+}
+.sf-gj-dl {
+  font-weight: 600;
+  border-bottom: 2px solid #0E1A14;
+  cursor: pointer;
+  padding-bottom: 1px;
+  color: #0E1A14;
+  background: transparent;
+  border-top: none;
+  border-left: none;
+  border-right: none;
+  font-family: inherit;
+  font-size: 16px;
+  transition: background 0.15s;
+}
+.sf-gj-dl:hover {
+  background: #F2B66B;
+}
+
+.sf-gj-cf {
+  flex: 1 1 100%;
+  margin: 0 0 16px 0;
+  padding: 20px 24px;
+  background: #F6DFB8;
+  border: 2px solid #0E1A14;
+  border-radius: 6px;
+  animation: sfFd 0.2s ease-out;
+}
+.sf-gj-acts {
+  display: flex;
+  gap: 20px;
+  align-items: center;
+  margin-top: 14px;
+  flex-wrap: wrap;
+}
+
+.sf-gj-gt {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  margin-top: 28px;
+  background: #C8F135;
+  border: 2px solid #0E1A14;
+  border-radius: 6px;
+  box-shadow: 4px 4px 0 #0E1A14;
+}
+.sf-gj-gt .c1 {
+  flex: 0 0 170px;
+  padding: 20px 6px 20px 20px;
+  box-sizing: border-box;
+  font-family: 'Bricolage Grotesque', sans-serif;
+  font-weight: 800;
+  font-size: 26px;
+  letter-spacing: -0.03em;
+  color: #0E1A14;
+}
+.sf-gj-gt .c2 {
+  flex: 1;
+  display: grid;
+  grid-template-columns: 1fr 150px 150px;
+  align-items: center;
+  padding: 14px 0;
+}
+.sf-gj-gt .n {
+  text-align: right;
+  padding-right: 16px;
+  font-family: 'Bricolage Grotesque', sans-serif;
+  font-weight: 800;
+  font-size: 30px;
+  letter-spacing: -0.03em;
+  color: #0E1A14;
+  font-variant-numeric: tabular-nums;
+}
+.sf-gj-gt .c3 {
+  flex: 0 0 130px;
+}
+
+.sf-gj-es {
+  margin-top: 20px;
+  padding: 40px;
+  border: 2px dashed #0E1A14;
+  border-radius: 6px;
+  background: #fff;
+  max-width: 760px;
+}
+.sf-gj-es h2 {
+  font-size: 34px;
+  color: #0E1A14;
+}
+.sf-gj-es p {
+  margin-top: 10px;
+  font-size: 18px;
+  color: #44544B;
+}
+
+@media (max-width: 900px) {
+  .sf-gj-hdr {
+    display: none;
+  }
+  .sf-gj-vm, .sf-gj-va {
+    flex: 1 1 100%;
+  }
+  .sf-gj-va {
+    flex-direction: row;
+    padding: 0 0 16px 6px;
+  }
+  .sf-gj-gt .c1, .sf-gj-gt .c3 {
+    flex: 1 1 100%;
+  }
+  .sf-gj-vb col.a {
+    width: 110px;
+  }
+  .sf-gj-vb td.n {
+    width: 110px;
+  }
+  .sf-gj-sp {
+    margin-left: 0;
+  }
+}
+
+
 
