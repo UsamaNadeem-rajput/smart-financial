@@ -944,4 +944,228 @@ html {
 }
 .sf-lk:hover {
   color: #0E1A14;
-}
+}
+
+/* ========================================================
+   STITCH CHART OF ACCOUNTS (LEDGERS) DESIGN SYSTEM
+   ======================================================== */
+
+.sf-cp {
+  display: inline-block;
+  padding: 9px 18px;
+  border: 2px solid #0E1A14;
+  border-radius: 999px;
+  font-weight: 600;
+  font-size: 15px;
+  cursor: pointer;
+  background: #fff;
+  transition: background .15s, color .15s;
+  color: #0E1A14;
+}
+.sf-cp:hover {
+  background: #E4EBDC;
+}
+.sf-cp.active {
+  background: #0E1A14;
+  color: #F2F5EE;
+}
+
+.sf-coa-idx {
+  flex: 1 1 440px;
+  max-width: 520px;
+}
+.sf-cap {
+  font-size: 13px;
+  font-weight: 600;
+  color: #44544B;
+  margin-bottom: 10px;
+  text-transform: uppercase;
+  letter-spacing: .05em;
+}
+.sf-coa-g {
+  margin-bottom: 22px;
+}
+.sf-coa-gh {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  border-top: 2px solid #0E1A14;
+  padding: 10px 4px 8px;
+}
+.sf-coa-gh b {
+  font-family: 'Bricolage Grotesque', sans-serif;
+  font-size: 26px;
+  letter-spacing: -0.03em;
+  font-weight: 800;
+  display: block;
+  color: #0E1A14;
+}
+.sf-coa-gh small {
+  font-size: 13px;
+  color: #44544B;
+  font-family: 'Instrument Sans', sans-serif;
+  font-weight: 500;
+}
+.sf-coa-gh span {
+  font-weight: 700;
+  font-size: 17px;
+  font-family: 'Bricolage Grotesque', sans-serif;
+  color: #0E1A14;
+}
+
+.sf-coa-rw {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 14px 16px;
+  border-bottom: 1px solid #C9D3C2;
+  background: #fff;
+  cursor: pointer;
+  transition: background .15s;
+  border-left: 2px solid #0E1A14;
+  border-right: 2px solid #0E1A14;
+  text-align: left;
+  width: 100%;
+}
+.sf-coa-rw:hover {
+  background: #E4EBDC;
+}
+.sf-coa-rw.active {
+  background: #C8F135;
+  box-shadow: inset 8px 0 0 #0E1A14;
+}
+.sf-coa-rw.active i, .sf-coa-rw.active small {
+  color: #0E1A14;
+}
+.sf-coa-nmx {
+  flex: 1;
+  min-width: 0;
+}
+.sf-coa-nmx b {
+  display: block;
+  font-weight: 600;
+  font-size: 18px;
+  color: #0E1A14;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.sf-coa-nmx i {
+  display: block;
+  font-style: normal;
+  font-size: 14px;
+  color: #44544B;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.sf-coa-bl {
+  font-family: 'Bricolage Grotesque', sans-serif;
+  font-weight: 700;
+  font-size: 20px;
+  letter-spacing: -0.02em;
+  white-space: nowrap;
+  color: #0E1A14;
+}
+.sf-coa-bl small {
+  font-family: 'Instrument Sans', sans-serif;
+  font-size: 12px;
+  font-weight: 700;
+  color: #44544B;
+  margin-left: 4px;
+}
+
+.sf-coa-pn {
+  flex: 2 1 600px;
+  position: sticky;
+  top: 20px;
+}
+.sf-coa-panel {
+  background: #fff;
+  border: 2px solid #0E1A14;
+  border-radius: 6px;
+  padding: 32px;
+  box-sizing: border-box;
+  min-height: 560px;
+}
+.sf-coa-tp {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  border: 2px solid #0E1A14;
+  border-radius: 4px;
+  padding: 4px 12px;
+  background: #F2F5EE;
+  color: #0E1A14;
+}
+.sf-coa-nm {
+  font-size: clamp(34px, 5vw, 56px);
+  margin: 16px 0 0;
+  line-height: 1;
+  letter-spacing: -0.04em;
+  font-weight: 800;
+  font-family: 'Bricolage Grotesque', sans-serif;
+  color: #0E1A14;
+}
+.sf-coa-bal {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin: 24px 0 20px;
+  padding: 18px 20px;
+  background: #C8F135;
+  border: 2px solid #0E1A14;
+  border-radius: 6px;
+}
+.sf-coa-lb {
+  display: block;
+  font-size: 14px;
+  font-weight: 600;
+  color: #0E1A14;
+}
+.sf-coa-bg {
+  font-family: 'Bricolage Grotesque', sans-serif;
+  font-weight: 800;
+  font-size: 44px;
+  letter-spacing: -0.04em;
+  line-height: 1.1;
+  color: #0E1A14;
+}
+.sf-coa-rl {
+  font-size: 15px;
+  font-weight: 600;
+  color: #0E1A14;
+}
+.sf-coa-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 15px;
+}
+.sf-coa-table th {
+  font-size: 12px;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+  text-align: left;
+  padding: 10px 10px;
+  border-bottom: 2px solid #0E1A14;
+  font-weight: 600;
+  color: #44544B;
+}
+.sf-coa-table td {
+  padding: 11px 10px;
+  border-bottom: 1px solid #E5EBDF;
+  color: #0E1A14;
+}
+.sf-coa-table .n {
+  text-align: right;
+  white-space: nowrap;
+}
+@media (max-width: 860px) {
+  .sf-coa-idx { max-width: 100%; }
+  .sf-coa-pn { position: static; }
+}
+

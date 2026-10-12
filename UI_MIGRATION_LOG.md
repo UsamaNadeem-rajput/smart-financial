@@ -93,4 +93,28 @@ Branch: `ui-stitch-migration`
 - **Decisions / Questions for User**:
   - Split inspector view defaults to the currently active business in context or the first business in the account. Clicking any item on the left smoothly updates the right inspection panel.
 
+---
+
+## 4. Chart of Accounts — Ledgers (`/showbusinessaccount`)
+- **Stitch Screen**: Project `11807552340976852434`, Screen `65825b7ccad544519b40782009baec80` ("Smart Financial — Chart of Accounts (Ledgers)")
+- **Target File(s) Changed**:
+  - `my-app/src/components/accounts/ShowBusinessAccount.jsx`
+  - `my-app/src/index.css` (added `.sf-cp`, `.sf-coa-idx`, `.sf-coa-g`, `.sf-coa-gh`, `.sf-coa-rw`, `.sf-coa-nmx`, `.sf-coa-bl`, `.sf-coa-pn`, `.sf-coa-panel`, `.sf-coa-tp`, `.sf-coa-nm`, `.sf-coa-bal`, `.sf-coa-table`)
+- **New Shared Design Tokens & Styles**:
+  - Command & Control Bar: `.sf-cp` banner with active business breadcrumbs, entity badges, Search accounts input (`#E4EBDC` focus ring), category filter toggle pills (`ALL`, `ASSETS`, `LIABILITIES`, `EQUITY`, `INCOME`, `EXPENSES`), and primary "+ New account" CTA (`/accountForm`).
+  - Master-Detail Split: Left index `.sf-coa-idx` (max-width 480px, grouped by accounting category with subheaders `.sf-coa-gh` and subtotals) and right inspector `.sf-coa-pn` / `.sf-coa-panel` (interactive account breakdown, balance card `.sf-coa-bal`, metadata, and transaction activity summary).
+  - Account Items: `.sf-coa-rw` with neo-brutalist 2px border, active left border bar (`#C8F135`), account code badges, debit/credit indicators, and row hover transitions.
+  - Actions: Direct inspection link to ledger transactions (`/ledger-balancing` with ledger name), edit account (`/accountForm` passing account state), and delete account with confirmation modal.
+- **Logic & Functionality Preserved**:
+  - API Fetch: `axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/accounts-list/${selectedBusiness.id}`)`.
+  - Account Deletion: `axios.delete(`${import.meta.env.VITE_BACKEND_URL}/api/accounts/${accountId}`)` with error handling, modal confirmations, and state updates.
+  - Business context integration: `useBusiness()` (`selectedBusiness`) with redirect to `/list` if no business selected.
+  - Filtering & Search: dynamic category classification mapping (`Assets`, `Liabilities`, `Equity`, `Income`, `Expenses`) based on `account.type_name`, realtime search filtering, and subtotal rollups.
+  - Navigation: "+ New account" -> `/accountForm`, edit -> `/accountForm` with state, view transactions -> `/ledger-balancing`.
+- **Skipped / Inert Stitch Elements**:
+  - Inline static mockup data replaced with live accounting category groups and active balance calculation from actual ledger records.
+- **Decisions / Questions for User**:
+  - Accounts are automatically categorized into standard double-entry groups (Assets, Liabilities, Equity, Income, Expenses) based on `type_name` while preserving custom account types.
+
+
 
