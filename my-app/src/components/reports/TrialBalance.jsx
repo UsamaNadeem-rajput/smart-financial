@@ -491,14 +491,22 @@ export default function TrialBalance() {
             {/* Grand Total Block */}
             <div className="sf-tb-tot">
               <div className="sf-tb-tr1">
-                <b>
-                  Total{' '}
+                <div className="sf-tb-tr1-left">
+                  <span className="sf-tb-tr1-title">Total</span>
                   <span className={isBalanced ? 'sf-tb-ok' : 'sf-tb-unbal'}>
                     {isBalanced ? 'Balanced' : 'Out of balance'}
                   </span>
-                </b>
-                <span className="n">{currency(grandTotal.debit)}</span>
-                <span className="n">{currency(grandTotal.credit)}</span>
+                </div>
+                <div className="sf-tb-tr1-totals">
+                  <div className="sf-tb-tr1-item">
+                    <span className="sf-tb-tr1-lbl">Debit</span>
+                    <span className="sf-tb-tr1-val">{currency(grandTotal.debit)}</span>
+                  </div>
+                  <div className="sf-tb-tr1-item">
+                    <span className="sf-tb-tr1-lbl">Credit</span>
+                    <span className="sf-tb-tr1-val">{currency(grandTotal.credit)}</span>
+                  </div>
+                </div>
               </div>
               <div className="sf-tb-bars">
                 <span style={{ fontSize: '15px', fontWeight: 600, color: '#0E1A14' }}>
@@ -508,11 +516,13 @@ export default function TrialBalance() {
                     ? `Difference ${currency(diff)}. Debits exceed credits.`
                     : `Difference ${currency(diff)}. Credits exceed debits.`}
                 </span>
-                <div className="sf-tb-trk" title={`Debit: ${currency(grandTotal.debit)}`}>
-                  <i style={{ width: `${debitPct}%` }}></i>
-                </div>
-                <div className="sf-tb-trk" title={`Credit: ${currency(grandTotal.credit)}`}>
-                  <i className="c" style={{ width: `${creditPct}%` }}></i>
+                <div className="sf-tb-bars-tracks">
+                  <div className="sf-tb-trk" title={`Debit: ${currency(grandTotal.debit)}`}>
+                    <i style={{ width: `${debitPct}%` }}></i>
+                  </div>
+                  <div className="sf-tb-trk" title={`Credit: ${currency(grandTotal.credit)}`}>
+                    <i className="c" style={{ width: `${creditPct}%` }}></i>
+                  </div>
                 </div>
               </div>
             </div>
