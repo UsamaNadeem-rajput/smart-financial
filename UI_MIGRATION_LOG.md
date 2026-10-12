@@ -174,3 +174,32 @@ Branch: `ui-stitch-migration`
 - **Recent Refinements**:
   - Grand Total Bar: Replaced rigid 150px grid columns with a flexible, responsive container (`.sf-gj-gt-totals`, `.sf-gj-gt-item`, `.sf-gj-gt-lbl`, `.sf-gj-gt-val`) so Debit and Credit badges and amounts never overlap or truncate on any viewport.
   - Loading State & Flicker Elimination: Added `isLoading` state to `ShowTransactions.jsx` so "No entries in this range" never flickers before asynchronous date range results load. Added animated fetching indicator and disabled View/Export buttons while queries are in-flight.
+
+---
+
+## 7. Trial Balance (`/trial-balance`)
+- **Stitch Screen**: Project `18290502498789531250`, Screen `a1f11390a7d24bdcaca7115af22909d5` ("Smart Financial — Trial Balance")
+- **Target File(s) Changed**:
+  - `my-app/src/components/reports/TrialBalance.jsx`
+  - `my-app/src/index.css` (added `.sf-tb-wrap`, `.sf-tb-sheet`, `.sf-tb-rh`, `.sf-tb-tools`, `.sf-tb-sw`, `.sf-tb-hd`, `.sf-tb-gp`, `.sf-tb-gn`, `.sf-tb-cv`, `.sf-tb-sn`, `.sf-tb-table`, `.sf-tb-ln-lk`, `.sf-tb-ar`, `.sf-tb-tot`, `.sf-tb-tr1`, `.sf-tb-ok`, `.sf-tb-unbal`, `.sf-tb-bars`, `.sf-tb-trk`, `.sf-tb-nx`, `.sf-tb-bad`)
+- **New Shared Design Tokens & Styles**:
+  - Main Sheet: `.sf-tb-sheet` neo-brutalist white container with 2px ink border, 4px ink drop shadow, and centered business report header (`.sf-tb-rh`).
+  - Interactive Filter Tools: `.sf-tb-tools` with neo-brutalist pill switch (`.sf-tb-sw`) to "Hide ledgers with no activity".
+  - Standard Group Ordering: Category accordions (`details.sf-tb-gp`) for Assets, Liabilities, Equity, Income, and Expenses with rotating chevrons, count badges, and subtotal metrics.
+  - Hover Interactions: Rows turn accent lime (`#C8F135`) on hover with sliding arrow indicator (`.sf-tb-ar`), linking directly to `/ledger-balancing`.
+  - Zero-Value Formatting: Tabular numbers with dimmed `.z` styling (`#8A978F`) that illuminate on hover.
+  - Grand Total Banner: `.sf-tb-tot` with prominent 30px totals, status badge (`Balanced` or `Out of balance`), and dual proportional progress tracks (`.sf-tb-trk`) visualizing debit and credit parity.
+  - Suggested Reports: Neo-brutalist link cards (`.sf-tb-nx`) directing to Income Statement and Balance Sheet.
+  - Diagnostic Alert: Out-of-balance diagnostic panel (`.sf-tb-bad`) in warm amber (`#F2B66B`) pointing directly to General Journal for discrepancy correction.
+- **Logic & Functionality Preserved**:
+  - API Fetch: `GET ${import.meta.env.VITE_BACKEND_URL}/api/ledger-balancing/${selectedBusiness.business_id}` with `withCredentials: true`.
+  - Double-Entry Grouping: Accounting classification mapping (`getCategoryOrder`, `getCategoryName`) preserving exact double-entry category order.
+  - Subtotal & Grand Total Aggregations: Dynamic sum of `total_debits` and `total_credits` for all category groups and the whole business.
+  - Context & Refresh: `useBusiness()` hook integration and `refreshTrigger` reactivity.
+  - Direct Ledger Navigation: Each ledger row links directly to `/ledger-balancing` passing `selectedLedger: account_id` state.
+  - Print Support: Dedicated "Print statement" action.
+- **Skipped / Inert Stitch Elements**:
+  - Replaced static HTML checkboxes with React state (`hideZeroActivity`) for smooth, reactive zero-ledger filtering.
+- **Decisions / Questions for User**:
+  - None for Trial Balance. All calculations, groupings, links, and styling behave identically to Stitch specifications.
+

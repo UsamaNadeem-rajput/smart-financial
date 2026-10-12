@@ -1,21 +1,29 @@
 import React, { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import Navbar from '../layout/Navbar';
 import { useBusiness } from '../../context/BusinessContext';
 
-const currency = (n) => new Intl.NumberFormat('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(Number(n || 0));
+const currency = (n) =>
+  new Intl.NumberFormat('en-US', {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  }).format(Number(n || 0));
 
 // Map account types to categories for ordering
 const getCategoryOrder = (type_id, type_name) => {
   // Assets: type_id 3, 4, 5, 11
-  if ([3, 4, 5, 11].includes(Number(type_id)) ||
-    ['Assets', 'Fixed Assets', 'Current Assets', 'Other Assets'].includes(type_name)) {
+  if (
+    [3, 4, 5, 11].includes(Number(type_id)) ||
+    ['Assets', 'Fixed Assets', 'Current Assets', 'Other Assets'].includes(type_name)
+  ) {
     return 1; // Assets
   }
   // Liabilities: type_id 6, 7, 8
-  if ([6, 7, 8].includes(Number(type_id)) ||
-    ['Liability', 'Current Liability', 'Non-Current Liabilities'].includes(type_name)) {
+  if (
+    [6, 7, 8].includes(Number(type_id)) ||
+    ['Liability', 'Current Liability', 'Non-Current Liabilities'].includes(type_name)
+  ) {
     return 2; // Liabilities
   }
   // Equity: type_id 9
@@ -23,13 +31,17 @@ const getCategoryOrder = (type_id, type_name) => {
     return 3; // Equity
   }
   // Income: type_id 1, 12
-  if ([1, 12].includes(Number(type_id)) ||
-    ['Income', 'Other Incomes'].includes(type_name)) {
+  if (
+    [1, 12].includes(Number(type_id)) ||
+    ['Income', 'Other Incomes'].includes(type_name)
+  ) {
     return 4; // Income
   }
   // Expenses: type_id 2, 13, 14
-  if ([2, 13, 14].includes(Number(type_id)) ||
-    ['Expense', 'Other Expenses', 'Cost Of Goods Sold'].includes(type_name)) {
+  if (
+    [2, 13, 14].includes(Number(type_id)) ||
+    ['Expense', 'Other Expenses', 'Cost Of Goods Sold'].includes(type_name)
+  ) {
     return 5; // Expenses
   }
   return 6; // Others (fallback)
@@ -41,13 +53,12 @@ const getCategoryName = (order) => {
     2: 'Liabilities',
     3: 'Equity',
     4: 'Income',
-    5: 'Expenses'
+    5: 'Expenses',
   };
   return categories[order] || 'Others';
 };
 
-
-const TrialBalance = () => {
+export default function TrialBalance() {
   const navigate = useNavigate();
   const { selectedBusiness, refreshTrigger } = useBusiness();
   const apiUrl = import.meta.env.VITE_BACKEND_URL;
@@ -57,6 +68,7 @@ const TrialBalance = () => {
   const [trialBalanceData, setTrialBalanceData] = useState([]);
   const [grandTotal, setGrandTotal] = useState({ debit: 0, credit: 0 });
   const [currentDate, setCurrentDate] = useState('');
+  const [hideZeroActivity, setHideZeroActivity] = useState(false);
 
   useEffect(() => {
     // Set current date/time when component loads
@@ -71,7 +83,10 @@ const TrialBalance = () => {
 
   useEffect(() => {
     const fetchData = async () => {
-      if (!selectedBusiness?.business_id) return;
+      if (!selectedBusiness?.business_id) {
+        setLoading(false);
+        return;
+      }
       setLoading(true);
       setError('');
       try {
@@ -81,7 +96,7 @@ const TrialBalance = () => {
         );
 
         // Process ledgers for trial balance - use total_debits and total_credits directly
-        const processed = (data.ledgers || []).map(ledger => {
+        const processed = (data.ledgers || []).map((ledger) => {
           const categoryOrder = getCategoryOrder(ledger.type_id, ledger.type_name);
 
           return {
@@ -89,7 +104,7 @@ const TrialBalance = () => {
             categoryOrder,
             categoryName: getCategoryName(categoryOrder),
             trialDebit: Number(ledger.total_debits) || 0,
-            trialCredit: Number(ledger.total_credits) || 0
+            trialCredit: Number(ledger.total_credits) || 0,
           };
         });
 
@@ -107,7 +122,7 @@ const TrialBalance = () => {
         const totals = processed.reduce(
           (acc, ledger) => ({
             debit: acc.debit + ledger.trialDebit,
-            credit: acc.credit + ledger.trialCredit
+            credit: acc.credit + ledger.trialCredit,
           }),
           { debit: 0, credit: 0 }
         );
@@ -121,144 +136,460 @@ const TrialBalance = () => {
     fetchData();
   }, [selectedBusiness?.business_id, apiUrl, refreshTrigger]);
 
-  const businessName = selectedBusiness?.business_name || selectedBusiness?.businessName || 'Business';
+  const businessName =
+    selectedBusiness?.business_name || selectedBusiness?.businessName || 'Business';
 
-  // Group by category for display
-  const groupedData = trialBalanceData.reduce((acc, ledger) => {
-    const category = ledger.categoryName;
-    if (!acc[category]) {
-      acc[category] = [];
-    }
-    acc[category].push(ledger);
-    return acc;
-  }, {});
+  // Group by category order
+  const categoriesList = [
+    { order: 1, name: 'Assets' },
+    { order: 2, name: 'Liabilities' },
+    { order: 3, name: 'Equity' },
+    { order: 4, name: 'Income' },
+    { order: 5, name: 'Expenses' },
+    { order: 6, name: 'Others' },
+  ];
+
+  const categoryGroups = categoriesList
+    .map((cat) => {
+      const allLedgers = trialBalanceData.filter((l) => l.categoryOrder === cat.order);
+      const totalDebits = allLedgers.reduce((sum, l) => sum + l.trialDebit, 0);
+      const totalCredits = allLedgers.reduce((sum, l) => sum + l.trialCredit, 0);
+      const visibleLedgers = hideZeroActivity
+        ? allLedgers.filter((l) => l.trialDebit > 0 || l.trialCredit > 0)
+        : allLedgers;
+
+      return {
+        order: cat.order,
+        name: cat.name,
+        allLedgers,
+        visibleLedgers,
+        totalDebits,
+        totalCredits,
+      };
+    })
+    .filter((group) => group.allLedgers.length > 0);
+
+  const diff = Math.abs(grandTotal.debit - grandTotal.credit);
+  const isBalanced = diff < 0.01 && grandTotal.debit > 0;
+  const maxTotal = Math.max(grandTotal.debit, grandTotal.credit, 1);
+  const debitPct = grandTotal.debit > 0 ? Math.min(100, (grandTotal.debit / maxTotal) * 100) : 0;
+  const creditPct = grandTotal.credit > 0 ? Math.min(100, (grandTotal.credit / maxTotal) * 100) : 0;
 
   return (
-    <div className="min-h-screen relative overflow-hidden">
-      <div className="relative z-20">
-        <Navbar />
-      </div>
-      <div className="absolute inset-0">
-        <div className="absolute inset-0 bg-gradient-to-br from-slate-900 via-blue-900 to-indigo-900"></div>
-        <div className="absolute inset-0 bg-gradient-to-t from-purple-900/30 via-transparent to-blue-800/20"></div>
-        <div className="absolute inset-0 bg-gradient-to-r from-indigo-800/20 via-transparent to-cyan-800/20"></div>
-        <div className="absolute inset-0 opacity-10">
-          <div
-            className="absolute inset-0"
-            style={{
-              backgroundImage: `
-                linear-gradient(90deg, rgba(255,255,255,0.1) 1px, transparent 1px),
-                linear-gradient(0deg, rgba(255,255,255,0.1) 1px, transparent 1px)
-              `,
-              backgroundSize: '50px 50px'
-            }}
-          ></div>
-        </div>
-        <div className="absolute inset-0 overflow-hidden">
-          <div className="absolute top-20 left-10 text-4xl text-blue-400/20 animate-pulse">🏢</div>
-          <div className="absolute top-40 right-20 text-3xl text-cyan-400/20 animate-bounce">📊</div>
-          <div className="absolute bottom-40 left-32 text-5xl text-purple-400/20 animate-pulse">💼</div>
-          <div className="absolute bottom-20 right-40 text-3xl text-indigo-400/20 animate-bounce">📈</div>
-          <div className="absolute top-1/2 left-1/4 text-2xl text-teal-400/20 animate-pulse">🏪</div>
-          <div className="absolute top-1/3 right-1/3 text-4xl text-violet-400/20 animate-bounce">🏭</div>
-          <div className="absolute top-1/4 right-10 w-32 h-32 border border-white/10 rounded-full animate-pulse"></div>
-          <div className="absolute bottom-1/4 left-10 w-24 h-24 border border-cyan-400/20 rounded-lg rotate-45 animate-spin" style={{ animationDuration: '20s' }}></div>
-          <div className="absolute top-1/2 right-1/4 w-20 h-20 bg-gradient-to-r from-purple-500/10 to-blue-500/10 rounded-full animate-pulse"></div>
-          <svg className="absolute inset-0 w-full h-full" style={{ filter: 'blur(0.5px)' }}>
-            <defs>
-              <linearGradient id="networkGradientTrial" x1="0%" y1="0%" x2="100%" y2="100%">
-                <stop offset="0%" style={{ stopColor: '#3b82f6', stopOpacity: 0.1 }} />
-                <stop offset="50%" style={{ stopColor: '#8b5cf6', stopOpacity: 0.2 }} />
-                <stop offset="100%" style={{ stopColor: '#06b6d4', stopOpacity: 0.1 }} />
-              </linearGradient>
-            </defs>
-            <path d="M100,100 L300,200 L600,150 L900,300 L1200,200" stroke="url(#networkGradientTrial)" strokeWidth="2" fill="none" className="animate-pulse" />
-            <path d="M200,400 L500,300 L800,450 L1100,350" stroke="rgba(59, 130, 246, 0.2)" strokeWidth="1" fill="none" className="animate-pulse" style={{ animationDelay: '1s' }} />
-          </svg>
-        </div>
-        <div className="absolute inset-0 bg-black/20"></div>
-      </div>
-      <div className="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8 relative z-10">
-        <div className="px-4 py-6 sm:px-0">
-          <div className="flex items-center justify-between mb-6">
-            <h1 className="text-2xl font-semibold text-white">Trial Balance</h1>
-            <button
-              className="text-sm text-primary-600 hover:text-primary-800"
-              onClick={() => navigate(-1)}
+    <div
+      style={{
+        backgroundColor: '#F2F5EE',
+        minHeight: '100vh',
+        color: '#0E1A14',
+        fontFamily: "'Instrument Sans', system-ui, sans-serif",
+      }}
+    >
+      <Navbar />
+
+      <main className="sf-tb-wrap" style={{ paddingTop: '40px', paddingBottom: '80px' }}>
+        {/* Breadcrumb & Navigation Controls */}
+        <div
+          style={{
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            flexWrap: 'wrap',
+            gap: '12px',
+          }}
+        >
+          <p style={{ color: '#44544B', fontSize: '15px', margin: 0 }}>
+            <Link
+              to="/showbusinessaccount"
+              style={{ borderBottom: '1px solid #0E1A14', color: '#0E1A14', textDecoration: 'none' }}
             >
-              Back
+              Reports
+            </Link>{' '}
+            / Trial balance
+          </p>
+          <div style={{ display: 'flex', gap: '16px', alignItems: 'center' }}>
+            <button
+              type="button"
+              onClick={() => window.print()}
+              style={{
+                background: 'none',
+                border: 'none',
+                borderBottom: '2px solid #0E1A14',
+                color: '#0E1A14',
+                fontFamily: 'inherit',
+                fontWeight: 600,
+                fontSize: '15px',
+                cursor: 'pointer',
+                padding: '0 0 2px 0',
+              }}
+            >
+              Print statement
+            </button>
+            <button
+              type="button"
+              onClick={() => navigate(-1)}
+              style={{
+                background: 'none',
+                border: 'none',
+                borderBottom: '2px solid #0E1A14',
+                color: '#0E1A14',
+                fontFamily: 'inherit',
+                fontWeight: 600,
+                fontSize: '15px',
+                cursor: 'pointer',
+                padding: '0 0 2px 0',
+              }}
+            >
+              ← Back to Reports
             </button>
           </div>
+        </div>
 
-          <div className="bg-white shadow sm:rounded-lg p-6">
-            {/* Header */}
-            <div className="mb-6 text-center">
-              <h2 className="text-xl font-bold text-gray-900 mb-2">{businessName}</h2>
-              <h3 className="text-lg font-semibold text-gray-700 mb-2">Trial Balance</h3>
-              <p className="text-sm text-gray-600">As of {currentDate}</p>
+        {/* Page Title & Mission */}
+        <h1
+          style={{
+            fontFamily: "'Bricolage Grotesque', sans-serif",
+            fontSize: 'clamp(44px, 6vw, 76px)',
+            fontWeight: 800,
+            letterSpacing: '-0.04em',
+            lineHeight: 0.98,
+            marginTop: '14px',
+            marginBottom: 0,
+            color: '#0E1A14',
+          }}
+        >
+          Trial Balance.
+        </h1>
+        <p
+          style={{
+            color: '#44544B',
+            fontSize: '20px',
+            marginTop: '16px',
+            maxWidth: '720px',
+            lineHeight: 1.5,
+          }}
+        >
+          The proof that every debit has a credit. Add up every ledger, and both sides must come out the
+          same.
+        </p>
+
+        {/* Loading State */}
+        {loading && (
+          <div
+            style={{
+              marginTop: '40px',
+              padding: '60px 24px',
+              textAlign: 'center',
+              background: '#fff',
+              border: '2px solid #0E1A14',
+              borderRadius: '6px',
+              boxShadow: '4px 4px 0 #0E1A14',
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: '16px',
+            }}
+            role="status"
+            aria-live="polite"
+          >
+            <div
+              style={{
+                width: '36px',
+                height: '36px',
+                border: '3px solid #E2E8F0',
+                borderTopColor: '#0E1A14',
+                borderRadius: '50%',
+                animation: 'sf-spin 0.7s linear infinite',
+              }}
+            />
+            <p
+              style={{
+                margin: 0,
+                fontFamily: "'Bricolage Grotesque', sans-serif",
+                fontWeight: 800,
+                fontSize: '22px',
+                color: '#0E1A14',
+              }}
+            >
+              Calculating trial balance...
+            </p>
+            <p style={{ margin: 0, fontSize: '15px', color: '#44544B' }}>
+              Aggregating debits and credits across all active business ledgers.
+            </p>
+          </div>
+        )}
+
+        {/* Error State */}
+        {!loading && error && (
+          <div
+            style={{
+              marginTop: '32px',
+              padding: '24px',
+              background: '#FEE2E2',
+              border: '2px solid #DC2626',
+              borderRadius: '6px',
+              boxShadow: '4px 4px 0 #0E1A14',
+            }}
+            role="alert"
+          >
+            <p style={{ fontWeight: 700, fontSize: '18px', color: '#991B1B', margin: 0 }}>
+              Could not load trial balance
+            </p>
+            <p style={{ marginTop: '8px', marginBottom: 0, color: '#7F1D1D', fontSize: '15px' }}>
+              {error}
+            </p>
+          </div>
+        )}
+
+        {/* Main Trial Balance Sheet */}
+        {!loading && !error && (
+          <div className="sf-tb-sheet">
+            {/* Report Header */}
+            <div className="sf-tb-rh">
+              <h2>{businessName}</h2>
+              <h3>Trial Balance</h3>
+              <p>As of {currentDate}</p>
             </div>
 
-            {loading ? (
-              <div className="py-10 text-center text-gray-500">Loading...</div>
-            ) : error ? (
-              <div className="py-4 text-red-600">{error}</div>
-            ) : (
-              <div className="overflow-x-auto">
-                <table className="min-w-full divide-y divide-gray-200 border border-gray-300">
-                  <thead className="bg-gray-50">
-                    <tr>
-                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider border-r border-gray-300">
-                        Ledger Name
-                      </th>
-                      <th className="px-4 py-3 text-right text-xs font-medium text-gray-700 uppercase tracking-wider">
-                        Debit
-                      </th>
-                      <th className="px-4 py-3 text-right text-xs font-medium text-gray-700 uppercase tracking-wider">
-                        Credit
-                      </th>
-                    </tr>
-                  </thead>
-                  <tbody className="bg-white divide-y divide-gray-200">
-                    {Object.keys(groupedData).map((category) => (
-                      <React.Fragment key={category}>
-                        {groupedData[category].map((ledger, idx) => (
-                          <tr key={ledger.account_id}>
-                            <td className="px-4 py-2 text-sm text-gray-900 border-r border-gray-300">
-                              {ledger.account_name}
-                            </td>
-                            <td className="px-4 py-2 text-sm text-right text-gray-700">
-                              {ledger.trialDebit > 0 ? currency(ledger.trialDebit) : '0.00'}
-                            </td>
-                            <td className="px-4 py-2 text-sm text-right text-gray-700">
-                              {ledger.trialCredit > 0 ? currency(ledger.trialCredit) : '0.00'}
-                            </td>
-                          </tr>
-                        ))}
-                      </React.Fragment>
-                    ))}
+            {/* Controls */}
+            <div className="sf-tb-tools">
+              <label className="sf-tb-sw">
+                <input
+                  type="checkbox"
+                  checked={hideZeroActivity}
+                  onChange={(e) => setHideZeroActivity(e.target.checked)}
+                  style={{ position: 'absolute', opacity: 0, width: 1, height: 1 }}
+                />
+                <span className="sf-tb-sw-slider"></span>
+                Hide ledgers with no activity
+              </label>
+              <p style={{ color: '#44544B', fontSize: '14px', maxWidth: '520px', margin: 0, textAlign: 'right' }}>
+                Each figure is the total of all debits or credits posted to that ledger. Ledgers follow the
+                standard order: Assets, Liabilities, Equity, Income, Expenses.
+              </p>
+            </div>
 
-                    {/* Grand Total Row */}
-                    <tr className="bg-gray-100 border-t-2 border-gray-400 font-bold">
-                      <td className="px-4 py-3 text-sm text-gray-900 border-r border-gray-300">
-                        TOTAL
-                      </td>
-                      <td className="px-4 py-3 text-sm text-right text-gray-900">
-                        {currency(grandTotal.debit)}
-                      </td>
-                      <td className="px-4 py-3 text-sm text-right text-gray-900">
-                        {currency(grandTotal.credit)}
-                      </td>
-                    </tr>
-                  </tbody>
-                </table>
+            {/* Table Header */}
+            <div className="sf-tb-hd" aria-hidden="true">
+              <span>Ledger name</span>
+              <span>Debit ($)</span>
+              <span>Credit ($)</span>
+            </div>
+
+            {/* Empty group alert */}
+            {categoryGroups.length === 0 && (
+              <div style={{ padding: '40px 20px', textAlign: 'center', color: '#44544B' }}>
+                <p style={{ fontSize: '18px', fontWeight: 600 }}>No chart of accounts found.</p>
+                <p style={{ fontSize: '14px', marginTop: '6px' }}>
+                  Create ledgers in Chart of Accounts or post transactions to see figures here.
+                </p>
+                <Link
+                  to="/showbusinessaccount"
+                  className="sf-btn sf-btn-lime"
+                  style={{ marginTop: '16px', display: 'inline-flex' }}
+                >
+                  Go to Ledgers
+                </Link>
               </div>
             )}
+
+            {/* Category Groups */}
+            {categoryGroups.map((group) => {
+              const count = group.visibleLedgers.length;
+              const hasHidden = group.allLedgers.length > group.visibleLedgers.length;
+
+              return (
+                <details key={group.order} className="sf-tb-gp" open>
+                  <summary>
+                    <span className="sf-tb-gn">
+                      <svg
+                        className="sf-tb-cv"
+                        width="14"
+                        height="14"
+                        viewBox="0 0 12 12"
+                        aria-hidden="true"
+                      >
+                        <path
+                          d="M2 4l4 4 4-4"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth="2"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                        />
+                      </svg>
+                      {group.name}
+                      <small>
+                        {count} {count === 1 ? 'ledger' : 'ledgers'}
+                        {hasHidden ? ` (${group.allLedgers.length - count} zero hidden)` : ''}
+                      </small>
+                    </span>
+                    <span className="sf-tb-sn">{currency(group.totalDebits)}</span>
+                    <span className="sf-tb-sn">{currency(group.totalCredits)}</span>
+                  </summary>
+
+                  <table className="sf-tb-table">
+                    <caption className="sr-only">{group.name} ledgers</caption>
+                    <thead className="sr-only">
+                      <tr>
+                        <th scope="col">Ledger name</th>
+                        <th scope="col">Debit</th>
+                        <th scope="col">Credit</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {group.visibleLedgers.length === 0 ? (
+                        <tr>
+                          <td colSpan="3" style={{ textAlign: 'center', color: '#8A978F', padding: '16px' }}>
+                            No active ledgers in this category
+                          </td>
+                        </tr>
+                      ) : (
+                        group.visibleLedgers.map((ledger) => {
+                          const isZeroDebit = ledger.trialDebit === 0;
+                          const isZeroCredit = ledger.trialCredit === 0;
+
+                          return (
+                            <tr key={ledger.account_id}>
+                              <td className="ln">
+                                <Link
+                                  to="/ledger-balancing"
+                                  state={{ selectedLedger: ledger.account_id }}
+                                  className="sf-tb-ln-lk"
+                                >
+                                  {ledger.account_name}
+                                  <span className="sf-tb-ar" aria-hidden="true">
+                                    →
+                                  </span>
+                                </Link>
+                              </td>
+                              <td className={`n ${isZeroDebit ? 'z' : ''}`}>
+                                {isZeroDebit ? '0.00' : currency(ledger.trialDebit)}
+                              </td>
+                              <td className={`n ${isZeroCredit ? 'z' : ''}`}>
+                                {isZeroCredit ? '0.00' : currency(ledger.trialCredit)}
+                              </td>
+                            </tr>
+                          );
+                        })
+                      )}
+                    </tbody>
+                    <tfoot>
+                      <tr>
+                        <th scope="row" className="ln">
+                          Total {group.name}
+                        </th>
+                        <td className="n">{currency(group.totalDebits)}</td>
+                        <td className="n">{currency(group.totalCredits)}</td>
+                      </tr>
+                    </tfoot>
+                  </table>
+                </details>
+              );
+            })}
+
+            {/* Grand Total Block */}
+            <div className="sf-tb-tot">
+              <div className="sf-tb-tr1">
+                <b>
+                  Total{' '}
+                  <span className={isBalanced ? 'sf-tb-ok' : 'sf-tb-unbal'}>
+                    {isBalanced ? 'Balanced' : 'Out of balance'}
+                  </span>
+                </b>
+                <span className="n">{currency(grandTotal.debit)}</span>
+                <span className="n">{currency(grandTotal.credit)}</span>
+              </div>
+              <div className="sf-tb-bars">
+                <span style={{ fontSize: '15px', fontWeight: 600, color: '#0E1A14' }}>
+                  {isBalanced
+                    ? 'Difference 0.00. Debits equal credits.'
+                    : grandTotal.debit > grandTotal.credit
+                    ? `Difference ${currency(diff)}. Debits exceed credits.`
+                    : `Difference ${currency(diff)}. Credits exceed debits.`}
+                </span>
+                <div className="sf-tb-trk" title={`Debit: ${currency(grandTotal.debit)}`}>
+                  <i style={{ width: `${debitPct}%` }}></i>
+                </div>
+                <div className="sf-tb-trk" title={`Credit: ${currency(grandTotal.credit)}`}>
+                  <i className="c" style={{ width: `${creditPct}%` }}></i>
+                </div>
+              </div>
+            </div>
           </div>
-        </div>
-      </div>
+        )}
+
+        {/* Suggested Next Links Section (Books Balance) */}
+        {!loading && !error && isBalanced && (
+          <div style={{ marginTop: '28px' }}>
+            <p
+              style={{
+                fontSize: '13px',
+                fontWeight: 700,
+                color: '#44544B',
+                textTransform: 'uppercase',
+                letterSpacing: '0.05em',
+                marginBottom: '10px',
+              }}
+            >
+              Books balance. Read the final reports next.
+            </p>
+            <div className="sf-tb-nx">
+              <Link to="/income-report">
+                <span>Income Statement</span>
+                <span aria-hidden="true">→</span>
+              </Link>
+              <Link to="/balance-sheet">
+                <span>Balance Sheet</span>
+                <span aria-hidden="true">→</span>
+              </Link>
+            </div>
+          </div>
+        )}
+
+        {/* Out-of-balance Warning State (Illustrated Diagnostic) */}
+        {!loading && !error && !isBalanced && trialBalanceData.length > 0 && (
+          <div style={{ marginTop: '36px' }}>
+            <p
+              style={{
+                fontSize: '13px',
+                fontWeight: 700,
+                color: '#44544B',
+                textTransform: 'uppercase',
+                letterSpacing: '0.05em',
+                marginBottom: '10px',
+              }}
+            >
+              State · totals do not match
+            </p>
+            <div className="sf-tb-bad" role="alert">
+              <div className="h">
+                <h2>Out of balance by {currency(diff)}.</h2>
+                <p>
+                  Debits are {currency(grandTotal.debit)} and credits are {currency(grandTotal.credit)}.
+                  Something was posted incorrectly or left incomplete.
+                </p>
+              </div>
+              <div style={{ padding: '24px' }}>
+                <p style={{ fontWeight: 700, fontSize: '17px', color: '#0E1A14', margin: 0 }}>
+                  Where to look
+                </p>
+                <p style={{ color: '#44544B', marginTop: '6px', marginBottom: 0, fontSize: '15px' }}>
+                  Open the General Journal and check the most recent transactions, then fix or delete the
+                  one that is wrong.
+                </p>
+                <Link
+                  to="/showtransections"
+                  className="sf-btn sf-btn-lime"
+                  style={{ marginTop: '16px', display: 'inline-flex', textDecoration: 'none' }}
+                >
+                  Open General Journal →
+                </Link>
+              </div>
+            </div>
+          </div>
+        )}
+      </main>
     </div>
   );
-};
-
-export default TrialBalance;
-
+}
