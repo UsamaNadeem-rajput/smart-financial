@@ -779,3 +779,169 @@ html {
   .sf-pc { box-shadow: none; border: 0; border-left: 3px solid #C8F135; border-radius: 0; width: auto !important; }
   .sf-g2 { grid-template-columns: 1fr; }
 }
+
+/* ========================================================
+   STITCH BUSINESSES (DASHBOARD) DESIGN SYSTEM
+   ======================================================== */
+
+.sf-biz-list {
+  flex: 1 1 400px;
+  max-width: 460px;
+}
+.sf-biz-rw {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  padding: 20px 22px;
+  border: 2px solid #0E1A14;
+  border-top-width: 0;
+  background: #fff;
+  cursor: pointer;
+  transition: background .15s, box-shadow .15s;
+  text-align: left;
+  width: 100%;
+}
+.sf-biz-rw:hover {
+  background: #E4EBDC;
+}
+.sf-biz-rw b {
+  display: block;
+  font-family: 'Bricolage Grotesque', sans-serif;
+  font-size: 28px;
+  letter-spacing: -0.03em;
+  font-weight: 700;
+  line-height: 1.05;
+  color: #0E1A14;
+}
+.sf-biz-rw i {
+  display: block;
+  font-style: normal;
+  font-size: 15px;
+  color: #44544B;
+  margin-top: 4px;
+}
+.sf-biz-rw em {
+  font-style: normal;
+  font-size: 14px;
+  color: #44544B;
+  white-space: nowrap;
+}
+.sf-biz-list .sf-biz-rw:first-of-type {
+  border-top-width: 2px;
+  border-radius: 6px 6px 0 0;
+}
+.sf-biz-list .sf-biz-rw:last-of-type {
+  border-radius: 0 0 6px 6px;
+}
+.sf-biz-rw.active {
+  background: #C8F135;
+  box-shadow: inset 8px 0 0 #0E1A14;
+}
+.sf-biz-rw.active i, .sf-biz-rw.active em {
+  color: #0E1A14;
+}
+
+.sf-biz-panel {
+  flex: 2 1 560px;
+  background: #fff;
+  border: 2px solid #0E1A14;
+  border-radius: 6px;
+  padding: 36px;
+  box-sizing: border-box;
+  min-height: 560px;
+}
+.sf-bd {
+  display: inline-block;
+  font-size: 14px;
+  font-weight: 600;
+  padding: 4px 12px;
+  border: 2px solid #0E1A14;
+  border-radius: 4px;
+  background: #F2F5EE;
+  color: #0E1A14;
+}
+.sf-bd-on {
+  background: #C8F135;
+}
+.sf-nm {
+  font-size: clamp(38px, 5.5vw, 72px);
+  margin: 18px 0 22px;
+  line-height: 0.98;
+  letter-spacing: -0.04em;
+  font-weight: 800;
+  font-family: 'Bricolage Grotesque', sans-serif;
+  color: #0E1A14;
+}
+.sf-meta {
+  margin: 0;
+  border-top: 2px solid #0E1A14;
+}
+.sf-meta div {
+  display: flex;
+  align-items: baseline;
+  padding: 12px 0;
+  font-size: 18px;
+  border-bottom: 1px solid #C9D3C2;
+}
+.sf-meta i {
+  flex: 1;
+  border-bottom: 2px dotted #9FB09A;
+  margin: 0 10px 5px;
+}
+.sf-meta dt {
+  color: #44544B;
+  font-weight: 500;
+}
+.sf-meta dd {
+  margin: 0;
+  font-weight: 600;
+  color: #0E1A14;
+}
+.sf-sc {
+  margin-top: 26px;
+  font-size: 18px;
+  color: #0E1A14;
+  line-height: 1.5;
+}
+.sf-scope {
+  list-style: none;
+  margin: 14px 0 0;
+  padding: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.sf-scope li {
+  font-size: 15px;
+  font-weight: 500;
+  padding: 7px 12px;
+  border: 1px solid #0E1A14;
+  border-radius: 4px;
+  background: #F2F5EE;
+  color: #0E1A14;
+}
+.sf-acts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 14px 28px;
+  align-items: center;
+  margin-top: 30px;
+}
+.sf-lk {
+  font-weight: 600;
+  font-size: 16px;
+  border-bottom: 2px solid #0E1A14;
+  cursor: pointer;
+  padding-bottom: 2px;
+  background: none;
+  border-left: none;
+  border-right: none;
+  border-top: none;
+  color: #0E1A14;
+  font-family: inherit;
+  transition: color .15s;
+}
+.sf-lk:hover {
+  color: #0E1A14;
+}
