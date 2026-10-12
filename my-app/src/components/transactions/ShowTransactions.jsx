@@ -747,8 +747,7 @@ export default function TransactionEntryTable() {
                         <tfoot>
                           <tr>
                             <th scope="row">
-                              Total for transaction #{frontend_id}{" "}
-                              <span className="sf-gj-bal">Balanced</span>
+                              Total for transaction #{frontend_id}
                             </th>
                             <td className="n">{formatAmount(totalRow.debit)}</td>
                             <td className="n">{formatAmount(totalRow.credit)}</td>
@@ -826,8 +825,14 @@ export default function TransactionEntryTable() {
               <div className="c1">Grand total</div>
               <div className="c2">
                 <span></span>
-                <span className="n">{formatAmount(totals.debit)}</span>
-                <span className="n">{formatAmount(totals.credit)}</span>
+                <span className="n">
+                  <span style={{ fontSize: "11px", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.05em", color: "#2F3E34" }}>Debit</span>
+                  {formatAmount(totals.debit)}
+                </span>
+                <span className="n">
+                  <span style={{ fontSize: "11px", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.05em", color: "#2F3E34" }}>Credit</span>
+                  {formatAmount(totals.credit)}
+                </span>
               </div>
               <div className="c3"></div>
             </div>
