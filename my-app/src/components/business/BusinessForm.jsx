@@ -2,8 +2,6 @@ import { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import Navbar from '../layout/Navbar';
 import axios from 'axios';
-import { Save, ArrowLeft } from 'lucide-react';
-
 
 const BusinessForm = () => {
   const navigate = useNavigate();
@@ -140,7 +138,7 @@ const BusinessForm = () => {
       navigate('/list');
     } catch (err) {
       console.error(err);
-      setErrors({ general: 'Something went wrong. Please try again.' + err.response.data.error });
+      setErrors({ general: 'Something went wrong. Please try again. ' + (err.response?.data?.error || err.message) });
     } finally {
       setIsLoading(false);
     }
@@ -160,253 +158,351 @@ const BusinessForm = () => {
   ];
 
   return (
-    <div>
+    <div className="min-h-screen bg-[#F2F5EE] text-[#0E1A14] font-sans">
       <Navbar />
-      <div className="max-w-4xl mx-auto py-6 px-4">
-        <div className="flex items-center mb-6">
-          <button onClick={() => navigate('/list')} className="mr-4 p-2 text-gray-500 hover:text-gray-700">
-            <ArrowLeft className="w-5 h-5" />
+
+      <main className="max-w-[1240px] mx-auto px-4 sm:px-8 pt-8 pb-20">
+        {/* Breadcrumb */}
+        <p className="text-brand-muted text-[15px] mb-3">
+          <button
+            type="button"
+            onClick={() => navigate('/list')}
+            className="hover:underline text-brand-muted cursor-pointer"
+          >
+            Businesses
           </button>
-          <div>
-            <h1 className="text-2xl font-bold text-gray-900">{isEditMode ? 'Edit Business' : 'Create New Business'}</h1>
-            <p className="text-sm text-gray-500">
-              {isEditMode ? 'Update your business information' : 'Set up your business to start managing finances'}
-            </p>
-          </div>
+          {' / '}
+          <span className="text-brand-ink font-medium">
+            {isEditMode ? 'Edit business' : 'New business'}
+          </span>
+        </p>
+
+        {/* Page Title & Subtitle */}
+        <h1 className="font-display font-extrabold text-[44px] sm:text-[76px] tracking-tight leading-[0.98] mt-1 text-brand-ink">
+          {isEditMode ? 'Edit business.' : 'New business.'}
+        </h1>
+        <p className="text-brand-muted text-lg sm:text-xl max-w-[760px] mt-4 leading-normal">
+          Every business gets its own vault: its own accounts, transactions and reports, never mixed with your other businesses.
+        </p>
+
+        <div className="sf-bf-cols">
+          {/* Main Form */}
+          <form className="sf-bf-fm" onSubmit={handleSubmit} noValidate>
+            {/* Plan Section */}
+            <div className="sf-bf-sec" style={{ marginTop: 0 }}>
+              <h2>Plan</h2>
+              <div className="sf-bf-tiles" role="group" aria-label="Plan">
+                <button
+                  type="button"
+                  className={`sf-bf-tile ${formData.plan === 'free' ? 'on' : ''}`}
+                  onClick={() => setFormData(prev => ({ ...prev, plan: 'free' }))}
+                >
+                  <b>Free</b>
+                  <span>Name and type. Everything you need to start.</span>
+                </button>
+                <button
+                  type="button"
+                  className={`sf-bf-tile ${formData.plan === 'premium' ? 'on' : ''}`}
+                  onClick={() => setFormData(prev => ({ ...prev, plan: 'premium' }))}
+                >
+                  <b>
+                    Premium{' '}
+                    <svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true" className="inline-block ml-1">
+                      <path d="M3 8l4.5 4L12 5l4.5 7L21 8l-2 11H5z" fill="#C8F135" stroke="#0E1A14" strokeWidth="2" strokeLinejoin="round"></path>
+                    </svg>
+                  </b>
+                  <span>Adds industry, NTN, address, city, country and phone.</span>
+                </button>
+              </div>
+            </div>
+
+            {/* Business details Section */}
+            <div className="sf-bf-sec">
+              <h2>Business details</h2>
+              <div className="sf-bf-fd">
+                <label htmlFor="bn" className="sf-bf-lbl">
+                  Business name <span aria-hidden="true">*</span>
+                </label>
+                <input
+                  id="bn"
+                  name="business_name"
+                  type="text"
+                  required
+                  placeholder="e.g. Corner Café"
+                  autoComplete="organization"
+                  value={formData.business_name}
+                  onChange={handleChange}
+                  className={`sf-bf-input ${errors.business_name ? 'err' : ''}`}
+                />
+                <p className="sf-bf-help">Required. This name appears on your reports.</p>
+                {errors.business_name && (
+                  <p className="sf-bf-hint">{errors.business_name}</p>
+                )}
+              </div>
+
+              <div className="sf-bf-fd">
+                <label className="sf-bf-lbl">
+                  Business type <span aria-hidden="true">*</span>
+                </label>
+                <div className="sf-bf-segs" role="group" aria-label="Business type">
+                  {businessTypes.map(type => {
+                    const isSelected = formData.business_type === type.value;
+                    return (
+                      <button
+                        key={type.value}
+                        type="button"
+                        className={`sf-bf-seg ${isSelected ? 'on' : ''}`}
+                        onClick={() => {
+                          setFormData(prev => ({ ...prev, business_type: type.value }));
+                          if (errors.business_type) {
+                            setErrors(prev => ({ ...prev, business_type: '' }));
+                          }
+                        }}
+                      >
+                        {type.label}
+                      </button>
+                    );
+                  })}
+                </div>
+                {errors.business_type && (
+                  <p className="sf-bf-hint">{errors.business_type}</p>
+                )}
+              </div>
+            </div>
+
+            {/* Premium details Section */}
+            <div className="sf-bf-sec">
+              <h2>Premium details</h2>
+              {formData.plan === 'free' ? (
+                <div>
+                  <p className="sf-bf-note2">
+                    Premium details are locked on the Free plan. Choose Premium above to fill them in.
+                  </p>
+                  <div className="sf-bf-fg3">
+                    <div className="sf-bf-fd">
+                      <label className="sf-bf-lbl">Industry</label>
+                      <input type="text" placeholder="Premium only" disabled={isDisabled('industry')} className="sf-bf-input" />
+                    </div>
+                    <div className="sf-bf-fd">
+                      <label className="sf-bf-lbl">NTN number</label>
+                      <input type="text" placeholder="Premium only" disabled={isDisabled('ntn_number')} className="sf-bf-input" />
+                    </div>
+                    <div className="sf-bf-fd sf-bf-w2">
+                      <label className="sf-bf-lbl">Address</label>
+                      <input type="text" placeholder="Premium only" disabled={isDisabled('address')} className="sf-bf-input" />
+                    </div>
+                    <div className="sf-bf-fd">
+                      <label className="sf-bf-lbl">City</label>
+                      <input type="text" placeholder="Premium only" disabled={isDisabled('city')} className="sf-bf-input" />
+                    </div>
+                    <div className="sf-bf-fd">
+                      <label className="sf-bf-lbl">Country</label>
+                      <input type="text" placeholder="Premium only" disabled={isDisabled('country')} className="sf-bf-input" />
+                    </div>
+                    <div className="sf-bf-fd">
+                      <label className="sf-bf-lbl">Phone</label>
+                      <input type="tel" placeholder="Premium only" disabled={isDisabled('phone')} className="sf-bf-input" />
+                    </div>
+                  </div>
+                </div>
+              ) : (
+                <div className="sf-bf-fg3">
+                  <div className="sf-bf-fd">
+                    <label className="sf-bf-lbl">
+                      Industry <span className="text-red-500">*</span>
+                    </label>
+                    <select
+                      name="industry"
+                      value={formData.industry}
+                      onChange={handleChange}
+                      className={`sf-bf-input ${errors.industry ? 'err' : ''}`}
+                    >
+                      <option value="">Select industry</option>
+                      {industries.map(ind => (
+                        <option key={ind} value={ind}>{ind}</option>
+                      ))}
+                    </select>
+                    {errors.industry && <p className="sf-bf-hint">{errors.industry}</p>}
+                  </div>
+
+                  <div className="sf-bf-fd">
+                    <label className="sf-bf-lbl">NTN number</label>
+                    <input
+                      type="text"
+                      name="ntn_number"
+                      value={formData.ntn_number}
+                      onChange={handleChange}
+                      placeholder="National Tax Number"
+                      className="sf-bf-input"
+                    />
+                  </div>
+
+                  <div className="sf-bf-fd sf-bf-w2">
+                    <label className="sf-bf-lbl">Address</label>
+                    <input
+                      type="text"
+                      name="address"
+                      value={formData.address}
+                      onChange={handleChange}
+                      placeholder="Street, area"
+                      autoComplete="street-address"
+                      className="sf-bf-input"
+                    />
+                  </div>
+
+                  <div className="sf-bf-fd">
+                    <label className="sf-bf-lbl">
+                      City <span className="text-red-500">*</span>
+                    </label>
+                    <input
+                      type="text"
+                      name="city"
+                      value={formData.city}
+                      onChange={handleChange}
+                      placeholder="e.g. Karachi"
+                      className={`sf-bf-input ${errors.city ? 'err' : ''}`}
+                    />
+                    {errors.city && <p className="sf-bf-hint">{errors.city}</p>}
+                  </div>
+
+                  <div className="sf-bf-fd">
+                    <label className="sf-bf-lbl">
+                      Country <span className="text-red-500">*</span>
+                    </label>
+                    <input
+                      type="text"
+                      name="country"
+                      value={formData.country}
+                      onChange={handleChange}
+                      placeholder="e.g. Pakistan"
+                      className={`sf-bf-input ${errors.country ? 'err' : ''}`}
+                    />
+                    {errors.country && <p className="sf-bf-hint">{errors.country}</p>}
+                  </div>
+
+                  <div className="sf-bf-fd">
+                    <label className="sf-bf-lbl">Phone</label>
+                    <input
+                      type="tel"
+                      name="phone"
+                      value={formData.phone}
+                      onChange={handleChange}
+                      placeholder="+92 300 0000000"
+                      className={`sf-bf-input ${errors.phone ? 'err' : ''}`}
+                    />
+                    {errors.phone && <p className="sf-bf-hint">{errors.phone}</p>}
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Logo Section */}
+            <div className="sf-bf-sec">
+              <h2>Logo</h2>
+              <div className="sf-bf-drop">
+                <div className="ic" aria-hidden="true">
+                  <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="#0E1A14" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <rect x="3" y="4" width="18" height="16" rx="2"></rect>
+                    <circle cx="9" cy="10" r="2"></circle>
+                    <path d="M21 16l-5-5-8 9"></path>
+                  </svg>
+                </div>
+                <div className="flex-1 min-w-[240px]">
+                  <label htmlFor="lg" className="sf-bf-lbl mb-2">Business logo (optional)</label>
+                  <input
+                    id="lg"
+                    name="logo"
+                    type="file"
+                    accept="image/jpeg,image/png,image/gif"
+                    onChange={handleLogoChange}
+                  />
+                  <p className="sf-bf-help mt-2">JPEG, PNG or GIF, up to 2 MB. Used on your statements.</p>
+                  {errors.logo && (
+                    <div className="mt-2.5 p-3 rounded bg-[#F2B66B] border-2 border-brand-ink font-semibold text-sm" role="alert">
+                      {errors.logo}
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+
+            {/* Form Actions */}
+            <div className="sf-bf-acts">
+              <button
+                type="submit"
+                id="submitBtn"
+                disabled={isLoading}
+                className={`btn lime font-semibold ${isLoading ? 'busy opacity-75' : ''}`}
+              >
+                {isLoading ? (
+                  <>
+                    <span className="sp"></span>
+                    {isEditMode ? 'Updating...' : 'Creating...'}
+                  </>
+                ) : (
+                  isEditMode ? 'Update business' : 'Create business'
+                )}
+              </button>
+              <button
+                type="button"
+                onClick={() => navigate('/list')}
+                className="btn out font-semibold"
+              >
+                Cancel
+              </button>
+
+              {errors.general && (
+                <div className="w-full mt-3 p-3.5 rounded bg-[#F2B66B] border-2 border-brand-ink font-semibold text-sm" role="alert">
+                  {errors.general}
+                </div>
+              )}
+            </div>
+          </form>
+
+          {/* Sticky Live Vault Preview */}
+          <aside className="sf-bf-as" aria-label="Preview of your new vault">
+            <div className="sf-bf-pv">
+              <small>Your new vault</small>
+              <div className="lg" id="previewLogo" aria-hidden="true">
+                {logoPreview ? (
+                  <img src={logoPreview} alt="Logo Preview" />
+                ) : (
+                  'Logo'
+                )}
+              </div>
+              <h2 id="previewBusinessName">
+                {formData.business_name.trim() || 'Your business name'}
+              </h2>
+              <div className="tags">
+                {formData.plan === 'free' ? (
+                  <span>Free plan</span>
+                ) : (
+                  <span>
+                    <svg width="16" height="16" viewBox="0 0 24 24" aria-hidden="true">
+                      <path d="M3 8l4.5 4L12 5l4.5 7L21 8l-2 11H5z" fill="#C8F135" stroke="#0E1A14" strokeWidth="2" strokeLinejoin="round"></path>
+                    </svg>
+                    Premium plan
+                  </span>
+                )}
+                {formData.business_type === 'sole' && <span>Sole Proprietorship</span>}
+                {formData.business_type === 'partnership' && <span>Partnership</span>}
+                {formData.business_type === 'company' && <span>Company</span>}
+                {!formData.business_type && <span>No type selected</span>}
+              </div>
+              <ul>
+                <li>Its own chart of accounts</li>
+                <li>Its own transactions and reports</li>
+                <li style={{ borderBottom: '1px solid #2C3F34' }}>Never mixed with your other businesses</li>
+              </ul>
+            </div>
+
+            <div className="sf-bf-nx">
+              <b>What happens next</b>
+              After you create it, you will see it in your list of businesses. Select it there to start adding accounts and posting transactions.
+            </div>
+          </aside>
         </div>
-
-        {errors.general && <p className="text-red-600 mb-4">{errors.general}</p>}
-
-        <form onSubmit={handleSubmit} className="space-y-6">
-          {/* Plan Selector */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-3">
-              Select Plan
-            </label>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div
-                className={`cursor-pointer border-2 rounded-lg p-4 transition-colors ${formData.plan === 'free'
-                  ? 'border-primary-500 bg-primary-50'
-                  : 'border-gray-200 hover:border-gray-300'
-                  }`}
-                onClick={() => setFormData(prev => ({ ...prev, plan: 'free' }))}
-              >
-                <div className="flex items-center">
-                  <input
-                    type="radio"
-                    name="plan"
-                    value="free"
-                    checked={formData.plan === 'free'}
-                    onChange={handleChange}
-                    className="h-4 w-4 text-primary-600 focus:ring-primary-500"
-                  />
-                  <div className="ml-3">
-                    <h3 className="text-lg font-medium text-gray-900">Free Plan</h3>
-                    <p className="text-sm text-gray-600">Up to 3 businesses</p>
-                    <p className="text-sm text-gray-600">Basic business information</p>
-                  </div>
-                </div>
-              </div>
-
-              <div
-                className={`cursor-pointer border-2 rounded-lg p-4 transition-colors ${formData.plan === 'premium'
-                  ? 'border-warning-500 bg-warning-50'
-                  : 'border-gray-200 hover:border-gray-300'
-                  }`}
-                onClick={() => setFormData(prev => ({ ...prev, plan: 'premium' }))}
-              >
-                <div className="flex items-center">
-                  <input
-                    type="radio"
-                    name="plan"
-                    value="premium"
-                    checked={formData.plan === 'premium'}
-                    onChange={handleChange}
-                    className="h-4 w-4 text-warning-600 focus:ring-warning-500"
-                  />
-                  <div className="ml-3">
-                    <h3 className="text-lg font-medium text-gray-900">Premium Plan</h3>
-                    <p className="text-sm text-gray-600">Unlimited businesses</p>
-                    <p className="text-sm text-gray-600">Complete business profiles</p>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* Logo Upload */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Business Logo
-            </label>
-            <div className="flex items-center space-x-4">
-              {logoPreview && (
-                <div className="relative w-24 h-24 rounded-lg overflow-hidden border border-gray-300 shadow-sm">
-                  <img src={logoPreview} alt="Logo Preview" className="w-full h-full object-contain p-1" />
-                </div>
-              )}
-              <input
-                type="file"
-                accept="image/*"
-                onChange={handleLogoChange}
-                className="block w-full text-sm text-slate-500
-                  file:mr-4 file:py-2 file:px-4
-                  file:rounded-full file:border-0
-                  file:text-sm file:font-semibold
-                  file:bg-primary-50 file:text-primary-700
-                  hover:file:bg-primary-100"
-              />
-            </div>
-            {errors.logo && <p className="text-sm text-red-600 mt-1">{errors.logo}</p>}
-          </div>
-
-          {/* Business Name */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Business Name <span className="text-red-500">*</span>
-            </label>
-            <input
-              type="text"
-              name="business_name"
-              value={formData.business_name}
-              onChange={handleChange}
-              className={`input-field ${errors.business_name ? 'border-red-400' : ''}`}
-              placeholder="Enter business name"
-            />
-            {errors.business_name && <p className="text-sm text-red-600">{errors.business_name}</p>}
-          </div>
-
-          {/* Business Type */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Business Type <span className="text-red-500">*</span>
-            </label>
-            <select
-              name="business_type"
-              value={formData.business_type}
-              onChange={handleChange}
-              className={`input-field ${errors.business_type ? 'border-red-400' : ''}`}
-            >
-              <option value="">Select type</option>
-              {businessTypes.map(type => (
-                <option key={type.value} value={type.value}>{type.label}</option>
-              ))}
-            </select>
-            {errors.business_type && <p className="text-sm text-red-600">{errors.business_type}</p>}
-          </div>
-
-          {/* Industry */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Industry {formData.plan === 'premium' && <span className="text-red-500">*</span>}
-            </label>
-            <select
-              name="industry"
-              // disabled={isDisabled('industry')}
-              value={formData.industry}
-              onChange={handleChange}
-              className={`input-field ${errors.industry ? 'border-red-400' : ''}`}
-            >
-              <option value="">Select industry</option>
-              {industries.map(ind => (
-                <option key={ind} value={ind}>{ind}</option>
-              ))}
-            </select>
-            {errors.industry && <p className="text-sm text-red-600">{errors.industry}</p>}
-          </div>
-
-          {/* NTN Number */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">NTN Number</label>
-            <input
-              type="text"
-              name="ntn_number"
-              // disabled={isDisabled('ntn_number')}
-              value={formData.ntn_number}
-              onChange={handleChange}
-              className="input-field"
-              placeholder="Enter NTN number"
-            />
-          </div>
-
-          {/* Address */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Address</label>
-            <textarea
-              name="address"
-              disabled={isDisabled('address')}
-              value={formData.address}
-              onChange={handleChange}
-              className="input-field"
-              rows="2"
-              placeholder="Business address"
-            />
-          </div>
-
-          {/* City and Country */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                City {formData.plan === 'premium' && <span className="text-red-500">*</span>}
-              </label>
-              <input
-                type="text"
-                name="city"
-                disabled={isDisabled('city')}
-                value={formData.city}
-                onChange={handleChange}
-                className={`input-field ${errors.city ? 'border-red-400' : ''}`}
-              />
-              {errors.city && <p className="text-sm text-red-600">{errors.city}</p>}
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Country {formData.plan === 'premium' && <span className="text-red-500">*</span>}
-              </label>
-              <input
-                type="text"
-                name="country"
-                disabled={isDisabled('country')}
-                value={formData.country}
-                onChange={handleChange}
-                className={`input-field ${errors.country ? 'border-red-400' : ''}`}
-              />
-              {errors.country && <p className="text-sm text-red-600">{errors.country}</p>}
-            </div>
-          </div>
-
-          {/* Phone */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Phone Number</label>
-            <input
-              type="text"
-              name="phone"
-              disabled={isDisabled('phone')}
-              value={formData.phone}
-              onChange={handleChange}
-              className={`input-field ${errors.phone ? 'border-red-400' : ''}`}
-              placeholder="e.g. +923001234567"
-            />
-            {errors.phone && <p className="text-sm text-red-600">{errors.phone}</p>}
-          </div>
-
-          {/* Submit */}
-          <div className="flex justify-end pt-6">
-            <button
-              type="submit"
-              disabled={isLoading}
-              className="btn-primary flex items-center"
-            >
-              {isLoading ? 'Saving...' : (
-                <>
-                  <Save className="w-4 h-4 mr-2" />
-                  {isEditMode ? 'Update Business' : 'Create Business'}
-                </>
-              )}
-            </button>
-          </div>
-        </form>
-      </div>
+      </main>
     </div>
   );
 };
