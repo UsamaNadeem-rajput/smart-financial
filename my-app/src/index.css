@@ -2956,5 +2956,373 @@ html {
   }
 }
 
+/* ==========================================================================
+   BUSINESS FORM (STITCH SPEC)
+   ========================================================================== */
+
+.sf-bf-cols {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 56px;
+  align-items: flex-start;
+  margin-top: 30px;
+}
+
+.sf-bf-fm {
+  flex: 1 1 640px;
+  min-width: 0;
+}
+
+.sf-bf-as {
+  flex: 0 1 380px;
+  position: sticky;
+  top: 24px;
+}
+
+.sf-bf-sec {
+  border-top: 2px solid #0E1A14;
+  padding: 26px 0 34px;
+}
+
+.sf-bf-sec > h2 {
+  font-family: 'Bricolage Grotesque', sans-serif;
+  font-size: 30px;
+  font-weight: 800;
+  letter-spacing: -0.03em;
+  margin-bottom: 18px;
+  color: #0E1A14;
+}
+
+.sf-bf-tiles {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+
+.sf-bf-tile {
+  display: block;
+  padding: 22px 24px;
+  border: 2px solid #0E1A14;
+  border-radius: 6px;
+  background: #fff;
+  cursor: pointer;
+  transition: background 0.15s ease-out, transform 0.15s ease-out;
+  text-align: left;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.sf-bf-tile:hover {
+  transform: translateY(-2px);
+}
+
+.sf-bf-tile.on {
+  background: #C8F135;
+  box-shadow: inset 0 0 0 2px #0E1A14;
+}
+
+.sf-bf-tile b {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-family: 'Bricolage Grotesque', sans-serif;
+  font-weight: 800;
+  font-size: 26px;
+  letter-spacing: -0.03em;
+  color: #0E1A14;
+}
+
+.sf-bf-tile span {
+  display: block;
+  margin-top: 8px;
+  font-size: 15px;
+  color: #44544B;
+  line-height: 1.4;
+}
+
+.sf-bf-segs {
+  display: inline-flex;
+  flex-wrap: wrap;
+  border: 2px solid #0E1A14;
+  border-radius: 6px;
+  overflow: hidden;
+}
+
+.sf-bf-seg {
+  padding: 13px 22px;
+  font-weight: 600;
+  font-size: 16px;
+  cursor: pointer;
+  background: #fff;
+  color: #0E1A14;
+  border: none;
+  border-right: 2px solid #0E1A14;
+  transition: background 0.15s;
+  font-family: inherit;
+}
+
+.sf-bf-seg:last-child {
+  border-right: none;
+}
+
+.sf-bf-seg:hover {
+  background: #E4EBDC;
+}
+
+.sf-bf-seg.on {
+  background: #0E1A14;
+  color: #F2F5EE;
+}
+
+.sf-bf-fd {
+  margin-bottom: 18px;
+}
+
+.sf-bf-lbl {
+  display: block;
+  font-weight: 600;
+  font-size: 15px;
+  margin-bottom: 7px;
+  color: #0E1A14;
+}
+
+.sf-bf-input {
+  width: 100%;
+  box-sizing: border-box;
+  min-height: 52px;
+  padding: 0 14px;
+  font-size: 16px;
+  font-family: inherit;
+  border: 2px solid #0E1A14;
+  border-radius: 6px;
+  background: #fff;
+  color: #0E1A14;
+  transition: background 0.15s;
+}
+
+.sf-bf-input:focus {
+  background: #FBFFE6;
+  outline: none;
+}
+
+.sf-bf-input:disabled {
+  background: repeating-linear-gradient(135deg, #F2F5EE 0 6px, #E5EBDF 6px 12px);
+  border-style: dashed;
+  border-color: #8FA196;
+  color: #6B7A71;
+  cursor: not-allowed;
+}
+
+.sf-bf-input.err {
+  border-style: dashed;
+  background: #FBEBD0;
+}
+
+.sf-bf-fg3 {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0 18px;
+}
+
+.sf-bf-w2 {
+  grid-column: 1 / -1;
+}
+
+.sf-bf-help {
+  margin-top: 6px;
+  font-size: 13px;
+  color: #44544B;
+}
+
+.sf-bf-note2 {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  margin-bottom: 16px;
+  padding: 12px 14px;
+  background: #E4EBDC;
+  border: 2px solid #0E1A14;
+  border-radius: 6px;
+  font-size: 15px;
+  font-weight: 500;
+  color: #0E1A14;
+}
+
+.sf-bf-drop {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  flex-wrap: wrap;
+  padding: 22px;
+  border: 2px dashed #0E1A14;
+  border-radius: 6px;
+  background: #fff;
+}
+
+.sf-bf-drop .ic {
+  flex: none;
+  width: 64px;
+  height: 64px;
+  border: 2px solid #0E1A14;
+  border-radius: 6px;
+  background: #F2F5EE;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.sf-bf-drop input[type="file"] {
+  font-family: inherit;
+  font-size: 15px;
+  max-width: 100%;
+}
+
+.sf-bf-drop input[type="file"]::file-selector-button {
+  min-height: 44px;
+  padding: 0 18px;
+  margin-right: 14px;
+  border: 2px solid #0E1A14;
+  border-radius: 6px;
+  background: #C8F135;
+  font-weight: 600;
+  font-family: inherit;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.sf-bf-drop input[type="file"]::file-selector-button:hover {
+  background: #b5dd2e;
+}
+
+.sf-bf-acts {
+  display: flex;
+  gap: 16px;
+  align-items: center;
+  flex-wrap: wrap;
+  padding-top: 10px;
+}
+
+/* Aside Preview Box */
+.sf-bf-pv {
+  background: #0E1A14;
+  color: #F2F5EE;
+  border-radius: 6px;
+  padding: 28px;
+  border: 2px solid #0E1A14;
+  box-shadow: 4px 4px 0 #0E1A14;
+}
+
+.sf-bf-pv small {
+  font-size: 13px;
+  font-weight: 700;
+  color: #C8F135;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.sf-bf-pv .lg {
+  width: 72px;
+  height: 72px;
+  border-radius: 6px;
+  border: 2px dashed #8FA196;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #8FA196;
+  font-size: 12px;
+  font-weight: 600;
+  margin-top: 16px;
+  overflow: hidden;
+  background: #14241c;
+}
+
+.sf-bf-pv .lg img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.sf-bf-pv h2 {
+  font-family: 'Bricolage Grotesque', sans-serif;
+  font-size: 32px;
+  font-weight: 800;
+  letter-spacing: -0.03em;
+  margin-top: 16px;
+  color: #F2F5EE;
+  word-break: break-word;
+}
+
+.sf-bf-pv .tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 16px;
+}
+
+.sf-bf-pv .tags span {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  border: 2px solid #C8F135;
+  border-radius: 999px;
+  font-weight: 600;
+  font-size: 13px;
+  color: #C8F135;
+}
+
+.sf-bf-pv ul {
+  list-style: none;
+  margin: 22px 0 0;
+  padding: 0;
+}
+
+.sf-bf-pv li {
+  padding: 11px 0;
+  border-top: 1px solid #2C3F34;
+  font-size: 15px;
+  color: #B9C6BD;
+}
+
+.sf-bf-nx {
+  margin-top: 18px;
+  padding: 18px 20px;
+  border: 2px solid #0E1A14;
+  border-radius: 6px;
+  background: #fff;
+  font-size: 15px;
+  color: #0E1A14;
+  box-shadow: 3px 3px 0 #0E1A14;
+}
+
+.sf-bf-nx b {
+  display: block;
+  margin-bottom: 4px;
+  font-size: 16px;
+  font-weight: 700;
+}
+
+.sf-bf-hint {
+  margin-top: 7px;
+  font-size: 14px;
+  font-weight: 600;
+  padding: 6px 10px;
+  background: #F2B66B;
+  border: 2px solid #0E1A14;
+  border-radius: 4px;
+  color: #0E1A14;
+}
+
+@media (max-width: 900px) {
+  .sf-bf-tiles, .sf-bf-fg3 {
+    grid-template-columns: 1fr;
+  }
+  .sf-bf-as {
+    position: static;
+    flex: 1 1 100%;
+  }
+}
+
+
 
 

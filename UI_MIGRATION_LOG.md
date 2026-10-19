@@ -238,3 +238,37 @@ Branch: `ui-stitch-migration`
 - **Decisions / Questions for User**:
   - None for Ledger Balancing. Both the summary index view and individual T-account views match Stitch specifications exactly and preserve all logic.
 
+---
+
+## 9. New Business / Edit Business (`/business`)
+- **Stitch Screen**: Project `4435387801083826442`, Screen `75f55f0195f140158f8ac8da1b31cb8f` ("Smart Financial — New Business (Interactive Screen)")
+- **Target File(s) Changed**:
+  - `my-app/src/components/business/BusinessForm.jsx`
+  - `my-app/src/index.css` (added `.sf-bf-cols`, `.sf-bf-fm`, `.sf-bf-as`, `.sf-bf-sec`, `.sf-bf-tiles`, `.sf-bf-tile`, `.sf-bf-segs`, `.sf-bf-seg`, `.sf-bf-fd`, `.sf-bf-lbl`, `.sf-bf-input`, `.sf-bf-fg3`, `.sf-bf-w2`, `.sf-bf-help`, `.sf-bf-note2`, `.sf-bf-drop`, `.sf-bf-acts`, `.sf-bf-pv`, `.sf-bf-nx`, `.sf-bf-hint`)
+- **New Shared Design Tokens & Styles**:
+  - Master Two-Column Layout:
+    - `.sf-bf-cols`: Responsive split grid with 56px gap between form controls and sticky preview panel.
+    - `.sf-bf-fm`: Primary form container (flex 1 1 640px).
+    - `.sf-bf-as`: Sticky live preview column (380px max-width, top 24px) keeping the business vault card in sight as the user scrolls.
+  - Interactive Plan & Type Pickers:
+    - `.sf-bf-tiles` & `.sf-bf-tile`: Dual plan cards for Free and Premium with active lime background (`#C8F135`), 2px ink border, and crown icon for Premium.
+    - `.sf-bf-segs` & `.sf-bf-seg`: Segmented pill selector for Sole Proprietorship, Partnership, and Company with active ink background (`#0E1A14`) and white text.
+  - Inputs & Field States:
+    - `.sf-bf-input`: Neo-brutalist 52px input with `#FBFFE6` focus state, dashed striped background for disabled Free plan fields, and amber dashed background on validation error (`.err`).
+    - `.sf-bf-note2`: Info banner explaining premium feature locking on Free plan.
+  - Logo Uploader:
+    - `.sf-bf-drop`: 2px dashed upload card with SVG image placeholder, styled lime file-selector-button, and instant client-side preview rendering.
+  - Live Vault Preview:
+    - `.sf-bf-pv`: Neo-brutalist `#0E1A14` card with lime vault header, dynamic logo thumbnail, real-time typing synchronization for business name, live plan and type tags, and double-entry vault benefits list.
+- **Logic & Functionality Preserved**:
+  - Mode Switching: Seamlessly handles both new business creation (`POST /api/business`) and existing business editing (`PUT /api/business/:id`) when navigating with `location.state.business`.
+  - API Payload Construction: Exactly preserves multipart `FormData` fields (`plan`, `businessName`, `businessType`, `industry`, `ntn`, `address`, `city`, `country`, `phone`, `logo`) with `withCredentials: true` and `multipart/form-data` headers.
+  - Full Form Validations: Name requirement, type requirement, conditional premium field validation (industry, city, country), phone regex validation, and 2MB logo size limitation.
+  - State and Handlers: `handleChange`, `handleLogoChange` with `FileReader` data URL preview, `validateForm`, `handleSubmit`, and `isDisabled` helper completely unchanged.
+  - Navigation: Breadcrumb and Cancel buttons navigate back to `/list`.
+- **Skipped / Inert Stitch Elements**:
+  - The static designer "States" gallery at the very bottom of the Stitch screen (displaying static cards for documentation) was omitted as it is a design reference; real dynamic error messages and spinners are integrated directly into the live form fields.
+- **Decisions / Questions for User**:
+  - None for New Business. Both create and edit workflows match Stitch specifications and preserve all existing logic.
+
+
