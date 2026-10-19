@@ -206,3 +206,35 @@ Branch: `ui-stitch-migration`
   - Total Sizing & Labeling: Reduced font size of totals from 30px to 18px and added explicit "Debit" and "Credit" pill labels.
   - Overlap Prevention: Converted `.sf-tb-tr1` and `.sf-tb-bars` to a responsive flex layout with dedicated items and auto-wrapping, guaranteeing that values and labels never collide across any screen width.
   - Cross-Page Ledger Navigation Fix: Fixed navigation from `ShowBusinessAccount` ("View Ledger Entries") and `TrialBalance` to pass complete `{ id, name }` state. Updated `LedgerBalancing.jsx` to dynamically resolve ledgers passed by ID, object, URL search query, or account name so the individual ledger T-Account entries and summary never render blank.
+
+---
+
+## 8. Ledger Balancing (`/ledger-balancing`)
+- **Stitch Screen**: Project `4435387801083826442`, Screen `045cbc1ba9584c4aac1f746fe17dcb5e` ("Smart Financial — Ledger Balancing Screen")
+- **Target File(s) Changed**:
+  - `my-app/src/components/reports/LedgerBalancing.jsx`
+  - `my-app/src/index.css` (added `.sf-lb-tot`, `.sf-lb-ok`, `.sf-lb-unbal`, `.sf-lb-sm`, `.sf-lb-hint`, `.sf-lb-lab`, `.sf-lb-bad`, `.sf-lb-bk`, `.sf-lb-chips`, `.sf-lb-cp`, `.sf-lb-hdb`, `.sf-lb-kp`, `.sf-lb-tsc`, `.sf-lb-ta`, `.sf-lb-dbl`, `.sf-lb-cbl`, `.sf-lb-how`, `.sf-lb-lk`)
+- **New Shared Design Tokens & Styles**:
+  - All Ledgers Summary:
+    - `.sf-lb-tot`: Accent lime banner (`#C8F135`) with 2px ink border, 4px shadow, displaying Total Debits, Total Credits, and status badge (`.sf-lb-ok` "Balanced" or `.sf-lb-unbal` "Out of balance").
+    - `.sf-lb-sm`: Neo-brutalist table with 2px ink border, uppercase headers (`LEDGER`, `TYPE`, `DEBITS ($)`, `CREDITS ($)`, `CLOSING`), and row hover state turning `#C8F135` with animated sliding arrow `→`.
+    - `.sf-lb-bad`: Neo-brutalist warning panel in warm amber (`#F2B66B`) shown when total debits and credits do not balance.
+  - Detail T-Account View:
+    - `.sf-lb-chips`: Horizontal scrolling ledger switcher pill bar (`.sf-lb-cp`) allowing instant ledger switching without leaving the T-account sheet.
+    - `.sf-lb-hdb` & `.sf-lb-kp`: Key performance indicator panel with Debits, Credits, and closing balance highlighted in lime.
+    - `.sf-lb-ta`: Authentic two-sided T-Account table with Dr. (Debit) on the left (cols: Date, Particulars, Amount) and Cr. (Credit) on the right (cols: Date, Particulars, Amount), separated by a 3px ink vertical divider (`.bl`).
+    - `.cd`: Balancing figure (`c/d (Balancing Figure)`) highlighted in `#C8F135` on the smaller side to balance the T-account.
+    - `.sf-lb-dbl`: Double underline styling for matching footer totals.
+    - `.sf-lb-how`: Collapsible neo-brutalist disclosure accordion explaining how to read a T-account (Dr., Cr., and c/d).
+- **Logic & Functionality Preserved**:
+  - Dynamic route & query param resolution: reads `location.state?.selectedLedger`, `?id=...`, `?name=...`, supporting `'all'`, `{ id, name }`, numeric IDs, and string names.
+  - API Fetch: `GET ${apiUrl}/api/ledger-balancing/${business_id}` for all ledgers and `GET ${apiUrl}/api/ledger-balancing/${business_id}/${targetId}` for individual ledger details with `withCredentials: true`.
+  - Name lookup fallback: automatically queries all ledgers to find `targetId` when only an account name is provided.
+  - Calculations & formatting: `currency`, `formatClosing` (Dr/Cr tags), and `normalizeOppositeAccounts` for "To <Opposing Account>" / "By <Opposing Account>" strings.
+  - Entry pairing: side-by-side row pairing with date formatting (`YYYY-MM-DD`), description preserving, and c/d balancing figure on the deficit side.
+  - Context & refresh: `useBusiness()` hook integration and `refreshTrigger` reactivity.
+- **Skipped / Inert Stitch Elements**:
+  - CSS-only radio button hack (`<input type="radio" id="all" />`, `#l1`, etc.) from static Stitch HTML replaced with React state and `navigate()` handlers while preserving the exact visual chip states and table views.
+- **Decisions / Questions for User**:
+  - None for Ledger Balancing. Both the summary index view and individual T-account views match Stitch specifications exactly and preserve all logic.
+
