@@ -1170,7 +1170,7 @@ html {
 }
 
 /* ==========================================================================
-   Smart Financial — Post Transaction Voucher Spec Styles
+   Smart Financial â€” Post Transaction Voucher Spec Styles
    ========================================================================== */
 @keyframes sfFd {
   from {
@@ -1628,7 +1628,7 @@ html {
 }
 
 /* ==========================================================================
-   Smart Financial — General Journal Spec Styles
+   Smart Financial â€” General Journal Spec Styles
    ========================================================================== */
 .sf-gj-fb {
   display: flex;
@@ -2909,7 +2909,7 @@ html {
 }
 
 .sf-lb-how[open] summary::after {
-  content: "−";
+  content: "âˆ’";
 }
 
 .sf-lb-how div {
@@ -3325,4 +3325,370 @@ html {
 
 
 
-
+
+/* ==========================================================================
+   Create New Account (New Ledger) — Neo-Brutalist Stitch UI
+   ========================================================================== */
+
+.sf-cna-cols {
+  display: flex;
+  gap: 40px;
+  align-items: flex-start;
+  margin-top: 28px;
+}
+
+.sf-cna-fm {
+  flex: 1 1 640px;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.sf-cna-as {
+  position: sticky;
+  top: 24px;
+  flex: 0 0 380px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.sf-cna-sec {
+  background: #FFFFFF;
+  border: 2px solid #0E1A14;
+  border-radius: 6px;
+  padding: 24px 28px;
+  box-shadow: 3px 3px 0 #0E1A14;
+}
+
+.sf-cna-sec h2 {
+  font-family: 'Bricolage Grotesque', sans-serif;
+  font-size: 20px;
+  font-weight: 800;
+  color: #0E1A14;
+  letter-spacing: -0.02em;
+  margin-bottom: 4px;
+}
+
+.sf-cna-sec p.sf-cna-sub {
+  font-size: 14px;
+  color: #5A6E63;
+  margin-bottom: 20px;
+}
+
+.sf-cna-fd {
+  margin-bottom: 20px;
+}
+
+.sf-cna-fd:last-child {
+  margin-bottom: 0;
+}
+
+.sf-cna-lbl {
+  display: block;
+  font-size: 13px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: #0E1A14;
+  margin-bottom: 8px;
+}
+
+.sf-cna-input,
+.sf-cna-select,
+.sf-cna-textarea {
+  width: 100%;
+  font-family: inherit;
+  font-size: 16px;
+  color: #0E1A14;
+  background: #FFFFFF;
+  border: 2px solid #0E1A14;
+  border-radius: 6px;
+  padding: 12px 14px;
+  outline: none;
+  transition: all 0.15s ease;
+  box-sizing: border-box;
+}
+
+.sf-cna-input:focus,
+.sf-cna-select:focus,
+.sf-cna-textarea:focus {
+  background: #FBFFE6;
+  border-color: #0E1A14;
+  box-shadow: 0 0 0 3px rgba(200, 241, 53, 0.45);
+}
+
+.sf-cna-input.err,
+.sf-cna-select.err {
+  border-color: #0E1A14;
+  border-style: dashed;
+  background: #FBEBD0;
+}
+
+.sf-cna-select {
+  appearance: none;
+  background-image: url("data:image/svg+xml;utf8,<svg fill='none' stroke='%230E1A14' stroke-width='2' stroke-linecap='round' stroke-linejoin='round' viewBox='0 0 24 24' xmlns='http://www.w3.org/2000/svg'><polyline points='6 9 12 15 18 9'/></svg>");
+  background-repeat: no-repeat;
+  background-position: right 14px center;
+  background-size: 18px;
+  padding-right: 40px;
+  cursor: pointer;
+}
+
+.sf-cna-chk-card {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 14px 16px;
+  background: #F2F5EE;
+  border: 2px solid #0E1A14;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.sf-cna-chk-card:hover {
+  background: #E4EBDC;
+}
+
+.sf-cna-chk-card input[type="checkbox"] {
+  width: 20px;
+  height: 20px;
+  accent-color: #0E1A14;
+  cursor: pointer;
+  margin-top: 2px;
+}
+
+.sf-cna-chk-info b {
+  display: block;
+  font-size: 15px;
+  font-weight: 700;
+  color: #0E1A14;
+}
+
+.sf-cna-chk-info span {
+  display: block;
+  font-size: 13px;
+  color: #5A6E63;
+  margin-top: 2px;
+}
+
+.sf-cna-bal-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  margin-top: 16px;
+  padding: 16px;
+  background: #FAFCF8;
+  border: 2px dashed #0E1A14;
+  border-radius: 6px;
+}
+
+.sf-cna-warn {
+  margin-top: 14px;
+  padding: 12px 14px;
+  background: #F2B66B;
+  border: 2px solid #0E1A14;
+  border-radius: 6px;
+  font-size: 14px;
+  font-weight: 600;
+  color: #0E1A14;
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  box-shadow: 2px 2px 0 #0E1A14;
+}
+
+.sf-cna-pv {
+  background: #0E1A14;
+  color: #F2F5EE;
+  border: 2px solid #0E1A14;
+  border-radius: 6px;
+  padding: 24px;
+  box-shadow: 4px 4px 0 #0E1A14;
+}
+
+.sf-cna-pv-hd {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #C8F135;
+  border-bottom: 1px solid #2C3F34;
+  padding-bottom: 12px;
+  margin-bottom: 16px;
+}
+
+.sf-cna-pv-title {
+  font-family: 'Bricolage Grotesque', sans-serif;
+  font-size: 26px;
+  font-weight: 800;
+  line-height: 1.15;
+  color: #F2F5EE;
+  word-break: break-word;
+  margin-bottom: 12px;
+}
+
+.sf-cna-pv-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+
+.sf-cna-pv-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  font-weight: 700;
+  padding: 4px 10px;
+  border-radius: 999px;
+  border: 1.5px solid #0E1A14;
+}
+
+.sf-cna-pv-pill-lime {
+  background: #C8F135;
+  color: #0E1A14;
+}
+
+.sf-cna-pv-pill-dark {
+  background: #1B2E24;
+  color: #B9C6BD;
+  border-color: #2C3F34;
+}
+
+.sf-cna-pv-box {
+  background: #16241C;
+  border: 1px solid #2C3F34;
+  border-radius: 6px;
+  padding: 12px 14px;
+  margin-top: 14px;
+}
+
+.sf-cna-pv-box .k {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: #8FA196;
+}
+
+.sf-cna-pv-box .v {
+  font-size: 16px;
+  font-weight: 700;
+  color: #F2F5EE;
+  margin-top: 2px;
+  font-variant-numeric: tabular-nums;
+}
+
+.sf-cna-sugg {
+  background: #FFFFFF;
+  border: 2px solid #0E1A14;
+  border-radius: 6px;
+  padding: 20px;
+  box-shadow: 3px 3px 0 #0E1A14;
+}
+
+.sf-cna-sugg h3 {
+  font-family: 'Bricolage Grotesque', sans-serif;
+  font-size: 16px;
+  font-weight: 800;
+  color: #0E1A14;
+  margin-bottom: 4px;
+}
+
+.sf-cna-sugg p {
+  font-size: 13px;
+  color: #5A6E63;
+  margin-bottom: 12px;
+}
+
+.sf-cna-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.sf-cna-chip {
+  padding: 6px 12px;
+  font-size: 13px;
+  font-weight: 600;
+  color: #0E1A14;
+  background: #F2F5EE;
+  border: 1.5px solid #0E1A14;
+  border-radius: 999px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.sf-cna-chip:hover {
+  background: #C8F135;
+  transform: translateY(-1px);
+}
+
+.sf-cna-chip.active {
+  background: #0E1A14;
+  color: #C8F135;
+}
+
+.sf-cna-guide {
+  background: #FFFFFF;
+  border: 2px solid #0E1A14;
+  border-radius: 6px;
+  padding: 18px 20px;
+  box-shadow: 3px 3px 0 #0E1A14;
+}
+
+.sf-cna-guide h4 {
+  font-size: 13px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: #0E1A14;
+  margin-bottom: 8px;
+}
+
+.sf-cna-guide ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  font-size: 13px;
+  color: #5A6E63;
+  line-height: 1.6;
+}
+
+.sf-cna-guide li {
+  padding: 4px 0;
+  border-bottom: 1px dashed #E4EBDC;
+}
+
+.sf-cna-guide li:last-child {
+  border-bottom: none;
+}
+
+.sf-cna-acts {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 14px;
+  padding-top: 10px;
+}
+
+@media (max-width: 960px) {
+  .sf-cna-cols {
+    flex-direction: column;
+  }
+  .sf-cna-as {
+    position: static;
+    flex: 1 1 100%;
+    width: 100%;
+  }
+  .sf-cna-bal-grid {
+    grid-template-columns: 1fr;
+  }
+}

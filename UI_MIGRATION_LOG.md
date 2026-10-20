@@ -272,3 +272,34 @@ Branch: `ui-stitch-migration`
   - None for New Business. Both create and edit workflows match Stitch specifications and preserve all existing logic.
 
 
+
+---
+
+## 10. Create New Account / New Ledger (/creatnewaccount)
+- **Stitch Screen**: Adapted from Chart of Accounts / New Business Interactive Stitch Neo-Brutalist design language.
+- **Target File(s) Changed**:
+  - my-app/src/components/accounts/CreateNewAccount.jsx
+  - my-app/src/index.css (added .sf-cna-cols, .sf-cna-fm, .sf-cna-as, .sf-cna-sec, .sf-cna-sub, .sf-cna-fd, .sf-cna-lbl, .sf-cna-input, .sf-cna-select, .sf-cna-textarea, .sf-cna-chk-card, .sf-cna-chk-info, .sf-cna-bal-grid, .sf-cna-warn, .sf-cna-pv, .sf-cna-pv-hd, .sf-cna-pv-title, .sf-cna-pv-tags, .sf-cna-pv-pill, .sf-cna-pv-pill-lime, .sf-cna-pv-pill-dark, .sf-cna-pv-box, .sf-cna-sugg, .sf-cna-chips, .sf-cna-chip, .sf-cna-guide, .sf-cna-acts)
+- **New Shared Design Tokens & Styles**:
+  - Split Layout:
+    - Master two-column layout (.sf-cna-cols) pairing the primary ledger configuration form (.sf-cna-fm) with a sticky ledger preview and guidance panel (.sf-cna-as).
+  - Form Organization & Fields:
+    - Sectioned architecture: 1. Ledger Classification, 2. Ledger Identity, 3. Opening Balance (Optional), and 4. Description & Notes.
+    - Custom styled 52px neo-brutalist inputs, selects, and textareas with 2px solid #0E1A14 borders, 6px radius, and #FBFFE6 focus tint with lime glow.
+    - Neo-brutalist interactive toggle cards (.sf-cna-chk-card) for sub-account and opening balance activation.
+    - Dynamic Account Nature Indicator pill: dynamically displays normal balance (Debit / Dr vs Credit / Cr) and double-entry increase/decrease behavior.
+    - Accounting Warning Banner (.sf-cna-warn): #F2B66B amber alert explaining debit/credit discrepancies against natural account balance.
+  - Sticky Live Ledger Preview & Suggestions:
+    - Real-time dark neo-brutalist Vault Ledger Preview card (.sf-cna-pv) displaying dynamic account name, category tags, Dr/Cr normal balance pill, parent hierarchy badge, opening balance preview, and notes.
+    - Quick Suggestion Cloud (.sf-cna-chips): one-click interactive chips with checkmark states that immediately populate the ledger name, accompanied by a fallback select dropdown.
+    - Double-Entry Principles Guide card (.sf-cna-guide): clear accounting guidelines for Dr/Cr rules and self-balancing ledgers.
+- **Logic & Functionality Preserved**:
+  - All React state variables intact: isLoading, ccountTypes, subAccountOptions, ccountSuggestions, ormData, errors.
+  - All lifecycle effects preserved: initial fetch of static account types and business accounts on [selectedBusiness], suggestion generation on [formData.type_id].
+  - Handlers and validation untouched: handleChange (numeric sanitization, comma digit grouping, debit/credit mutual exclusivity), handleSuggestionClick, alidateForm, and handleSubmit (POST /api/createnewaccount with separate opening_balance_debit and opening_balance_credit).
+  - Sub-account filtering logic: getFilteredSubAccountOptions() filters existing accounts by matching 	ype_id.
+  - Account nature resolution: getAccountNature() accurately computes 'Debit' vs 'Credit' natures across all 14 account types.
+- **Skipped / Inert Stitch Elements**:
+  - None. Enhanced the original single select dropdown suggestions into both modern interactive pill chips and backward-compatible select options.
+- **Decisions / Questions for User**:
+  - None. Page matches platform neo-brutalist styling, passes full production builds, and preserves 100% of previous logic.
