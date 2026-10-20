@@ -23,8 +23,8 @@ router.post('/', async (req, res) => {
 
     const [result] = await pool.query(
       `INSERT INTO accounts
-  (account_name, type_id, business_id, description, parent_account_id, is_deleted)
-VALUES(?, ?, ?, ?, ?, 0)`,
+  (account_name, type_id, business_id, description, parent_account_id, is_deleted, is_active)
+VALUES(?, ?, ?, ?, ?, 0, 1)`,
       [account_name, type_id, business_id, description, parent_account_id || null]
     );
 

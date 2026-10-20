@@ -257,10 +257,10 @@ const CreateNewAccount = () => {
         {/* Header */}
         <div className="flex items-center justify-between flex-wrap gap-4 mb-6">
           <div>
-            <h1 className="font-display font-extrabold text-[40px] sm:text-[64px] tracking-tight leading-[1] text-brand-ink">
+            <h1 className="font-display font-extrabold text-[32px] sm:text-[48px] lg:text-[64px] tracking-tight leading-[1] text-brand-ink">
               New ledger.
             </h1>
-            <p className="text-brand-muted text-base sm:text-lg max-w-[720px] mt-2">
+            <p className="text-brand-muted text-sm sm:text-base lg:text-lg max-w-[720px] mt-2">
               Add a new account to {selectedBusiness?.business_name ? <strong className="text-brand-ink">{selectedBusiness.business_name}</strong> : 'your chart of accounts'} to record transactions with double-entry integrity.
             </p>
           </div>
@@ -448,7 +448,7 @@ const CreateNewAccount = () => {
                 <div className="sf-cna-bal-grid">
                   <div>
                     <label htmlFor="debit_amount" className="sf-cna-lbl">
-                      Debit Amount ($)
+                      Debit Amount (PKR)
                     </label>
                     <input
                       id="debit_amount"
@@ -463,7 +463,7 @@ const CreateNewAccount = () => {
                   </div>
                   <div>
                     <label htmlFor="credit_amount" className="sf-cna-lbl">
-                      Credit Amount ($)
+                      Credit Amount (PKR)
                     </label>
                     <input
                       id="credit_amount"
@@ -573,14 +573,14 @@ const CreateNewAccount = () => {
                 <div className="v">
                   {formData.add_opening_balance ? (
                     formData.debit_amount ? (
-                      <span className="text-[#C8F135]">Dr ${formData.debit_amount}</span>
+                      <span className="text-[#C8F135]">Dr PKR {formData.debit_amount}</span>
                     ) : formData.credit_amount ? (
-                      <span className="text-[#C8F135]">Cr ${formData.credit_amount}</span>
+                      <span className="text-[#C8F135]">Cr PKR {formData.credit_amount}</span>
                     ) : (
-                      '$0.00'
+                      'PKR 0.00'
                     )
                   ) : (
-                    '$0.00'
+                    'PKR 0.00'
                   )}
                 </div>
               </div>

@@ -372,8 +372,8 @@ export default function TrialBalance() {
             {/* Table Header */}
             <div className="sf-tb-hd" aria-hidden="true">
               <span>Ledger name</span>
-              <span>Debit ($)</span>
-              <span>Credit ($)</span>
+              <span>Debit (PKR)</span>
+              <span>Credit (PKR)</span>
             </div>
 
             {/* Empty group alert */}

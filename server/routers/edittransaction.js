@@ -9,7 +9,7 @@ router.get("/:transactionId/:businessId", async (req, res) => {
   try {
     const [rows] = await pool.query(
       `
-      SELECT t.transaction_id, t.business_id, t.date, te.entry_id, te.account_id, a.account_name, te.amount, te.type
+      SELECT t.transaction_id, t.frontend_transaction_id, t.business_id, t.date, te.entry_id, te.account_id, a.account_name, te.amount, te.type
       FROM transactions t
       JOIN transaction_entries te ON t.transaction_id = te.transaction_id
       JOIN accounts a ON te.account_id = a.account_id
@@ -27,6 +27,7 @@ router.get("/:transactionId/:businessId", async (req, res) => {
     // ðŸ”¹ Structure response
     const transaction = {
       transaction_id: rows[0].transaction_id,
+      frontend_transaction_id: rows[0].frontend_transaction_id || rows[0].transaction_id,
       business_id: rows[0].business_id,
       date: rows[0].date,
       entries: rows.map((r) => ({

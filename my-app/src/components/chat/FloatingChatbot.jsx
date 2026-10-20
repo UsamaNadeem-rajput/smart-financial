@@ -349,6 +349,13 @@ const FloatingChatbot = () => {
         messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
     }, [messages, isLoading]);
 
+    // Allow other pages (like Contact Hub) to trigger the AI chatbot
+    useEffect(() => {
+        const handleOpen = () => setIsOpen(true);
+        window.addEventListener('open-smart-chatbot', handleOpen);
+        return () => window.removeEventListener('open-smart-chatbot', handleOpen);
+    }, []);
+
     useEffect(() => {
         const SpeechRecognition =
             window.SpeechRecognition || window.webkitSpeechRecognition;

@@ -11,3 +11,15 @@ my-app/build/
 # Optional: log files
 *.log
 .env
+
+# IDE / Agent Tooling
+.agent/
+.agents/
+.gemini/
+.gsd/
+GSD-STYLE.md
+PROJECT_RULES.md
+model_capabilities.yaml
+adapters/
+scripts/
+debug.log

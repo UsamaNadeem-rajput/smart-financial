@@ -1,30 +1,50 @@
 import { useEffect, useState } from 'react';
 import { Navigate } from 'react-router-dom';
 import axios from 'axios';
+import PageLoader from '../common/PageLoader';
 
 const PrivateRoute = ({ children }) => {
-  const [authenticated, setAuthenticated] = useState(null);
+  // Synchronously initialize auth state from localStorage to prevent loading flash
+  const [authenticated, setAuthenticated] = useState(() => {
+    try {
+      return Boolean(localStorage.getItem('username') || localStorage.getItem('user'));
+    } catch {
+      return null;
+    }
+  });
 
   useEffect(() => {
+    let isMounted = true;
     const checkSession = async () => {
       try {
         const res = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/login/session`, {
           withCredentials: true,
         });
-        if (res.data.username) {
-          setAuthenticated(true);
-        } else {
-          setAuthenticated(false);
+        if (isMounted) {
+          if (res.data?.username) {
+            setAuthenticated(true);
+            localStorage.setItem('username', res.data.username);
+          } else {
+            setAuthenticated(false);
+            localStorage.removeItem('username');
+          }
         }
       } catch {
-        setAuthenticated(false);
+        if (isMounted) {
+          setAuthenticated(false);
+          localStorage.removeItem('username');
+        }
       }
     };
 
     checkSession();
+
+    return () => {
+      isMounted = false;
+    };
   }, []);
 
-  if (authenticated === null) return <div>Loading...</div>; // show spinner or loader here
+  if (authenticated === null) return <PageLoader />;
   return authenticated ? children : <Navigate to="/login" replace />;
 };
 
