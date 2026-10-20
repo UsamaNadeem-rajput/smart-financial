@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useBusiness } from '../../context/BusinessContext';
 import Navbar from '../layout/Navbar';
 import axios from 'axios';
-import { Save, ArrowLeft, HelpCircle } from 'lucide-react';
+import { Save, ArrowLeft, HelpCircle, Check, BookOpen, AlertTriangle } from 'lucide-react';
 
 const CreateNewAccount = () => {
   const navigate = useNavigate();
@@ -140,6 +140,9 @@ const CreateNewAccount = () => {
       ...prev,
       account_name: suggestion
     }));
+    if (errors.account_name) {
+      setErrors(prev => ({ ...prev, account_name: '' }));
+    }
   };
 
   const validateForm = () => {
@@ -221,309 +224,426 @@ const CreateNewAccount = () => {
     (currentNature === 'Debit' && formData.credit_amount && parseFloat(formData.credit_amount.replace(/,/g, '')) > 0)
   );
 
-  return (
-    <div
-      className="min-h-screen relative overflow-hidden"
-      style={{ minHeight: '100vh', width: '100vw' }}
-    >
-      {/* Background (matched to /list) */}
-      <div className="absolute inset-0">
-        <div className="absolute inset-0 bg-gradient-to-br from-slate-900 via-blue-900 to-indigo-900"></div>
-        <div className="absolute inset-0 bg-gradient-to-t from-purple-900/30 via-transparent to-blue-800/20"></div>
-        <div className="absolute inset-0 bg-gradient-to-r from-indigo-800/20 via-transparent to-cyan-800/20"></div>
-        <div className="absolute inset-0 opacity-10">
-          <div
-            className="absolute inset-0"
-            style={{
-              backgroundImage:
-                'linear-gradient(90deg, rgba(255,255,255,0.1) 1px, transparent 1px),\n              linear-gradient(0deg, rgba(255,255,255,0.1) 1px, transparent 1px)',
-              backgroundSize: '50px 50px',
-            }}
-          ></div>
-        </div>
-        {/* Soft glowing orbs */}
-        <div className="pointer-events-none absolute -top-32 -left-20 w-96 h-96 rounded-full blur-3xl opacity-25" style={{ background: 'radial-gradient(circle at center, rgba(59,130,246,0.6), transparent 60%)' }}></div>
-        <div className="pointer-events-none absolute top-1/3 -right-24 w-[28rem] h-[28rem] rounded-full blur-3xl opacity-20" style={{ background: 'radial-gradient(circle at center, rgba(147,51,234,0.5), transparent 60%)' }}></div>
-        <div className="pointer-events-none absolute bottom-0 left-1/4 w-80 h-80 rounded-full blur-2xl opacity-20" style={{ background: 'radial-gradient(circle at center, rgba(6,182,212,0.5), transparent 60%)' }}></div>
-        <div className="absolute inset-0 bg-black/20"></div>
-      </div>
+  const selectedTypeObj = accountTypes.find(t => t.type_id == formData.type_id);
+  const selectedParentObj = subAccountOptions.find(a => a.account_id == formData.parent_account_id);
+  const filteredSubAccountOptions = getFilteredSubAccountOptions();
 
-      {/* Content */}
-      <div className="relative z-10">
-        <Navbar />
-        <div className="max-w-4xl mx-auto py-6 sm:px-6 lg:px-8">
-          <div className="px-4 py-6 sm:px-0">
-            {/* Header */}
-            <div className="flex items-center mb-8">
-              <button
-                onClick={() => navigate('/showbusinessaccount')}
-                className="mr-4 p-2 text-gray-300 hover:text-white transition-colors duration-200 rounded-lg hover:bg-white/10"
-                title="Back to accounts"
-              >
-                <ArrowLeft className="w-5 h-5" />
-              </button>
-              <div>
-                <h1 className="text-3xl font-bold text-white">Create New Ledger</h1>
-                <p className="mt-2 text-gray-300">
-                  Add a new Ledger to {selectedBusiness?.business_name}
-                </p>
+  return (
+    <div className="min-h-screen bg-[#F2F5EE] text-[#0E1A14] font-sans">
+      <Navbar />
+
+      <main className="max-w-[1240px] mx-auto px-4 sm:px-8 pt-8 pb-20">
+        {/* Breadcrumb */}
+        <p className="text-brand-muted text-[15px] mb-3">
+          <button
+            type="button"
+            onClick={() => navigate('/list')}
+            className="hover:underline text-brand-muted cursor-pointer"
+          >
+            {selectedBusiness?.business_name || 'Businesses'}
+          </button>
+          {' / '}
+          <button
+            type="button"
+            onClick={() => navigate('/showbusinessaccount')}
+            className="hover:underline text-brand-muted cursor-pointer"
+          >
+            Chart of Accounts
+          </button>
+          {' / '}
+          <span className="text-brand-ink font-medium">New ledger</span>
+        </p>
+
+        {/* Header */}
+        <div className="flex items-center justify-between flex-wrap gap-4 mb-6">
+          <div>
+            <h1 className="font-display font-extrabold text-[40px] sm:text-[64px] tracking-tight leading-[1] text-brand-ink">
+              New ledger.
+            </h1>
+            <p className="text-brand-muted text-base sm:text-lg max-w-[720px] mt-2">
+              Add a new account to {selectedBusiness?.business_name ? <strong className="text-brand-ink">{selectedBusiness.business_name}</strong> : 'your chart of accounts'} to record transactions with double-entry integrity.
+            </p>
+          </div>
+          <button
+            type="button"
+            onClick={() => navigate('/showbusinessaccount')}
+            className="sf-btn sf-btn-line flex items-center gap-2"
+          >
+            <ArrowLeft className="w-4 h-4" />
+            Back to ledgers
+          </button>
+        </div>
+
+        {/* Layout */}
+        <div className="sf-cna-cols">
+          {/* Main Form */}
+          <form className="sf-cna-fm" onSubmit={handleSubmit} noValidate>
+            {errors.general && (
+              <div className="sf-cna-warn" role="alert">
+                <AlertTriangle className="w-5 h-5 flex-shrink-0 text-[#0E1A14]" />
+                <div>{errors.general}</div>
+              </div>
+            )}
+
+            {/* Section 1: Classification */}
+            <div className="sf-cna-sec">
+              <h2>1. Ledger Classification</h2>
+              <p className="sf-cna-sub">Select the primary accounting category that defines how this ledger operates.</p>
+
+              <div className="sf-cna-fd">
+                <label htmlFor="type_id" className="sf-cna-lbl">
+                  Ledger Type <span aria-hidden="true">*</span>
+                </label>
+                <select
+                  id="type_id"
+                  name="type_id"
+                  value={formData.type_id}
+                  onChange={handleChange}
+                  className={`sf-cna-select ${errors.type_id ? 'err' : ''}`}
+                >
+                  <option value="">Select ledger classification</option>
+                  {/* Income */}
+                  <optgroup label="Income">
+                    <option value="1">Income</option>
+                  </optgroup>
+
+                  {/* Assets */}
+                  <optgroup label="Assets">
+                    <option value="4">Fixed Assets</option>
+                    <option value="5">Current Assets</option>
+                  </optgroup>
+
+                  {/* Liability */}
+                  <optgroup label="Liability">
+                    <option value="7">Current Liability</option>
+                    <option value="8">Non-Current Liabilities</option>
+                  </optgroup>
+
+                  {/* Equity */}
+                  <optgroup label="Equity">
+                    <option value="9">Equity</option>
+                  </optgroup>
+
+                  {/* Expense */}
+                  <optgroup label="Expense">
+                    <option value="2">Expense</option>
+                  </optgroup>
+
+                  {/* Others */}
+                  <optgroup label="Others">
+                    <option value="11">Other Assets</option>
+                    <option value="12">Other Incomes</option>
+                    <option value="13">Other Expenses</option>
+                    <option value="14">Cost Of Goods Sold</option>
+                  </optgroup>
+                </select>
+                {errors.type_id && (
+                  <p className="sf-bf-hint">{errors.type_id}</p>
+                )}
+              </div>
+
+              {currentNature && (
+                <div className="flex items-center gap-2 mt-3 p-3 bg-[#F2F5EE] border border-[#0E1A14]/20 rounded-md text-sm text-[#0E1A14]">
+                  <span className="font-bold uppercase tracking-wider text-xs px-2 py-0.5 rounded bg-[#0E1A14] text-[#C8F135]">
+                    {currentNature} Nature
+                  </span>
+                  <span>
+                    Normal balance is <strong>{currentNature} ({currentNature === 'Debit' ? 'Dr' : 'Cr'})</strong>.
+                    Increases with {currentNature}s, decreases with {currentNature === 'Debit' ? 'Credit' : 'Debit'}s.
+                  </span>
+                </div>
+              )}
+            </div>
+
+            {/* Section 2: Ledger Identity */}
+            <div className="sf-cna-sec">
+              <h2>2. Ledger Identity</h2>
+              <p className="sf-cna-sub">Give this account a distinctive name and configure hierarchy if applicable.</p>
+
+              <div className="sf-cna-fd">
+                <label htmlFor="account_name" className="sf-cna-lbl">
+                  Ledger Name <span aria-hidden="true">*</span>
+                </label>
+                <input
+                  id="account_name"
+                  name="account_name"
+                  type="text"
+                  value={formData.account_name}
+                  onChange={handleChange}
+                  className={`sf-cna-input ${errors.account_name ? 'err' : ''}`}
+                  placeholder="e.g. Meezan Bank, Office Supplies, Consulting Revenue"
+                />
+                {errors.account_name && (
+                  <p className="sf-bf-hint">{errors.account_name}</p>
+                )}
+              </div>
+
+              {/* Sub-account toggle */}
+              <div className="sf-cna-fd">
+                <label htmlFor="is_sub_account" className="sf-cna-chk-card">
+                  <input
+                    id="is_sub_account"
+                    name="is_sub_account"
+                    type="checkbox"
+                    checked={formData.is_sub_account}
+                    onChange={handleChange}
+                  />
+                  <div className="sf-cna-chk-info">
+                    <b>Make this a sub-account</b>
+                    <span>Nest this ledger under an existing parent account of the same type for hierarchical grouping.</span>
+                  </div>
+                </label>
+              </div>
+
+              {/* Parent Account dropdown */}
+              {formData.is_sub_account && (
+                <div className="sf-cna-fd pl-4 border-l-2 border-[#0E1A14] mt-3">
+                  <label htmlFor="parent_account_id" className="sf-cna-lbl">
+                    Parent Account
+                  </label>
+                  {filteredSubAccountOptions.length > 0 ? (
+                    <select
+                      id="parent_account_id"
+                      name="parent_account_id"
+                      value={formData.parent_account_id}
+                      onChange={handleChange}
+                      className="sf-cna-select"
+                    >
+                      <option value="">Select parent account</option>
+                      {filteredSubAccountOptions.map(account => (
+                        <option key={account.account_id} value={account.account_id}>
+                          {account.account_name}
+                        </option>
+                      ))}
+                    </select>
+                  ) : (
+                    <div className="p-3 bg-[#F2F5EE] border border-[#0E1A14] rounded text-sm text-[#5A6E63]">
+                      No existing parent accounts available under {selectedTypeObj ? selectedTypeObj.type_name : 'this category'}. You can create primary accounts first or uncheck sub-account.
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+
+            {/* Section 3: Opening Balance */}
+            <div className="sf-cna-sec">
+              <h2>3. Opening Balance (Optional)</h2>
+              <p className="sf-cna-sub">If migrating from another accounting system, record the starting balance.</p>
+
+              <label htmlFor="add_opening_balance" className="sf-cna-chk-card">
+                <input
+                  id="add_opening_balance"
+                  name="add_opening_balance"
+                  type="checkbox"
+                  checked={formData.add_opening_balance}
+                  onChange={handleChange}
+                />
+                <div className="sf-cna-chk-info">
+                  <b>Add opening balance</b>
+                  <span>Record an initial Debit or Credit balance for this ledger upon creation.</span>
+                </div>
+              </label>
+
+              {formData.add_opening_balance && (
+                <div className="sf-cna-bal-grid">
+                  <div>
+                    <label htmlFor="debit_amount" className="sf-cna-lbl">
+                      Debit Amount ($)
+                    </label>
+                    <input
+                      id="debit_amount"
+                      name="debit_amount"
+                      type="text"
+                      value={formData.debit_amount}
+                      onChange={handleChange}
+                      className={`sf-cna-input ${showNatureWarning && formData.debit_amount ? 'err' : ''}`}
+                      placeholder="0.00"
+                    />
+                    <span className="text-xs text-[#5A6E63] mt-1 block">Left side entry (increases assets & expenses)</span>
+                  </div>
+                  <div>
+                    <label htmlFor="credit_amount" className="sf-cna-lbl">
+                      Credit Amount ($)
+                    </label>
+                    <input
+                      id="credit_amount"
+                      name="credit_amount"
+                      type="text"
+                      value={formData.credit_amount}
+                      onChange={handleChange}
+                      className={`sf-cna-input ${showNatureWarning && formData.credit_amount ? 'err' : ''}`}
+                      placeholder="0.00"
+                    />
+                    <span className="text-xs text-[#5A6E63] mt-1 block">Right side entry (increases liabilities, equity & revenue)</span>
+                  </div>
+                </div>
+              )}
+
+              {showNatureWarning && (
+                <div className="sf-cna-warn">
+                  <AlertTriangle className="w-5 h-5 flex-shrink-0 text-[#0E1A14]" />
+                  <span>
+                    <strong>Accounting Notice:</strong> You entered a <strong>{formData.debit_amount ? 'Debit' : 'Credit'}</strong> balance for a <strong>{currentNature}</strong> nature account. Usually, {currentNature === 'Debit' ? 'Assets & Expenses' : 'Liabilities, Equity & Income'} maintain a normal {currentNature} balance.
+                  </span>
+                </div>
+              )}
+            </div>
+
+            {/* Section 4: Description */}
+            <div className="sf-cna-sec">
+              <h2>4. Description & Notes</h2>
+              <p className="sf-cna-sub">Add contextual notes or reference codes for your bookkeeping team.</p>
+
+              <div className="sf-cna-fd">
+                <label htmlFor="description" className="sf-cna-lbl">
+                  Description
+                </label>
+                <textarea
+                  id="description"
+                  name="description"
+                  rows={3}
+                  value={formData.description}
+                  onChange={handleChange}
+                  className="sf-cna-textarea"
+                  placeholder="Enter ledger purpose or notes (optional)"
+                />
               </div>
             </div>
 
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-              {/* Form */}
-              <div className="lg:col-span-2">
-                <div className="card transition-shadow duration-200 hover:shadow-xl">
-                  <form onSubmit={handleSubmit} className="space-y-6">
-                    {errors.general && (
-                      <div className="bg-error-50 border border-error-200 text-error-700 px-4 py-3 rounded-lg">
-                        {errors.general}
-                      </div>
-                    )}
+            {/* Actions Bar */}
+            <div className="sf-cna-acts">
+              <button
+                type="button"
+                onClick={() => navigate('/showbusinessaccount')}
+                className="sf-btn sf-btn-line"
+              >
+                Cancel
+              </button>
+              <button
+                type="submit"
+                disabled={isLoading}
+                className="sf-btn sf-btn-lime flex items-center gap-2"
+              >
+                {isLoading ? (
+                  <>
+                    <div className="animate-spin rounded-full h-4 w-4 border-2 border-[#0E1A14] border-t-transparent"></div>
+                    <span>Creating ledger...</span>
+                  </>
+                ) : (
+                  <>
+                    <Save className="w-4 h-4" />
+                    <span>Create Ledger</span>
+                  </>
+                )}
+              </button>
+            </div>
+          </form>
 
-                    {/* Account Type */}
-                    <div>
-                      <label htmlFor="type_id" className="block text-sm font-medium text-gray-700 mb-1">
-                        Ledger Type <span className="text-error-500">*</span>
-                      </label>
-                      <select
-                        id="type_id"
-                        name="type_id"
-                        value={formData.type_id}
-                        onChange={handleChange}
-                        className={`input-field transition-colors duration-200 ${errors.type_id ? 'border-error-300 focus:border-error-500 focus:ring-error-500' : 'focus:border-primary-500 focus:ring-primary-500'}`}
-                      >
-                        <option value="">Select Ledger type</option>
-                        {/* Income */}
-                        <optgroup label="Income">
-                          <option value="1">Income</option>
-                        </optgroup>
+          {/* Sticky Sidebar (Preview & Suggestions) */}
+          <aside className="sf-cna-as">
+            {/* Live Ledger Card */}
+            <div className="sf-cna-pv">
+              <div className="sf-cna-pv-hd">
+                <span>Ledger Preview</span>
+                <span>{selectedBusiness?.business_name || 'Business'}</span>
+              </div>
 
-                        {/* Assets */}
-                        <optgroup label="Assets">
-                          <option value="4">Fixed Assets</option>
-                          <option value="5">Current Assets</option>
-                        </optgroup>
+              <div className="sf-cna-pv-title">
+                {formData.account_name.trim() || 'Untitled Ledger'}
+              </div>
 
-                        {/* Liability */}
-                        <optgroup label="Liability">
-                          <option value="7">Current Liability</option>
-                          <option value="8">Non-Current Liabilities</option>
-                        </optgroup>
+              <div className="sf-cna-pv-tags">
+                <span className="sf-cna-pv-pill sf-cna-pv-pill-lime">
+                  {selectedTypeObj ? selectedTypeObj.type_name : 'No Category'}
+                </span>
+                {currentNature && (
+                  <span className="sf-cna-pv-pill sf-cna-pv-pill-dark">
+                    Normal: {currentNature === 'Debit' ? 'Dr' : 'Cr'}
+                  </span>
+                )}
+                {formData.is_sub_account && selectedParentObj && (
+                  <span className="sf-cna-pv-pill sf-cna-pv-pill-dark">
+                    Sub of: {selectedParentObj.account_name}
+                  </span>
+                )}
+              </div>
 
-                        {/* Equity */}
-                        <optgroup label="Equity">
-                          <option value="9">Equity</option>
-                        </optgroup>
-
-                        {/* Expense */}
-                        <optgroup label="Expense">
-                          <option value="2">Expense</option>
-                        </optgroup>
-
-                        {/* Others */}
-                        <optgroup label="Others">
-                          <option value="11">Other Assets</option>
-                          <option value="12">Other Incomes</option>
-                          <option value="13">Other Expenses</option>
-                          <option value="14">Cost Of Goods Sold</option>
-                        </optgroup>
-                      </select>
-                      {errors.type_id && (
-                        <p className="mt-1 text-sm text-error-600">{errors.type_id}</p>
-                      )}
-                    </div>
-
-                    {/* Account Name */}
-                    <div>
-                      <label htmlFor="account_name" className="block text-sm font-medium text-gray-700 mb-1">
-                        Ledger Name <span className="text-error-500">*</span>
-                      </label>
-                      <input
-                        id="account_name"
-                        name="account_name"
-                        type="text"
-                        value={formData.account_name}
-                        onChange={handleChange}
-                        className={`input-field transition-colors duration-200 ${errors.account_name ? 'border-error-300 focus:border-error-500 focus:ring-error-500' : 'focus:border-primary-500 focus:ring-primary-500'}`}
-                        placeholder="Enter Ledger name"
-                      />
-                      {errors.account_name && (
-                        <p className="mt-1 text-sm text-error-600">{errors.account_name}</p>
-                      )}
-                    </div>
-
-                    {/* Sub Account Option */}
-                    <div>
-                      <div className="flex items-center">
-                        <input
-                          id="is_sub_account"
-                          name="is_sub_account"
-                          type="checkbox"
-                          checked={formData.is_sub_account}
-                          onChange={handleChange}
-                          className="h-4 w-4 text-primary-600 focus:ring-primary-500 border-gray-300 rounded"
-                        />
-                        <label htmlFor="is_sub_account" className="ml-2 block text-sm text-gray-900">
-                          Make this a sub-account
-                        </label>
-                        <HelpCircle className="ml-2 w-4 h-4 text-gray-400" title="Sub-accounts are grouped under parent accounts for better organization" />
-                      </div>
-                    </div>
-
-                    {/* Parent Account Selection */}
-                    {formData.is_sub_account && (
-                      <div>
-                        <label htmlFor="parent_account_id" className="block text-sm font-medium text-gray-700 mb-1">
-                          Parent Account
-                        </label>
-                        <select
-                          id="parent_account_id"
-                          name="parent_account_id"
-                          value={formData.parent_account_id}
-                          onChange={handleChange}
-                          className="input-field focus:border-primary-500 focus:ring-primary-500 transition-colors duration-200"
-                        >
-                          <option value="">Select parent account</option>
-                          {getFilteredSubAccountOptions().map(account => (
-                            <option key={account.account_id} value={account.account_id}>
-                              {account.account_name}
-                            </option>
-                          ))}
-                        </select>
-                      </div>
-                    )}
-
-                    {/* Opening Balance Section */}
-                    <div className="bg-gray-50 p-4 rounded-lg border border-gray-200 space-y-4">
-                      <div className="flex items-center">
-                        <input
-                          id="add_opening_balance"
-                          name="add_opening_balance"
-                          type="checkbox"
-                          checked={formData.add_opening_balance}
-                          onChange={handleChange}
-                          className="h-4 w-4 text-primary-600 focus:ring-primary-500 border-gray-300 rounded"
-                        />
-                        <label htmlFor="add_opening_balance" className="ml-2 block text-sm font-medium text-gray-900">
-                          Add Opening Balance
-                        </label>
-                      </div>
-
-                      {formData.add_opening_balance && (
-                        <>
-                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pl-6 border-l-2 border-primary-200">
-                            <div>
-                              <label htmlFor="debit_amount" className="block text-sm font-medium text-gray-700 mb-1">
-                                Debit Amount
-                              </label>
-                              <input
-                                id="debit_amount"
-                                name="debit_amount"
-                                type="text"
-                                value={formData.debit_amount}
-                                onChange={handleChange}
-                                className={`input-field focus:border-primary-500 focus:ring-primary-500 ${showNatureWarning && formData.debit_amount ? 'border-warning-300 bg-warning-50' : ''}`}
-                                placeholder="0.00"
-                              />
-                            </div>
-                            <div>
-                              <label htmlFor="credit_amount" className="block text-sm font-medium text-gray-700 mb-1">
-                                Credit Amount
-                              </label>
-                              <input
-                                id="credit_amount"
-                                name="credit_amount"
-                                type="text"
-                                value={formData.credit_amount}
-                                onChange={handleChange}
-                                className={`input-field focus:border-primary-500 focus:ring-primary-500 ${showNatureWarning && formData.credit_amount ? 'border-warning-300 bg-warning-50' : ''}`}
-                                placeholder="0.00"
-                              />
-                            </div>
-                          </div>
-                          {showNatureWarning && (
-                            <div className="mt-2 text-warning-700 bg-warning-50 border border-warning-200 p-2 rounded-md text-sm flex items-start">
-                              <HelpCircle className="w-4 h-4 mr-1 mt-0.5 flex-shrink-0" />
-                              <span>
-                                Warning: You are entering a <strong>{formData.debit_amount ? 'Debit' : 'Credit'}</strong> balance for a <strong>{currentNature}</strong> nature account.
-                                Usually {currentNature === 'Debit' ? 'Assets & Expenses' : 'Liabilities, Equity & Income'} have a {currentNature} balance.
-                              </span>
-                            </div>
-                          )}
-                        </>
-                      )}
-                    </div>
-
-                    {/* Description */}
-                    <div>
-                      <label htmlFor="description" className="block text-sm font-medium text-gray-700 mb-1">
-                        Description
-                      </label>
-                      <textarea
-                        id="description"
-                        name="description"
-                        rows={3}
-                        value={formData.description}
-                        onChange={handleChange}
-                        className="input-field focus:border-primary-500 focus:ring-primary-500 transition-colors duration-200"
-                        placeholder="Enter Ledger description (optional)"
-                      />
-                    </div>
-
-                    {/* Submit Button */}
-                    <div className="flex justify-end space-x-4 pt-6">
-                      <button
-                        type="button"
-                        onClick={() => navigate('/showbusinessaccount')}
-                        className="btn-secondary transition-transform duration-200 hover:scale-[1.02]"
-                      >
-                        Cancel
-                      </button>
-                      <button
-                        type="submit"
-                        disabled={isLoading}
-                        className="btn-primary flex items-center transition-transform duration-200 hover:scale-[1.02]"
-                      >
-                        {isLoading ? (
-                          <div className="flex items-center">
-                            <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-                            Creating...
-                          </div>
-                        ) : (
-                          <>
-                            <Save className="w-4 h-4 mr-2" />
-                            Create Ledger
-                          </>
-                        )}
-                      </button>
-                    </div>
-                  </form>
+              <div className="sf-cna-pv-box">
+                <div className="k">Opening Balance</div>
+                <div className="v">
+                  {formData.add_opening_balance ? (
+                    formData.debit_amount ? (
+                      <span className="text-[#C8F135]">Dr ${formData.debit_amount}</span>
+                    ) : formData.credit_amount ? (
+                      <span className="text-[#C8F135]">Cr ${formData.credit_amount}</span>
+                    ) : (
+                      '$0.00'
+                    )
+                  ) : (
+                    '$0.00'
+                  )}
                 </div>
               </div>
 
-              {/* Suggestions Sidebar */}
-              {accountSuggestions.length > 0 && (
-                <div className="lg:col-span-1">
-                  <div className="card transition-shadow duration-200 hover:shadow-xl">
-                    <h3 className="text-lg font-medium text-gray-900 mb-4">Suggested Ledger Names</h3>
-                    <select
-                      className="w-full px-3 py-2 text-sm text-gray-700 rounded-md border border-gray-300 focus:border-primary-500 focus:ring-primary-500 transition-colors duration-200"
-                      onChange={e => handleSuggestionClick(e.target.value)}
-                      defaultValue=""
-                    >
-                      <option value="" disabled>Select a suggestion</option>
-                      {accountSuggestions.map((suggestion, index) => (
-                        <option key={index} value={suggestion}>{suggestion}</option>
-                      ))}
-                    </select>
+              {formData.description && (
+                <div className="sf-cna-pv-box">
+                  <div className="k">Notes</div>
+                  <div className="text-xs text-[#B9C6BD] mt-1 line-clamp-3">
+                    {formData.description}
                   </div>
                 </div>
               )}
             </div>
-          </div>
+
+            {/* Quick Suggestions Card */}
+            {accountSuggestions.length > 0 && (
+              <div className="sf-cna-sugg">
+                <h3>Suggested Ledger Names</h3>
+                <p>Click any standard accounting title to autofill:</p>
+                <div className="sf-cna-chips">
+                  {accountSuggestions.map((suggestion, index) => {
+                    const isActive = formData.account_name === suggestion;
+                    return (
+                      <button
+                        key={index}
+                        type="button"
+                        onClick={() => handleSuggestionClick(suggestion)}
+                        className={`sf-cna-chip ${isActive ? 'active' : ''}`}
+                      >
+                        {isActive && <Check className="w-3.5 h-3.5 inline mr-1" />}
+                        {suggestion}
+                      </button>
+                    );
+                  })}
+                </div>
+                <div className="mt-4 pt-3 border-t border-[#0E1A14]/10">
+                  <select
+                    className="sf-cna-select text-xs py-2"
+                    onChange={e => handleSuggestionClick(e.target.value)}
+                    value={formData.account_name || ""}
+                  >
+                    <option value="" disabled>Or choose from list...</option>
+                    {accountSuggestions.map((suggestion, index) => (
+                      <option key={index} value={suggestion}>{suggestion}</option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+            )}
+
+            {/* Double-Entry Guidance Card */}
+            <div className="sf-cna-guide">
+              <h4>Double-Entry Principles</h4>
+              <ul>
+                <li><strong>Debit (Dr):</strong> Left side. Increases Assets and Expenses.</li>
+                <li><strong>Credit (Cr):</strong> Right side. Increases Liabilities, Equity, and Revenue.</li>
+                <li><strong>Accounting Equation:</strong> Assets = Liabilities + Equity.</li>
+                <li><strong>Self-Balancing:</strong> All journal entries must have equal Debits and Credits.</li>
+              </ul>
+            </div>
+          </aside>
         </div>
-      </div>
+      </main>
     </div>
   );
 };
