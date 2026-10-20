@@ -165,8 +165,10 @@ export default function TransactionEntryTable() {
     }
   };
 
-  const handleEdit = (transactionId) => {
-    navigate(`/transaction-edit/${transactionId}`);
+  const handleEdit = (transactionId, frontendTxId) => {
+    navigate(`/transaction-edit/${transactionId}`, {
+      state: { frontend_transaction_id: frontendTxId },
+    });
   };
 
   const handleDelete = async (transactionId) => {
@@ -383,176 +385,440 @@ export default function TransactionEntryTable() {
   };
 
   const handleSavePDF = async () => {
-    const doc = new jsPDF();
-    const pageWidth = doc.internal.pageSize.getWidth();
-    let y = 15;
+    if (!entries || entries.length === 0) return;
 
+    const doc = new jsPDF({ unit: "mm", format: "a4" });
+
+    // Date formatting helpers for the PDF
+    const shortMonths = [
+      "Jan",
+      "Feb",
+      "Mar",
+      "Apr",
+      "May",
+      "Jun",
+      "Jul",
+      "Aug",
+      "Sep",
+      "Oct",
+      "Nov",
+      "Dec",
+    ];
+    const fullMonths = [
+      "January",
+      "February",
+      "March",
+      "April",
+      "May",
+      "June",
+      "July",
+      "August",
+      "September",
+      "October",
+      "November",
+      "December",
+    ];
+
+    const formatJournalDate = (dateStr) => {
+      if (!dateStr) return "";
+      const parts = String(dateStr).split("-");
+      if (parts.length === 3) {
+        const year = parts[0];
+        const monthIdx = parseInt(parts[1], 10) - 1;
+        const day = parseInt(parts[2], 10);
+        return `${day} ${shortMonths[monthIdx] || parts[1]} ${year}`;
+      }
+      const d = new Date(dateStr);
+      if (!isNaN(d.getTime())) {
+        return `${d.getDate()} ${shortMonths[d.getMonth()]} ${d.getFullYear()}`;
+      }
+      return dateStr;
+    };
+
+    const formatFullDate = (dateStr) => {
+      if (!dateStr) return "";
+      const parts = String(dateStr).split("-");
+      if (parts.length === 3) {
+        const year = parts[0];
+        const monthIdx = parseInt(parts[1], 10) - 1;
+        const day = parseInt(parts[2], 10);
+        return `${day} ${fullMonths[monthIdx] || parts[1]} ${year}`;
+      }
+      const d = new Date(dateStr);
+      if (!isNaN(d.getTime())) {
+        return `${d.getDate()} ${fullMonths[d.getMonth()]} ${d.getFullYear()}`;
+      }
+      return dateStr;
+    };
+
+    const formatShortDate = (dateStr) => {
+      if (!dateStr) return "";
+      const parts = String(dateStr).split("-");
+      if (parts.length === 3) {
+        const year = parts[0];
+        const monthIdx = parseInt(parts[1], 10) - 1;
+        const day = parseInt(parts[2], 10);
+        return `${day} ${shortMonths[monthIdx] || parts[1]} ${year}`;
+      }
+      const d = new Date(dateStr);
+      if (!isNaN(d.getTime())) {
+        return `${d.getDate()} ${shortMonths[d.getMonth()]} ${d.getFullYear()}`;
+      }
+      return dateStr;
+    };
+
+    const now = new Date();
+    const genDay = now.getDate();
+    const genMon = shortMonths[now.getMonth()];
+    const genYr = now.getFullYear();
+    const genHrs = String(now.getHours()).padStart(2, "0");
+    const genMins = String(now.getMinutes()).padStart(2, "0");
+    const genDateTime = `${genDay} ${genMon} ${genYr}, ${genHrs}:${genMins}`;
+
+    const businessName = selectedBusiness?.business_name || "Your Business Name";
+
+    // 1. First-page header (top of page 1 only)
     const logoPath = selectedBusiness?.logo_url;
     const backendUrl = import.meta.env.VITE_BACKEND_URL;
-
     let logoDataUrl = null;
     if (logoPath) {
-      logoDataUrl = await getImageAsDataUrl(logoPath, backendUrl);
+      try {
+        logoDataUrl = await getImageAsDataUrl(logoPath, backendUrl);
+      } catch (err) {
+        console.error("Failed to load logo:", err);
+      }
     }
 
-    const headerY = y;
-    const logoWidth = 25;
-    let logoHeight = 25;
-
+    let logoDrawn = false;
     if (logoDataUrl) {
       try {
-        const img = new Image();
-        img.src = logoDataUrl;
-        await new Promise((resolve, reject) => {
-          img.onload = resolve;
-          img.onerror = reject;
-        });
-        logoHeight = (img.height * logoWidth) / img.width;
-        doc.addImage(logoDataUrl, "PNG", 10, headerY - 5, logoWidth, logoHeight);
+        const format =
+          logoDataUrl.startsWith("data:image/jpeg") ||
+          logoDataUrl.startsWith("data:image/jpg")
+            ? "JPEG"
+            : "PNG";
+        doc.addImage(logoDataUrl, format, 14, 14, 11, 11);
+        logoDrawn = true;
       } catch (e) {
-        console.error("Failed to add logo to PDF:", e);
-        doc.setFillColor(255, 255, 255);
-        doc.rect(10, headerY - 5, logoWidth, logoWidth, "F");
-        doc.setTextColor(14, 26, 20);
-        doc.setFontSize(16);
-        doc.text("SF", 10 + logoWidth / 2, headerY + 8, { align: "center" });
+        console.error("Failed to draw logo:", e);
       }
-    } else {
-      doc.setFillColor(255, 255, 255);
-      doc.rect(10, headerY - 5, logoWidth, logoWidth, "F");
-      doc.setTextColor(14, 26, 20);
-      doc.setFontSize(16);
-      doc.text("SF", 10 + logoWidth / 2, headerY + 8, { align: "center" });
     }
 
-    doc.setTextColor(0, 0, 0);
-    doc.setFontSize(16);
-    doc.setFont(undefined, "bold");
-    doc.text(
-      selectedBusiness?.business_name || "Your Business Name",
-      pageWidth / 2,
-      headerY,
-      { align: "center" }
-    );
+    if (!logoDrawn) {
+      doc.setFillColor(26, 26, 26);
+      doc.rect(14, 14, 11, 11, "F");
+      doc.setTextColor(255, 255, 255);
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(13);
+      doc.text("SF", 14 + 5.5, 14 + 7.8, { align: "center" });
+    }
 
-    doc.setFontSize(12);
-    doc.setFont(undefined, "normal");
-    doc.setTextColor(14, 26, 20);
-    doc.text("General Journal", pageWidth / 2, headerY + 7, { align: "center" });
+    // Three lines to the right of logo
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(15);
+    doc.setTextColor(26, 26, 26);
+    doc.text(businessName, 28, 18);
 
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(11);
+    doc.setTextColor(26, 26, 26);
+    doc.text("General Journal", 28, 23);
+
+    doc.setFont("helvetica", "normal");
     doc.setFontSize(9);
-    doc.setTextColor(100, 100, 100);
+    doc.setTextColor(85, 85, 85);
     doc.text(
-      `${formatCustomDate(fromDate)} to ${formatCustomDate(toDate)}`,
-      pageWidth / 2,
-      headerY + 13,
-      { align: "center" }
+      `For the period ${formatFullDate(fromDate)} to ${formatFullDate(toDate)}`,
+      28,
+      27.5
     );
 
+    // Top-right text
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(8.5);
+    doc.setTextColor(85, 85, 85);
+    doc.text("Smart Financial", 196, 18, { align: "right" });
+    doc.text(`Generated ${genDateTime}`, 196, 23, { align: "right" });
+
+    // 1 pt rule (#1A1A1A) across 14 to 196 at y = 33
+    doc.setDrawColor(26, 26, 26);
+    doc.setLineWidth(0.35);
+    doc.line(14, 33, 196, 33);
+
+    // Note under rule
+    doc.setFont("helvetica", "normal");
     doc.setFontSize(8);
-    doc.setTextColor(100, 100, 100);
+    doc.setTextColor(85, 85, 85);
     doc.text(
-      `Generated on: ${formatCustomDate(getLocalDateString())}`,
-      pageWidth - 10,
-      headerY,
-      { align: "right" }
+      "Amounts in PKR. Transactions are listed by transaction number. Credit accounts are indented.",
+      14,
+      37
     );
 
-    const lineY = Math.max(headerY + logoHeight, headerY + 18);
-    doc.setDrawColor(14, 26, 20);
-    doc.setLineWidth(0.5);
-    doc.line(10, lineY, pageWidth - 10, lineY);
-
-    y = lineY + 5;
-
+    // Group entries by frontend_transaction_id using existing grouped data
     const grouped = entries.reduce((acc, entry) => {
-      if (!acc[entry.frontend_transaction_id])
+      if (!acc[entry.frontend_transaction_id]) {
         acc[entry.frontend_transaction_id] = [];
+      }
       acc[entry.frontend_transaction_id].push(entry);
       return acc;
     }, {});
 
     const tableRows = [];
 
-    Object.entries(grouped).forEach(
-      ([frontend_transaction_id, group], groupIndex) => {
-        group.forEach((entry, idx) => {
-          tableRows.push([
-            idx === 0 && !entry.isTotal
-              ? `${frontend_transaction_id}\n(${formatCustomDate(entry.transaction_date) || "No Date"})`
-              : "",
-            entry.account_name,
-            formatAmount(entry.debit),
-            formatAmount(entry.credit),
-            entry.isTotal ? "transaction-total-row" : "",
-          ]);
-        });
-        if (groupIndex < Object.keys(grouped).length - 1) {
-          tableRows.push(["", "", "", "", ""]);
-        }
-      }
-    );
+    Object.entries(grouped).forEach(([txId, group]) => {
+      const entryLines = group.filter((e) => !e.isTotal);
+      const totalEntry = group.find((e) => e.isTotal);
 
-    tableRows.push([
+      entryLines.forEach((entry, idx) => {
+        const isCredit = Boolean(entry.credit && entry.credit !== "");
+        const row = [
+          idx === 0 ? formatJournalDate(entry.transaction_date) : "",
+          idx === 0 ? String(txId) : "",
+          entry.account_name,
+          entry.debit || "",
+          entry.credit || "",
+        ];
+        row.rowType = "entry";
+        row.isCredit = isCredit;
+        tableRows.push(row);
+      });
+
+      if (totalEntry) {
+        const totalRow = [
+          "",
+          "",
+          "",
+          totalEntry.debit || "",
+          totalEntry.credit || "",
+        ];
+        totalRow.rowType = "entry-total";
+        tableRows.push(totalRow);
+      }
+    });
+
+    const grandTotalRow = [
       "",
-      "Total",
+      "",
+      "Grand total",
       formatAmount(totals.debit),
       formatAmount(totals.credit),
-      "",
-    ]);
+    ];
+    grandTotalRow.rowType = "grand-total";
+    tableRows.push(grandTotalRow);
 
-    let totalRowIndex = tableRows.length - 1;
+    const drawFooter = (pageNum) => {
+      doc.setDrawColor(212, 212, 212);
+      doc.setLineWidth(0.18);
+      doc.line(14, 281, 196, 281);
+
+      doc.setFont("helvetica", "normal");
+      doc.setFontSize(8);
+      doc.setTextColor(85, 85, 85);
+      const footerLeft = `${businessName}  |  General Journal  |  ${formatShortDate(fromDate)} to ${formatShortDate(toDate)}`;
+      doc.text(footerLeft, 14, 285);
+      doc.text(
+        `Page ${pageNum} of {total_pages_count_string}`,
+        196,
+        285,
+        { align: "right" }
+      );
+      doc.text(`Generated by Smart Financial on ${genDateTime}`, 14, 289);
+    };
 
     autoTable(doc, {
-      startY: y + 10,
-      head: [["Transaction ID / Date", "Ledger Name", "Debit", "Credit"]],
+      startY: 41,
+      margin: { left: 14, right: 14, top: 14, bottom: 22 },
+      showHead: "everyPage",
+      theme: "plain",
+      head: [["Date", "Txn no.", "Account", "Debit (PKR)", "Credit (PKR)"]],
       body: tableRows,
       columnStyles: {
-        0: { cellWidth: 35 },
-        1: { cellWidth: "auto" },
-        2: { cellWidth: 25 },
-        3: { cellWidth: 25 },
-      },
-      styles: {
-        fontSize: 12,
-        textColor: [0, 0, 0],
+        0: { cellWidth: 26, halign: "left" },
+        1: { cellWidth: 18, halign: "left" },
+        2: { cellWidth: 80, halign: "left" },
+        3: { cellWidth: 29, halign: "right" },
+        4: { cellWidth: 29, halign: "right" },
       },
       headStyles: {
-        fillColor: [14, 26, 20],
-        textColor: [255, 255, 255],
+        fillColor: [237, 237, 237],
+        textColor: [26, 26, 26],
+        font: "helvetica",
+        fontStyle: "bold",
+        fontSize: 8.5,
+        cellPadding: { top: 1.3, bottom: 1.3, left: 1.5, right: 1.5 },
+      },
+      styles: {
+        font: "helvetica",
+        fontSize: 9,
+        textColor: [26, 26, 26],
+        cellPadding: { top: 1.3, bottom: 1.3, left: 1.5, right: 1.5 },
+      },
+      didParseCell: (data) => {
+        if (data.section === "body") {
+          const rawRow = data.row.raw;
+          if (rawRow?.rowType === "entry") {
+            if (data.column.index === 1) {
+              data.cell.styles.fontStyle = "bold";
+            }
+            if (data.column.index === 2 && rawRow.isCredit) {
+              data.cell.styles.cellPadding = {
+                top: 1.3,
+                bottom: 1.3,
+                left: 6.5,
+                right: 1.5,
+              };
+            }
+          } else if (rawRow?.rowType === "entry-total") {
+            data.cell.styles.cellPadding = {
+              top: 1.3,
+              bottom: 4.5,
+              left: 1.5,
+              right: 1.5,
+            };
+            if (data.column.index === 2) {
+              data.cell.styles.fontStyle = "italic";
+              data.cell.styles.fontSize = 8.5;
+              data.cell.styles.textColor = [85, 85, 85];
+            } else if (data.column.index === 3 || data.column.index === 4) {
+              data.cell.styles.fontStyle = "bold";
+              data.cell.styles.fontSize = 9;
+              data.cell.styles.textColor = [26, 26, 26];
+            }
+          } else if (rawRow?.rowType === "grand-total") {
+            data.cell.styles.fontStyle = "bold";
+            data.cell.styles.fontSize = 10;
+            data.cell.styles.textColor = [26, 26, 26];
+            data.cell.styles.cellPadding = {
+              top: 2.0,
+              bottom: 2.0,
+              left: 1.5,
+              right: 1.5,
+            };
+          }
+        }
       },
       didDrawCell: (data) => {
-        if (
-          data.section === "body" &&
-          data.row.raw[1] &&
-          data.row.raw[1].includes("Total for Transaction")
-        ) {
-          doc.setFont(undefined, "bold");
-          doc.setFontSize(12);
-        } else {
-          doc.setFont(undefined, "normal");
-          doc.setFontSize(12);
-        }
+        if (data.section === "head") {
+          doc.setDrawColor(26, 26, 26);
+          doc.setLineWidth(0.28);
+          doc.line(
+            data.cell.x,
+            data.cell.y,
+            data.cell.x + data.cell.width,
+            data.cell.y
+          );
+          doc.line(
+            data.cell.x,
+            data.cell.y + data.cell.height,
+            data.cell.x + data.cell.width,
+            data.cell.y + data.cell.height
+          );
+        } else if (data.section === "body") {
+          const rawRow = data.row.raw;
+          if (rawRow?.rowType === "entry-total") {
+            if (data.column.index === 3 || data.column.index === 4) {
+              doc.setDrawColor(26, 26, 26);
+              doc.setLineWidth(0.18);
+              doc.line(
+                data.cell.x,
+                data.cell.y,
+                data.cell.x + data.cell.width,
+                data.cell.y
+              );
+            }
+            if (data.column.index === 0) {
+              doc.setDrawColor(212, 212, 212);
+              doc.setLineWidth(0.14);
+              doc.line(
+                14,
+                data.cell.y + data.cell.height,
+                196,
+                data.cell.y + data.cell.height
+              );
+            }
+          } else if (rawRow?.rowType === "grand-total") {
+            if (data.column.index === 3 || data.column.index === 4) {
+              doc.setDrawColor(26, 26, 26);
+              doc.setLineWidth(0.28);
+              doc.line(
+                data.cell.x,
+                data.cell.y,
+                data.cell.x + data.cell.width,
+                data.cell.y
+              );
 
-        if (
-          data.section === "body" &&
-          data.row.raw.every((cell) => cell === "")
-        ) {
-          const { x, y, width } = data.cell;
-          doc.setDrawColor(0, 0, 0);
-          doc.setLineWidth(0.5);
-          doc.line(x, y, x + width, y);
+              doc.setLineWidth(0.21);
+              const line1 = data.cell.y + data.cell.height;
+              const line2 = line1 + 0.6;
+              doc.line(data.cell.x, line1, data.cell.x + data.cell.width, line1);
+              doc.line(data.cell.x, line2, data.cell.x + data.cell.width, line2);
+            }
+          }
         }
-        if (data.section === "body" && data.row.index === totalRowIndex) {
-          const { x, y, width, height } = data.cell;
-          doc.setDrawColor(0, 0, 0);
-          doc.setLineWidth(0.5);
-          doc.line(x, y, x + width, y);
-          doc.line(x, y + height, x + width, y + height);
-        }
+      },
+      didDrawPage: (data) => {
+        drawFooter(data.pageNumber);
       },
     });
 
+    // End of report block
+    const finalY = doc.lastAutoTable ? doc.lastAutoTable.finalY : 41;
+    let blockStartY = finalY + 8;
+    if (blockStartY + 28 > 281) {
+      doc.addPage();
+      drawFooter(doc.internal.getNumberOfPages());
+      blockStartY = 24;
+    }
+
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(8.5);
+    doc.setTextColor(85, 85, 85);
+    const endText = "End of report";
+    const endTextWidth = doc.getTextWidth(endText);
+    const centerX = 105;
+    doc.text(endText, centerX, blockStartY, { align: "center" });
+
+    doc.setDrawColor(212, 212, 212);
+    doc.setLineWidth(0.14);
+    const lineOffset = endTextWidth / 2 + 4;
+    doc.line(14, blockStartY - 1, centerX - lineOffset, blockStartY - 1);
+    doc.line(centerX + lineOffset, blockStartY - 1, 196, blockStartY - 1);
+
+    const sentenceY = blockStartY + 6;
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(9);
+    doc.setTextColor(85, 85, 85);
+
+    const txCount = Object.keys(grouped).length;
+    const totalDebitStr = formatAmount(totals.debit);
+    const totalCreditStr = formatAmount(totals.credit);
+    const numDebit = Number(totals.debit) || 0;
+    const numCredit = Number(totals.credit) || 0;
+    const diff = Math.abs(numDebit - numCredit);
+    const diffStr = formatAmount(diff);
+    const balanceText =
+      diff < 0.005
+        ? "Difference 0.00: the journal balances."
+        : `Difference ${diffStr}: the journal does not balance.`;
+    const summarySentence = `${txCount} transactions. Total debits ${totalDebitStr}, total credits ${totalCreditStr}. ${balanceText}`;
+    doc.text(summarySentence, centerX, sentenceY, { align: "center" });
+
+    const sigY = sentenceY + 16;
+    doc.setDrawColor(212, 212, 212);
+    doc.setLineWidth(0.18);
+    doc.line(14, sigY, 58, sigY);
+    doc.line(83, sigY, 127, sigY);
+    doc.line(152, sigY, 196, sigY);
+
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(8.5);
+    doc.setTextColor(85, 85, 85);
+    doc.text("Prepared by", 36, sigY + 4.5, { align: "center" });
+    doc.text("Reviewed by", 105, sigY + 4.5, { align: "center" });
+    doc.text("Approved by", 174, sigY + 4.5, { align: "center" });
+
+    doc.putTotalPages("{total_pages_count_string}");
     doc.save(`transactions_${fromDate}_to_${toDate}.pdf`);
   };
 
@@ -751,8 +1017,8 @@ export default function TransactionEntryTable() {
               <div className="c1">Transaction</div>
               <div className="c2">
                 <span>Ledger</span>
-                <span className="n">Debit ($)</span>
-                <span className="n">Credit ($)</span>
+                <span className="n">Debit (PKR)</span>
+                <span className="n">Credit (PKR)</span>
               </div>
               <div className="c3">Actions</div>
             </div>
@@ -816,7 +1082,7 @@ export default function TransactionEntryTable() {
                     <button
                       type="button"
                       className="sf-gj-ed"
-                      onClick={() => handleEdit(txId)}
+                      onClick={() => handleEdit(txId, frontend_id)}
                     >
                       Edit
                     </button>

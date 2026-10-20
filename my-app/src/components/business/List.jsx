@@ -8,7 +8,7 @@ import axios from 'axios';
 const List = () => {
   const navigate = useNavigate();
   const { businesses, setBusinesses, selectBusiness, selectedBusiness } = useBusiness();
-  const [isLoading, setIsLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(() => businesses && businesses.length > 0 ? false : true);
   const [user, setUser] = useState(null);
   const [inspectedBusinessId, setInspectedBusinessId] = useState(null);
 

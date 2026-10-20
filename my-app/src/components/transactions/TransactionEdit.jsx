@@ -1,7 +1,8 @@
 import { useState, useEffect } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams, useNavigate, useLocation } from "react-router-dom";
 import Navbar from "../layout/Navbar";
 import { useBusiness } from "../../context/BusinessContext";
+import { ArrowLeft, Save, AlertTriangle, CheckCircle2, FileText } from "lucide-react";
 
 // Helper to format numbers with commas
 function formatNumberWithCommas(value) {
@@ -14,9 +15,14 @@ function formatNumberWithCommas(value) {
 export default function TransactionEdit() {
   const { transactionId } = useParams();
   const navigate = useNavigate();
+  const location = useLocation();
   const { selectedBusiness } = useBusiness();
 
   const [rows, setRows] = useState([]);
+  const [frontendTransactionId, setFrontendTransactionId] = useState(
+    location.state?.frontend_transaction_id || ""
+  );
+  const [transactionDate, setTransactionDate] = useState("");
   const [isLoading, setIsLoading] = useState(false);
 
   // Search/Suggestion state
@@ -35,6 +41,13 @@ export default function TransactionEdit() {
         const data = await res.json();
 
         if (data.success && data.transaction) {
+          if (data.transaction.frontend_transaction_id) {
+            setFrontendTransactionId(data.transaction.frontend_transaction_id);
+          }
+          if (data.transaction.date) {
+            const d = new Date(data.transaction.date);
+            setTransactionDate(!isNaN(d) ? d.toISOString().split("T")[0] : "");
+          }
           setRows(
             data.transaction.entries.map((e) => ({
               entryId: e.entry_id,
@@ -46,7 +59,7 @@ export default function TransactionEdit() {
           );
         }
       } catch (err) {
-        console.error("❌ Error fetching transaction:", err);
+        console.error("Error fetching transaction:", err);
       }
     };
 
@@ -66,6 +79,12 @@ export default function TransactionEdit() {
     creditTotal === 0 ||
     debitTotal !== creditTotal ||
     hasInvalidLedger;
+
+  const maxTotal = Math.max(debitTotal, creditTotal, 1);
+  const debitRatio = debitTotal > 0 ? Math.min(100, (debitTotal / maxTotal) * 100) : 0;
+  const creditRatio = creditTotal > 0 ? Math.min(100, (creditTotal / maxTotal) * 100) : 0;
+  const isBalanced = debitTotal === creditTotal && debitTotal > 0;
+  const displayVoucherNo = frontendTransactionId || transactionId;
 
   // --- Handlers ---
 
@@ -141,15 +160,15 @@ export default function TransactionEdit() {
   const handleAccountNameKeyDown = (idx, e) => {
     // Handle navigation keys if suggestions are visible
     if (showSuggestionsIdx === idx && suggestions.length > 0) {
-      if (e.key === 'ArrowDown') {
+      if (e.key === "ArrowDown") {
         e.preventDefault();
         setHighlightedSuggestion((prev) => (prev + 1) % suggestions.length);
         return;
-      } else if (e.key === 'ArrowUp') {
+      } else if (e.key === "ArrowUp") {
         e.preventDefault();
         setHighlightedSuggestion((prev) => (prev - 1 + suggestions.length) % suggestions.length);
         return;
-      } else if (e.key === 'Escape') {
+      } else if (e.key === "Escape") {
         setShowSuggestionsIdx(null);
         setHighlightedSuggestion(-1);
         return;
@@ -157,16 +176,13 @@ export default function TransactionEdit() {
     }
 
     // Handle Enter key
-    if (e.key === 'Enter') {
-      e.preventDefault(); // Prevent accidental form submit
-      // 1. Select suggestion if highlighted
+    if (e.key === "Enter") {
+      e.preventDefault();
       if (showSuggestionsIdx === idx && suggestions.length > 0 && highlightedSuggestion >= 0) {
         const s = suggestions[highlightedSuggestion];
         handleSuggestionClick(idx, s);
         setHighlightedSuggestion(-1);
-      }
-      // 2. Otherwise, add new row if account name exists (User Request)
-      else if (rows[idx].accountName) {
+      } else if (rows[idx].accountName) {
         addRow();
       }
     }
@@ -183,7 +199,6 @@ export default function TransactionEdit() {
       addRow();
     }
   };
-
 
   // --- Save Logic ---
 
@@ -211,222 +226,355 @@ export default function TransactionEdit() {
 
       const data = await res.json();
       if (data.success) {
-        alert("✅ Transaction updated successfully!");
-        navigate(-1); // go back
+        alert("Transaction updated successfully!");
+        navigate(-1);
       } else {
-        alert("❌ Error: " + (data.error || "Failed to update transaction."));
+        alert("Error: " + (data.message || "Failed to update transaction"));
       }
     } catch (err) {
-      alert("❌ Network error: " + err.message);
+      alert("Network error: " + err.message);
     } finally {
       setIsLoading(false);
     }
   };
 
   return (
-    <div
-      className="min-h-screen relative overflow-hidden bg-slate-900"
-      style={{
-        minHeight: "100vh",
-        width: "100%",
-        overflowX: "hidden"
-      }}
-    >
-      {/* BACKGROUND LAYER */}
-      <div className="fixed inset-0 z-0 pointer-events-none overflow-hidden">
-        {/* Primary gradient background */}
-        <div className="absolute inset-0 bg-gradient-to-br from-slate-900 via-blue-900 to-indigo-900"></div>
+    <div style={{ backgroundColor: "#F2F5EE", minHeight: "100vh", color: "#0E1A14" }}>
+      <Navbar />
 
-        {/* Overlay gradients for depth */}
-        <div className="absolute inset-0 bg-gradient-to-t from-purple-900/30 via-transparent to-blue-800/20"></div>
-        <div className="absolute inset-0 bg-gradient-to-r from-indigo-800/20 via-transparent to-cyan-800/20"></div>
+      <main className="sf-wrap" style={{ paddingTop: "44px", paddingBottom: "88px" }}>
+        {/* Breadcrumb */}
+        <p className="text-brand-muted text-[15px] mb-3">
+          <button
+            type="button"
+            onClick={() => navigate('/list')}
+            className="hover:underline text-brand-muted cursor-pointer"
+          >
+            {selectedBusiness?.business_name || 'Businesses'}
+          </button>
+          {' / '}
+          <button
+            type="button"
+            onClick={() => navigate(-1)}
+            className="hover:underline text-brand-muted cursor-pointer"
+          >
+            Transactions
+          </button>
+          {' / '}
+          <span className="text-brand-ink font-medium">Edit voucher #{displayVoucherNo}</span>
+        </p>
 
-        {/* Professional grid pattern */}
-        <div className="absolute inset-0 opacity-10">
-          <div className="absolute inset-0" style={{
-            backgroundImage: `
-              linear-gradient(90deg, rgba(255,255,255,0.1) 1px, transparent 1px),
-              linear-gradient(0deg, rgba(255,255,255,0.1) 1px, transparent 1px)
-            `,
-            backgroundSize: '50px 50px'
-          }}></div>
+        {/* Header Section */}
+        <div
+          style={{
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "flex-end",
+            flexWrap: "wrap",
+            gap: "24px",
+            marginBottom: "32px",
+          }}
+        >
+          <div>
+            <h1
+              style={{
+                fontFamily: "'Bricolage Grotesque', sans-serif",
+                fontSize: "clamp(42px, 6vw, 76px)",
+                fontWeight: 800,
+                letterSpacing: "-0.04em",
+                lineHeight: 0.98,
+                margin: 0,
+                color: "#0E1A14",
+              }}
+            >
+              Edit voucher.
+            </h1>
+            <p
+              style={{
+                color: "#44544B",
+                fontSize: "18px",
+                marginTop: "16px",
+                maxWidth: "680px",
+                lineHeight: 1.5,
+              }}
+            >
+              Review and adjust journal entries for voucher #{displayVoucherNo}. Saving unlocks when total debits equal credits.
+            </p>
+          </div>
+
+          <div style={{ display: "flex", alignItems: "center", gap: "12px", flexWrap: "wrap" }}>
+            {selectedBusiness && (
+              <span
+                style={{
+                  display: "inline-flex",
+                  padding: "8px 14px",
+                  border: "2px solid #0E1A14",
+                  borderRadius: "6px",
+                  background: "#fff",
+                  fontWeight: 600,
+                  fontSize: "15px",
+                  boxShadow: "3px 3px 0 #0E1A14",
+                }}
+              >
+                {selectedBusiness.business_name}
+              </span>
+            )}
+            <button
+              type="button"
+              onClick={() => navigate(-1)}
+              className="sf-btn sf-btn-line flex items-center gap-2"
+            >
+              <ArrowLeft className="w-4 h-4" />
+              Back
+            </button>
+          </div>
         </div>
 
-        {/* Animated elements */}
-        <div className="absolute inset-0 overflow-hidden">
-          <div className="absolute top-1/4 right-10 w-32 h-32 border border-white/10 rounded-full animate-pulse"></div>
-          <div className="absolute bottom-1/4 left-10 w-24 h-24 border border-cyan-400/20 rounded-lg rotate-45 animate-spin" style={{ animationDuration: '20s' }}></div>
-          <div className="absolute top-1/2 right-1/4 w-20 h-20 bg-gradient-to-r from-purple-500/10 to-blue-500/10 rounded-full animate-pulse"></div>
+        {/* Voucher Container */}
+        <div className="sf-vc">
+          {/* Left Voucher Stub */}
+          <div className="sf-stub">
+            <p className="sf-stub-cap">Voucher no.</p>
+            <p className="sf-vn">#{displayVoucherNo}</p>
+            <p className="sf-stub-cap" style={{ marginTop: "4px" }}>
+              Permanent record in {selectedBusiness?.business_name || "active business"}.
+            </p>
 
-          <svg className="absolute inset-0 w-full h-full" style={{ filter: 'blur(0.5px)' }}>
-            <defs>
-              <linearGradient id="networkGradient" x1="0%" y1="0%" x2="100%" y2="100%">
-                <stop offset="0%" style={{ stopColor: '#3b82f6', stopOpacity: 0.1 }} />
-                <stop offset="50%" style={{ stopColor: '#8b5cf6', stopOpacity: 0.2 }} />
-                <stop offset="100%" style={{ stopColor: '#06b6d4', stopOpacity: 0.1 }} />
-              </linearGradient>
-            </defs>
-            <path
-              d="M100,100 L300,200 L600,150 L900,300 L1200,200"
-              stroke="url(#networkGradient)"
-              strokeWidth="2"
-              fill="none"
-              className="animate-pulse"
+            <label htmlFor="dt">Transaction Date</label>
+            <input
+              id="dt"
+              type="date"
+              value={transactionDate}
+              readOnly
+              style={{ background: "#F2F5EE", cursor: "default" }}
             />
-            <path
-              d="M200,400 L500,300 L800,450 L1100,350"
-              stroke="rgba(59, 130, 246, 0.2)"
-              strokeWidth="1"
-              fill="none"
-              className="animate-pulse"
-              style={{ animationDelay: '1s' }}
-            />
-          </svg>
-        </div>
 
-        <div className="absolute inset-0 bg-black/20"></div>
-      </div>
+            <div style={{ marginTop: "24px", paddingTop: "18px", borderTop: "2px dashed #0E1A14" }}>
+              <div style={{ display: "flex", justifyContent: "space-between", fontSize: "13px", fontWeight: 700, marginBottom: "8px" }}>
+                <span style={{ color: "#44544B" }}>Total Entries:</span>
+                <span>{rows.length} rows</span>
+              </div>
+              <div style={{ display: "flex", justifyContent: "space-between", fontSize: "13px", fontWeight: 700, marginBottom: "8px" }}>
+                <span style={{ color: "#44544B" }}>Status:</span>
+                <span
+                  style={{
+                    padding: "2px 8px",
+                    borderRadius: "999px",
+                    fontSize: "11px",
+                    border: "1.5px solid #0E1A14",
+                    background: isBalanced ? "#C8F135" : "#F2B66B",
+                    color: "#0E1A14",
+                  }}
+                >
+                  {isBalanced ? "Balanced" : "Unbalanced"}
+                </span>
+              </div>
+            </div>
+          </div>
 
-      {/* CONTENT LAYER */}
-      <div className="relative z-10 w-full min-h-screen pb-10">
-        <Navbar />
-        <div className="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
-          <div className="bg-white/95 backdrop-blur-sm shadow sm:rounded-2xl p-6 border border-white/20 mb-10">
-            <h2 className="text-2xl font-bold text-gray-800 mb-6">Edit Transaction</h2>
+          {/* Right Voucher Body */}
+          <div className="sf-vbody">
+            {/* Header Columns */}
+            <div className="sf-r3 sf-hd3">
+              <span>Ledger name</span>
+              <span style={{ textAlign: "right" }}>Debit (PKR)</span>
+              <span style={{ textAlign: "right" }}>Credit (PKR)</span>
+              <span></span>
+            </div>
 
-            <table className="table table-striped table-hover table-bordered border-secondary mt-3">
-          <thead className="table-dark">
-            <tr>
-              <th>Ledger Name</th>
-              <th>Debit</th>
-              <th>Credit</th>
-              <th className="text-center" style={{ width: "80px" }}>Remove</th>
-            </tr>
-          </thead>
-                <tbody>
-                  {rows.map((row, idx) => (
-                    <tr key={idx}>
-                      <td style={{ position: "relative" }}>
-                        <input
-                          type="text"
-                          className="form-control"
-                          value={row.accountName}
-                          onChange={(e) => handleAccountNameChange(idx, e.target.value)}
-                          onKeyDown={(e) => handleAccountNameKeyDown(idx, e)}
-                          onFocus={() => { if (row.accountName) setShowSuggestionsIdx(idx); }}
-                          onBlur={() => setTimeout(() => { setShowSuggestionsIdx(null); setHighlightedSuggestion(-1); }, 200)}
-                          autoComplete="off"
-                        />
-                        {showSuggestionsIdx === idx && suggestions.length > 0 && (
-                          <ul
-                      className="list-group position-absolute shadow"
-                      style={{ zIndex: 10, maxHeight: "200px", overflowY: "auto", minWidth: "100%", width: "max-content", maxWidth: "85vw", top: "100%" }}
-                    >
-                            {suggestions.map((s, sidx) => (
-                              <li
-                                key={s.account_id}
-                                className={`list-group-item list-group-item-action ${highlightedSuggestion === sidx ? 'active' : ''}`}
-                                onMouseDown={() => handleSuggestionClick(idx, s)}
-                                style={{ cursor: "pointer" }}
-                              >
-                                <div className="d-flex flex-column flex-sm-row justify-content-between align-items-start align-items-sm-center">
-                                  <span>{s.account_name}</span>
-                                  <small className={highlightedSuggestion === sidx ? 'text-white' : 'text-muted'}>
-                                    Balance: ${(s.balance || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-                                  </small>
-                                </div>
-                              </li>
-                            ))}
-                          </ul>
-                        )}
-                        {row.accountName && !row.accountId && showSuggestionsIdx !== idx && (
-                          <div className="text-danger small mt-1">Choose a valid ledger</div>
-                        )}
-                      </td>
-                      <td>
-                        <input
-                          type="text"
-                          className="form-control"
-                          value={formatNumberWithCommas(row.debit)}
-                          onChange={(e) => handleDebitChange(idx, e.target.value)}
-                          onKeyDown={(e) => handleDebitKeyDown(idx, e)}
-                          disabled={row.credit !== ''}
-                        />
-                      </td>
-                      <td>
-                        <input
-                          type="text"
-                          className="form-control"
-                          value={formatNumberWithCommas(row.credit)}
-                          onChange={(e) => handleCreditChange(idx, e.target.value)}
-                          onKeyDown={(e) => handleCreditKeyDown(idx, e)}
-                          disabled={row.debit !== ''}
-                        />
-                      </td>
-                      <td className="text-center align-middle">
+            {/* Entry Rows */}
+            {rows.map((row, idx) => (
+              <div className="sf-r3" key={idx}>
+                {/* Ledger selector */}
+                <div className="sf-ac">
+                  <input
+                    type="text"
+                    value={row.accountName}
+                    placeholder="Search a ledger..."
+                    autoComplete="off"
+                    onChange={(e) => handleAccountNameChange(idx, e.target.value)}
+                    onBlur={() =>
+                      setTimeout(() => {
+                        setShowSuggestionsIdx(null);
+                        setHighlightedSuggestion(-1);
+                      }, 180)
+                    }
+                    onFocus={() => {
+                      if (row.accountName) setShowSuggestionsIdx(idx);
+                    }}
+                    onKeyDown={(e) => handleAccountNameKeyDown(idx, e)}
+                  />
+
+                  {/* Suggestion Dropdown */}
+                  {showSuggestionsIdx === idx && suggestions.length > 0 && (
+                    <div className="sf-ac-dd">
+                      <p>Active ledgers in {selectedBusiness?.business_name || "selected business"}</p>
+                      {suggestions.map((s, sidx) => (
                         <button
+                          key={s.account_id}
                           type="button"
-                          className="btn btn-link btn-sm text-danger"
-                          onClick={() => removeRow(idx)}
-                          title="Remove row"
+                          className={`sf-op ${highlightedSuggestion === sidx ? "active" : ""}`}
+                          onMouseDown={() => handleSuggestionClick(idx, s)}
                         >
-                          <i className="fas fa-times"></i>
+                          <span>{s.account_name}</span>
+                          <b>
+                            ${Number(s.balance || 0).toLocaleString("en-US", {
+                              minimumFractionDigits: 2,
+                              maximumFractionDigits: 2,
+                            })}{" "}
+                            {Number(s.balance || 0) >= 0 ? "Dr" : "Cr"}
+                          </b>
                         </button>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-        </table>
+                      ))}
+                    </div>
+                  )}
 
-            <div className="mt-2 text-end">
-              <button className="btn btn-outline-secondary btn-sm" onClick={addRow}>
-                + Add Row
-              </button>
-            </div>
+                  {row.accountName && !row.accountId && showSuggestionsIdx !== idx && (
+                    <div className="text-danger small mt-1 font-semibold" style={{ color: "#E05252", fontSize: "12px", marginTop: "4px" }}>
+                      Choose a valid ledger from suggestions
+                    </div>
+                  )}
+                </div>
 
-            <div className="d-flex flex-wrap justify-content-end gap-3 mt-4">
-              <div className="d-flex align-items-center">
-                <label className="me-2 fw-bold">Debit Total:</label>
-                <input
-                  type="text"
-                  className="form-control text-end"
-                  value={formatNumberWithCommas(debitTotal)}
-                  readOnly
-                  style={{ width: "150px" }}
-                />
+                {/* Debit Input */}
+                <div>
+                  <input
+                    className="sf-am"
+                    type="text"
+                    inputMode="decimal"
+                    value={formatNumberWithCommas(row.debit)}
+                    placeholder="0.00"
+                    disabled={row.credit !== ""}
+                    onChange={(e) => handleDebitChange(idx, e.target.value)}
+                    onKeyDown={(e) => handleDebitKeyDown(idx, e)}
+                  />
+                </div>
+
+                {/* Credit Input */}
+                <div>
+                  <input
+                    className="sf-am"
+                    type="text"
+                    inputMode="decimal"
+                    value={formatNumberWithCommas(row.credit)}
+                    placeholder="0.00"
+                    disabled={row.debit !== ""}
+                    onChange={(e) => handleCreditChange(idx, e.target.value)}
+                    onKeyDown={(e) => handleCreditKeyDown(idx, e)}
+                  />
+                </div>
+
+                {/* Remove Row Button */}
+                <button
+                  type="button"
+                  className="sf-rm"
+                  aria-label="Remove row"
+                  disabled={rows.length <= 2}
+                  onClick={() => removeRow(idx)}
+                  title={rows.length <= 2 ? "A voucher requires at least two rows" : "Remove entry"}
+                >
+                  ✕
+                </button>
               </div>
-              <div className="d-flex align-items-center">
-                <label className="me-2 fw-bold">Credit Total:</label>
-                <input
-                  type="text"
-                  className="form-control text-end"
-                  value={formatNumberWithCommas(creditTotal)}
-                  readOnly
-                  style={{ width: "150px" }}
-                />
-              </div>
-            </div>
+            ))}
 
-            <div className="mt-5 d-flex gap-2">
+            {/* Row Controls */}
+            <div className="sf-addr">
               <button
-                className="btn btn-primary px-4"
+                type="button"
+                className="sf-lk"
+                style={{
+                  background: "transparent",
+                  border: "none",
+                  borderBottom: "2px solid #0E1A14",
+                  cursor: "pointer",
+                  padding: "0 0 2px",
+                  fontSize: "16px",
+                  fontWeight: 600,
+                  fontFamily: "inherit",
+                  color: "#0E1A14",
+                }}
+                onClick={addRow}
+              >
+                + Add row
+              </button>
+              <p style={{ color: "#44544B", fontSize: "14px", margin: 0 }}>
+                Typing a debit locks the credit on that row, and the other way round.
+              </p>
+            </div>
+
+            {/* Running Totals */}
+            <div className="sf-tots">
+              <div>
+                <span className="sf-lb">Debit total</span>
+                <span className="sf-tn">${formatNumberWithCommas(debitTotal.toFixed(2))}</span>
+                <div className="sf-trk">
+                  <i style={{ width: `${debitRatio}%` }}></i>
+                </div>
+              </div>
+              <div>
+                <span className="sf-lb">Credit total</span>
+                <span className="sf-tn">${formatNumberWithCommas(creditTotal.toFixed(2))}</span>
+                <div className="sf-trk">
+                  <i className={isBalanced ? "ok" : "wr"} style={{ width: `${creditRatio}%` }}></i>
+                </div>
+              </div>
+            </div>
+
+            {/* Balance Status Banner */}
+            {rows.length === 0 ? (
+              <p className="sf-st sf-idle" role="status">
+                Loading voucher rows...
+              </p>
+            ) : isBalanced ? (
+              <p className="sf-st sf-ok" role="status">
+                ✓ Balanced. Debits equal credits (${formatNumberWithCommas(debitTotal.toFixed(2))}), you can save changes.
+              </p>
+            ) : (
+              <p className="sf-st sf-bad" role="status">
+                ⚠ Unbalanced. Difference: ${formatNumberWithCommas(Math.abs(debitTotal - creditTotal).toFixed(2))} (
+                {debitTotal > creditTotal ? "Debits exceed Credits" : "Credits exceed Debits"}).
+              </p>
+            )}
+
+            {/* Action Buttons */}
+            <div className="sf-acts2">
+              <button
+                type="button"
+                className="sf-btn sf-btn-lime flex items-center gap-2"
+                style={
+                  isSubmitDisabled || isLoading
+                    ? { opacity: 0.45, cursor: "not-allowed", transform: "none" }
+                    : {}
+                }
                 onClick={handleSave}
                 disabled={isSubmitDisabled || isLoading}
               >
                 {isLoading ? (
                   <>
-                    <span className="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
-                    Saving...
+                    <div className="animate-spin rounded-full h-4 w-4 border-2 border-[#0E1A14] border-t-transparent"></div>
+                    <span>Saving changes...</span>
                   </>
-                ) : "Save Changes"}
+                ) : (
+                  <>
+                    <Save className="w-4 h-4" />
+                    <span>Save Changes</span>
+                  </>
+                )}
               </button>
-              <button className="btn btn-secondary px-4" onClick={() => navigate(-1)}>
+
+              <button
+                type="button"
+                className="sf-btn sf-btn-line"
+                onClick={() => navigate(-1)}
+                disabled={isLoading}
+              >
                 Cancel
               </button>
             </div>
           </div>
         </div>
-      </div>
+      </main>
     </div>
   );
 }

@@ -1,15 +1,14 @@
+import { preloadInternalPages } from '../../App';
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import axios from 'axios';
-import TrueFocus from '../animation/TrueFocus';
-import './styles.css';
-import { DotLottieReact } from '@lottiefiles/dotlottie-react';
 
 export default function LoginForm() {
   const [formData, setFormData] = useState({ email: '', password: '' });
   const [message, setMessage] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [isGoogleLoading, setIsGoogleLoading] = useState(false);
+  const [focusedField, setFocusedField] = useState(null);
 
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
@@ -22,205 +21,821 @@ export default function LoginForm() {
     }
   }, [searchParams, navigate]);
 
-  const handleChange = (e) => setFormData(prev => ({ ...prev, [e.target.name]: e.target.value }));
+  const handleChange = (e) =>
+    setFormData((prev) => ({ ...prev, [e.target.name]: e.target.value }));
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setIsLoading(true); setMessage('');
-    if (!formData.email || !formData.password) { setMessage('Please fill in all fields'); setIsLoading(false); return; }
+    setIsLoading(true);
+    setMessage('');
+    if (!formData.email || !formData.password) {
+      setMessage('Please fill in all fields');
+      setIsLoading(false);
+      return;
+    }
     try {
       const apiUrl = import.meta.env.VITE_BACKEND_URL || 'http://localhost:8080';
       const res = await axios.post(`${apiUrl}/api/login`, formData, { withCredentials: true });
-      setMessage(res.data.message); navigate('/list');
+      if (res.data?.username) {
+        localStorage.setItem('username', res.data.username);
+        preloadInternalPages();
+      }
+      setMessage(res.data.message || 'Login successful. Taking you to your businesses.');
+      navigate('/list');
     } catch (err) {
       const msg = err.response?.data?.error || err.response?.data?.message || 'Server error';
       setMessage(`Login failed: ${msg}`);
-    } finally { setIsLoading(false); }
+    } finally {
+      setIsLoading(false);
+    }
   };
 
-  /*  Google login  */
+  /* Google login */
   const handleGoogleLogin = () => {
     setIsGoogleLoading(true);
-    window.location.href = "https://server.khushifinances.com/api/auth/google"; // <-- NO SPACE
+    window.location.href = 'https://server.khushifinances.com/api/auth/google';
   };
 
+  // Calculation & Percentage Logic: Form validation & readiness percentage
+  const isEmailFilled = Boolean(formData.email && formData.email.trim().length > 0);
+  const isPasswordFilled = Boolean(formData.password && formData.password.trim().length > 0);
+  const isEmailValid = isEmailFilled && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email);
+  const isUnlatched = isEmailValid && isPasswordFilled;
+
+  let completionPct = 0;
+  if (isEmailFilled && isPasswordFilled) {
+    completionPct = isEmailValid ? 100 : 75;
+  } else if (isEmailFilled || isPasswordFilled) {
+    completionPct = 50;
+  }
+
+  // Interactive Vault Dial Rotation Calculation
+  let dialRotation = 0;
+  if (isUnlatched) {
+    dialRotation = 330;
+  } else if (focusedField === 'password') {
+    dialRotation = 250;
+  } else if (focusedField === 'email') {
+    dialRotation = 120;
+  }
+
   return (
-    <div className="login-page-wrapper min-h-screen relative overflow-x-hidden" style={{ minHeight: '100vh', width: '100vw' }}>
-      {/* Enhanced Professional Background - fixed to cover full screen on scroll */}
-      <div className="fixed inset-0 z-0">
-        <div className="absolute inset-0 bg-gradient-to-br from-slate-900 via-blue-900 to-indigo-900"></div>
-        <div className="absolute inset-0 bg-gradient-to-t from-purple-900/30 via-transparent to-blue-800/20"></div>
-        <div className="absolute inset-0 bg-gradient-to-r from-indigo-800/20 via-transparent to-cyan-800/20"></div>
+    <div className="sf-login-page">
+      <div className="sf-split">
+        {/* Left Side: Form */}
+        <main className="sf-L">
+          <div className="sf-fw">
+            {/* Logo */}
+            <Link to="/" className="sf-logo" style={{ marginBottom: '40px', textDecoration: 'none', display: 'inline-block' }}>
+              <img
+                src="/final.png"
+                alt="Smart Financials by Khushi Vijay"
+                className="sf-nav-logo-img"
+                style={{ height: '48px', width: 'auto', objectFit: 'contain' }}
+              />
+            </Link>
 
-        {/* Professional grid pattern */}
-        <div className="absolute inset-0 opacity-10">
-          <div className="absolute inset-0" style={{
-            backgroundImage: `
-              linear-gradient(90deg, rgba(255,255,255,0.1) 1px, transparent 1px),
-              linear-gradient(0deg, rgba(255,255,255,0.1) 1px, transparent 1px)
-            `,
-            backgroundSize: '50px 50px'
-          }}></div>
-        </div>
+            {/* Title & Subtitle */}
+            <h1 className="sf-tt" style={{ fontSize: '64px' }}>
+              Welcome back.
+            </h1>
+            <p className="sf-muted" style={{ fontSize: '19px', margin: '14px 0 30px' }}>
+              Log in to open your businesses.
+            </p>
 
-        {/* Geometric shapes (no heavy animations) */}
-        <div className="absolute inset-0 overflow-hidden">
-          <div className="absolute top-1/4 right-10 w-32 h-32 border border-white/10 rounded-full"></div>
-          <div className="absolute bottom-1/4 left-10 w-24 h-24 border border-cyan-400/20 rounded-lg rotate-45"></div>
-          <div className="absolute top-1/2 right-1/4 w-20 h-20 bg-gradient-to-r from-purple-500/10 to-blue-500/10 rounded-full"></div>
-        </div>
+            {/* Google Authentication Button */}
+            <button
+              type="button"
+              className="sf-btn sf-out"
+              onClick={handleGoogleLogin}
+              disabled={isGoogleLoading}
+            >
+              <svg width="20" height="20" viewBox="0 0 48 48" aria-hidden="true">
+                <path
+                  fill="#EA4335"
+                  d="M24 9.5c3.5 0 6.6 1.2 9.1 3.6l6.8-6.8C35.8 2.4 30.3 0 24 0 14.6 0 6.5 5.4 2.6 13.2l7.9 6.1C12.4 13.6 17.7 9.5 24 9.5z"
+                />
+                <path
+                  fill="#4285F4"
+                  d="M46.1 24.5c0-1.6-.1-3.1-.4-4.5H24v9h12.4c-.5 2.9-2.1 5.3-4.5 7l7.3 5.7c4.3-4 6.9-9.9 6.9-17.2z"
+                />
+                <path
+                  fill="#FBBC05"
+                  d="M10.5 28.7c-.5-1.4-.8-2.9-.8-4.7s.3-3.3.8-4.7l-7.9-6.1C.9 16.4 0 20.1 0 24s.9 7.6 2.6 10.8l7.9-6.1z"
+                />
+                <path
+                  fill="#34A853"
+                  d="M24 48c6.5 0 11.9-2.1 15.9-5.8l-7.3-5.7c-2 1.4-4.6 2.2-8.6 2.2-6.3 0-11.6-4.1-13.5-9.8l-7.9 6.1C6.5 42.6 14.6 48 24 48z"
+                />
+              </svg>
+              {isGoogleLoading ? 'Connecting to Google...' : 'Continue with Google'}
+            </button>
 
-        <div className="absolute inset-0 bg-black/20"></div>
-      </div>
+            {/* Divider */}
+            <div className="sf-dv">or use your email</div>
 
-      {/* Content */}
-      <div className="relative z-10">
-        <section className="h-100 gradient-form" style={{ backgroundColor: 'transparent' }}>
-          <div className="container py-5 h-100">
-            <div className="row d-flex justify-content-center align-items-center h-100">
-              <div className="col-xl-10">
-                <div className="card rounded-3 border border-white/10" style={{ boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.5)', backdropFilter: 'blur(20px)', backgroundColor: 'rgba(255,255,255,0.05)' }}>
-                  <div className="row g-0">
-                    <div className="col-lg-6" style={{ borderRadius: '.3rem 0 0 .3rem' }}>
-                      <div className="card-body p-md-5 mx-md-4">
-                        <div className="w-72 h-45 md:w-80 md:h-64">
-                          <DotLottieReact
-                            src="https://lottie.host/b57769dd-de23-4b79-acb7-8f275ee9ccaa/i1qkmQtZ8q.lottie"
-                            loop
-                            autoplay
-                          />
-                        </div>
-                        <div className="w-full h-1 bg-white/20 mb-4"></div>
-                        <TrueFocus
-                          sentence="Smart_Financial by Khushi-Vijay"
-                          manualMode={false}
-                          blurAmount={5}
-                          borderColor="red"
-                          animationDuration={2}
-                          pauseBetweenAnimations={1}
-                        />
-
-                        {/* Google button */}
-                        <div className="mb-4">
-                          <button
-                            type="button"
-                            className="btn btn-outline-light w-100 py-3 d-flex align-items-center justify-content-center gap-2"
-                            onClick={handleGoogleLogin}
-                            disabled={isGoogleLoading}
-                          >
-                            {isGoogleLoading ? (
-                              <>
-                                <span className="spinner-border spinner-border-sm" role="status" aria-hidden="true" />
-                                Connecting to Google...
-                              </>
-                            ) : (
-                              <>
-                                <svg width="20" height="20" viewBox="0 0 18 18">
-                                  <path fill="#4285F4" d="m18 9.205c0-.639-.057-1.252-.164-1.841H9.167v3.481h4.948c-.212 1.116-.856 2.06-1.823 2.691v2.226h2.956C16.983 14.09 18 11.864 18 9.205z" />
-                                  <path fill="#34A853" d="M9.167 18c2.467 0 4.532-.82 6.044-2.238l-2.956-2.226c-.812.562-1.852.892-3.088.892-2.373 0-4.381-1.603-5.098-3.757h-3.04v2.297C2.252 15.312 5.454 18 9.167 18z" />
-                                  <path fill="#FBBC04" d="M4.069 10.671c-.185-.562-.29-1.161-.29-1.784s.105-1.222.29-1.784V4.806H1.029C.373 6.118 0 7.588 0 9.171s.373 3.053 1.029 4.365l3.04-2.865z" />
-                                  <path fill="#EA4335" d="M9.167 3.572c1.336 0 2.535.459 3.477 1.361l2.602-2.602C13.698.921 11.632 0 9.167 0 5.454 0 2.252 2.688 1.029 6.131l3.04 2.865c.717-2.154 2.725-3.757 5.098-3.757z" />
-                                </svg>
-                                Continue with Google
-                              </>
-                            )}
-                          </button>
-                        </div>
-
-                        <div className="d-flex align-items-center mb-4">
-                          <hr className="flex-grow-1 border-white/30" /><span className="px-3 text-gray-300">OR</span><hr className="flex-grow-1 border-white/30" />
-                        </div>
-
-                        {/* Login Form */}
-                        <form onSubmit={handleSubmit}>
-                          <p className='text-center fw-semibold text-white'>Please login to your account</p>
-
-                          {/* Email */}
-                          <div className="form-outline mb-3">
-                            <label className="form-label text-white">Email</label>
-                            <input
-                              type="email"
-                              name="email"
-                              className="form-control bg-white/10 border-white/20"
-                              style={{ color: 'white' }}
-                              placeholder="Email"
-                              value={formData.email}
-                              onChange={handleChange}
-                            />
-                          </div>
-
-                          {/* Password */}
-                          <div className="form-outline mb-3">
-                            <label className="form-label text-white">Password</label>
-                            <input
-                              type="password"
-                              name="password"
-                              className="form-control bg-white/10 border-white/20"
-                              style={{ color: 'white' }}
-                              placeholder="Password"
-                              value={formData.password}
-                              onChange={handleChange}
-                            />
-                          </div>
-
-                          {/* Feedback message */}
-                          {message && (
-                            <div className={`alert ${message.includes('failed') ? 'alert-danger' : 'alert-success'}`}>
-                              {message}
-                            </div>
-                          )}
-
-                          {/* Submit button */}
-                          <div className="text-end">
-                            <button
-                              className="btn btn-primary w-100"
-                              type="submit"
-                              disabled={isLoading}
-                            >
-                              {isLoading ? (
-                                <>
-                                  <span className="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
-                                  Logging in...
-                                </>
-                              ) : (
-                                'Log in'
-                              )}
-                            </button>
-                          </div>
-
-                          <div className="text-center mt-2">
-                            <a className="d-block text-cyan-400 hover:text-cyan-300" href="/forgot-password">Forgot password?</a>
-                          </div>
-
-                          {/* Link to register */}
-                          <div className="d-flex align-items-center justify-content-center pb-4 mt-3">
-                            <p className="mb-0 me-2 text-gray-300">Don't have an account?</p>
-                            <Link to="/register">
-                              <button type="button" className="btn btn-outline-light">Create new</button>
-                            </Link>
-                          </div>
-                        </form>
-                      </div>
-                    </div>
-
-                    <div className="col-lg-6 d-flex align-items-center gradient-custom-2" style={{ borderRadius: '0 .3rem .3rem 0' }}>
-                      <div className="text-white px-3 py-4 p-md-5 mx-md-4">
-                        <h4 className="mb-4">Your Smart Financial Partner</h4>
-                        <p className="small mb-0">
-                          Welcome to Smart Financial — your all-in-one accounting and ledger
-                          management platform. Track transactions, manage multiple businesses,
-                          and get AI-powered financial insights, all in one place. Log in to
-                          take control of your finances with confidence and clarity.
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-                </div>
+            {/* Error or Status Alert */}
+            {message && (
+              <div
+                className={`sf-al ${
+                  message.toLowerCase().includes('fail') ||
+                  message.toLowerCase().includes('error') ||
+                  message.toLowerCase().includes('invalid') ||
+                  message.toLowerCase().includes('please')
+                    ? 'err'
+                    : 'ok'
+                }`}
+                role="alert"
+              >
+                {message}
               </div>
+            )}
+
+            {/* Login Form */}
+            <form onSubmit={handleSubmit} noValidate>
+              <div className="sf-fd">
+                <label htmlFor="em">Email</label>
+                <input
+                  id="em"
+                  name="email"
+                  type="email"
+                  required
+                  placeholder="you@example.com"
+                  autoComplete="email"
+                  value={formData.email}
+                  onChange={handleChange}
+                  onFocus={() => setFocusedField('email')}
+                  onBlur={() => setFocusedField(null)}
+                  className={isEmailFilled && !isEmailValid ? 'invalid-input' : ''}
+                />
+                {isEmailFilled && !isEmailValid && (
+                  <p className="sf-hint" style={{ display: 'block' }}>
+                    Enter a valid email address.
+                  </p>
+                )}
+              </div>
+
+              <div className="sf-fd">
+                <label htmlFor="pw">Password</label>
+                <input
+                  id="pw"
+                  name="password"
+                  type="password"
+                  required
+                  placeholder="Your password"
+                  autoComplete="current-password"
+                  value={formData.password}
+                  onChange={handleChange}
+                  onFocus={() => setFocusedField('password')}
+                  onBlur={() => setFocusedField(null)}
+                />
+              </div>
+
+              {/* Form readiness and vault security percentage indicator */}
+              <div
+                style={{
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'center',
+                  fontSize: '13px',
+                  fontWeight: 600,
+                  marginBottom: '6px',
+                  marginTop: '10px',
+                }}
+              >
+                <span style={{ color: '#44544B' }}>Vault security check:</span>
+                <span style={{ color: completionPct === 100 ? '#0E1A14' : '#44544B' }}>
+                  {completionPct}% verified {completionPct === 100 ? '✓' : ''}
+                </span>
+              </div>
+              <div
+                style={{
+                  height: '6px',
+                  width: '100%',
+                  background: '#E5EBDF',
+                  borderRadius: '4px',
+                  overflow: 'hidden',
+                  border: '1.5px solid #0E1A14',
+                  marginBottom: '16px',
+                }}
+              >
+                <div
+                  style={{
+                    height: '100%',
+                    width: `${completionPct}%`,
+                    background: completionPct === 100 ? '#C8F135' : '#44544B',
+                    transition: 'width 0.3s ease-out, background 0.3s',
+                  }}
+                />
+              </div>
+
+              <button
+                type="submit"
+                className={`sf-btn ${isLoading ? 'busy' : 'lime'}`}
+                style={{ marginTop: '6px' }}
+                disabled={isLoading}
+              >
+                {isLoading ? (
+                  <>
+                    <span className="sf-sp"></span>
+                    Logging in...
+                  </>
+                ) : (
+                  'Log in'
+                )}
+              </button>
+            </form>
+
+            {/* Links */}
+            <div
+              style={{
+                display: 'flex',
+                justifyContent: 'space-between',
+                flexWrap: 'wrap',
+                gap: '12px',
+                marginTop: '22px',
+                fontSize: '16px',
+              }}
+            >
+              <Link to="/forgot-password" className="sf-lk">
+                Forgot password?
+              </Link>
+              <span>
+                New here?{' '}
+                <Link to="/register" className="sf-lk">
+                  Create an account
+                </Link>
+              </span>
             </div>
+
+            <p className="sf-muted" style={{ marginTop: '34px', fontSize: '14px' }}>
+              Your password is never stored as plain text. You stay logged in on this device for 24 hours.
+            </p>
           </div>
-        </section>
+        </main>
+
+        {/* Right Side: Interactive Vault Door Showcase */}
+        <aside className="sf-R">
+          <div
+            className="sf-stage"
+            role="img"
+            aria-label="A vault door. While you type, the dial turns. Once your email and password are filled in, the door unlatches, ready for you to press Log in."
+          >
+            {/* Vault interior with businesses */}
+            <div className="sf-inner">
+              <small>Your businesses</small>
+              <b>
+                nav shop
+                <br />
+                New shop 3
+                <br />
+                Animal food
+                <br />
+                Ai agency
+              </b>
+            </div>
+
+            {/* Vault door SVG */}
+            <svg
+              className="sf-door"
+              viewBox="0 0 500 500"
+              aria-hidden="true"
+              style={{
+                transform: isUnlatched ? 'rotateY(26deg)' : 'none',
+              }}
+            >
+              <circle cx="250" cy="250" r="250" fill="#0E1A14" stroke="#2C3F34" strokeWidth="2" />
+              <circle cx="250" cy="250" r="226" fill="none" stroke="#2C3F34" strokeWidth="6" />
+              <circle cx="250" cy="250" r="168" fill="none" stroke="#2C3F34" strokeWidth="6" />
+              <circle cx="447.0" cy="250.0" r="9" fill="#44544B" />
+              <circle cx="389.3" cy="389.3" r="9" fill="#44544B" />
+              <circle cx="250.0" cy="447.0" r="9" fill="#44544B" />
+              <circle cx="110.7" cy="389.3" r="9" fill="#44544B" />
+              <circle cx="53.0" cy="250.0" r="9" fill="#44544B" />
+              <circle cx="110.7" cy="110.7" r="9" fill="#44544B" />
+              <circle cx="250.0" cy="53.0" r="9" fill="#44544B" />
+              <circle cx="389.3" cy="110.7" r="9" fill="#44544B" />
+
+              {/* Turning Dial */}
+              <g
+                className="sf-dial"
+                style={{
+                  transform: `rotate(${dialRotation}deg)`,
+                  transformOrigin: '250px 250px',
+                }}
+              >
+                <circle cx="250" cy="250" r="100" fill="#C8F135" stroke="#0E1A14" strokeWidth="6" />
+                <line
+                  x1="330.0"
+                  y1="250.0"
+                  x2="340.0"
+                  y2="250.0"
+                  stroke="#0E1A14"
+                  strokeWidth="4"
+                  strokeLinecap="round"
+                />
+                <line
+                  x1="319.3"
+                  y1="290.0"
+                  x2="327.9"
+                  y2="295.0"
+                  stroke="#0E1A14"
+                  strokeWidth="4"
+                  strokeLinecap="round"
+                />
+                <line
+                  x1="290.0"
+                  y1="319.3"
+                  x2="295.0"
+                  y2="327.9"
+                  stroke="#0E1A14"
+                  strokeWidth="4"
+                  strokeLinecap="round"
+                />
+                <line
+                  x1="250.0"
+                  y1="330.0"
+                  x2="250.0"
+                  y2="340.0"
+                  stroke="#0E1A14"
+                  strokeWidth="4"
+                  strokeLinecap="round"
+                />
+                <line
+                  x1="210.0"
+                  y1="319.3"
+                  x2="205.0"
+                  y2="327.9"
+                  stroke="#0E1A14"
+                  strokeWidth="4"
+                  strokeLinecap="round"
+                />
+                <line
+                  x1="180.7"
+                  y1="290.0"
+                  x2="172.1"
+                  y2="295.0"
+                  stroke="#0E1A14"
+                  strokeWidth="4"
+                  strokeLinecap="round"
+                />
+                <line
+                  x1="170.0"
+                  y1="250.0"
+                  x2="160.0"
+                  y2="250.0"
+                  stroke="#0E1A14"
+                  strokeWidth="4"
+                  strokeLinecap="round"
+                />
+                <line
+                  x1="180.7"
+                  y1="210.0"
+                  x2="172.1"
+                  y2="205.0"
+                  stroke="#0E1A14"
+                  strokeWidth="4"
+                  strokeLinecap="round"
+                />
+                <line
+                  x1="210.0"
+                  y1="180.7"
+                  x2="205.0"
+                  y2="172.1"
+                  stroke="#0E1A14"
+                  strokeWidth="4"
+                  strokeLinecap="round"
+                />
+                <line
+                  x1="250.0"
+                  y1="170.0"
+                  x2="250.0"
+                  y2="160.0"
+                  stroke="#0E1A14"
+                  strokeWidth="4"
+                  strokeLinecap="round"
+                />
+                <line
+                  x1="290.0"
+                  y1="180.7"
+                  x2="295.0"
+                  y2="172.1"
+                  stroke="#0E1A14"
+                  strokeWidth="4"
+                  strokeLinecap="round"
+                />
+                <line
+                  x1="319.3"
+                  y1="210.0"
+                  x2="327.9"
+                  y2="205.0"
+                  stroke="#0E1A14"
+                  strokeWidth="4"
+                  strokeLinecap="round"
+                />
+                <line
+                  x1="250"
+                  y1="250"
+                  x2="250.0"
+                  y2="316.0"
+                  stroke="#0E1A14"
+                  strokeWidth="12"
+                  strokeLinecap="round"
+                />
+                <line
+                  x1="250"
+                  y1="250"
+                  x2="192.8"
+                  y2="217.0"
+                  stroke="#0E1A14"
+                  strokeWidth="12"
+                  strokeLinecap="round"
+                />
+                <line
+                  x1="250"
+                  y1="250"
+                  x2="307.2"
+                  y2="217.0"
+                  stroke="#0E1A14"
+                  strokeWidth="12"
+                  strokeLinecap="round"
+                />
+                <circle cx="250" cy="250" r="16" fill="#0E1A14" />
+              </g>
+              <path d="M250 148l-11-24h22z" fill="#F2F5EE" />
+            </svg>
+          </div>
+
+          {/* Dynamic Status Text */}
+          <p
+            style={{
+              marginTop: '22px',
+              fontWeight: 600,
+              fontSize: '16px',
+              color: '#C8F135',
+              minHeight: '24px',
+            }}
+          >
+            {isUnlatched ? (
+              <span className="sf-c2">Unlatched. Press Log in to open.</span>
+            ) : (
+              <span className="sf-c1">Sealed. Log in to open your vaults.</span>
+            )}
+          </p>
+
+          {/* Value Propositions */}
+          <div className="sf-vp">
+            <p>Track every transaction in double-entry books.</p>
+            <p>Manage multiple businesses with one login.</p>
+            <p style={{ borderBottom: '1px solid #2C3F34' }}>
+              Ask your books questions and get AI-powered insights.
+            </p>
+          </div>
+        </aside>
       </div>
+
+      {/* Scoped Brutalist Styling Matching Stitch */}
+      <style>{`
+        .sf-login-page {
+          background: #F2F5EE;
+          font-family: 'Instrument Sans', system-ui, sans-serif;
+          color: #0E1A14;
+          min-height: 100vh;
+          width: 100%;
+          -webkit-font-smoothing: antialiased;
+        }
+
+        .sf-login-page h1,
+        .sf-login-page h2 {
+          font-family: 'Bricolage Grotesque', system-ui, sans-serif;
+          margin: 0;
+          letter-spacing: -0.04em;
+          line-height: .98;
+          font-weight: 800;
+        }
+
+        .sf-login-page p {
+          margin: 0;
+          line-height: 1.5;
+        }
+
+        .sf-login-page a {
+          color: inherit;
+          text-decoration: none;
+        }
+
+        .sf-login-page a:focus-visible,
+        .sf-login-page input:focus-visible,
+        .sf-login-page button:focus-visible {
+          outline: 3px solid #0E1A14;
+          outline-offset: 3px;
+        }
+
+        .sf-muted {
+          color: #44544B;
+        }
+
+        .sf-split {
+          display: flex;
+          flex-wrap: wrap;
+          min-height: 860px;
+        }
+
+        .sf-L {
+          flex: 1 1 560px;
+          display: flex;
+          flex-direction: column;
+          justify-content: center;
+          padding: 48px 64px;
+          box-sizing: border-box;
+        }
+
+        .sf-R {
+          flex: 1 1 560px;
+          background: #0E1A14;
+          color: #F2F5EE;
+          display: flex;
+          flex-direction: column;
+          justify-content: center;
+          align-items: center;
+          padding: 48px;
+          box-sizing: border-box;
+          position: relative;
+        }
+
+        .sf-fw {
+          width: 100%;
+          max-width: 440px;
+          margin: 0 auto;
+        }
+
+        .sf-logo {
+          display: inline-flex;
+          align-items: center;
+          gap: 10px;
+          font-family: 'Bricolage Grotesque', sans-serif;
+          font-weight: 800;
+          font-size: 24px;
+          letter-spacing: -0.04em;
+          color: #0E1A14;
+        }
+
+        .sf-logo small {
+          display: block;
+          font-family: 'Instrument Sans', sans-serif;
+          font-size: 12px;
+          font-weight: 500;
+          letter-spacing: 0;
+          color: #44544B;
+          margin-top: 1px;
+        }
+
+        .sf-btn {
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          gap: 12px;
+          width: 100%;
+          min-height: 54px;
+          padding: 0 24px;
+          border-radius: 6px;
+          font-weight: 600;
+          font-size: 17px;
+          border: 2px solid #0E1A14;
+          cursor: pointer;
+          font-family: inherit;
+          text-decoration: none;
+          box-sizing: border-box;
+          transition: transform .15s ease-out, background .15s;
+          user-select: none;
+        }
+
+        .sf-btn:hover:not(:disabled) {
+          transform: translateY(-2px);
+        }
+
+        .sf-btn.lime {
+          background: #C8F135;
+          color: #0E1A14;
+        }
+
+        .sf-btn.sf-out {
+          background: #fff;
+          color: #0E1A14;
+        }
+
+        .sf-btn.sf-out:hover:not(:disabled) {
+          background: #E4EBDC;
+        }
+
+        .sf-btn.busy {
+          background: #E5EBDF;
+          cursor: progress;
+          transform: none;
+          color: #0E1A14;
+        }
+
+        .sf-dv {
+          display: flex;
+          align-items: center;
+          gap: 14px;
+          margin: 22px 0;
+          font-size: 14px;
+          font-weight: 600;
+          color: #44544B;
+        }
+
+        .sf-dv::before,
+        .sf-dv::after {
+          content: "";
+          flex: 1;
+          border-top: 1px solid #B8C4B1;
+        }
+
+        .sf-fd {
+          margin-bottom: 18px;
+        }
+
+        .sf-fd label {
+          display: block;
+          font-weight: 600;
+          font-size: 15px;
+          margin-bottom: 7px;
+          color: #0E1A14;
+        }
+
+        .sf-fd input {
+          width: 100%;
+          box-sizing: border-box;
+          min-height: 54px;
+          padding: 0 16px;
+          font-size: 17px;
+          font-family: inherit;
+          border: 2px solid #0E1A14;
+          border-radius: 6px;
+          background: #fff;
+          color: #0E1A14;
+          transition: background .15s, border-color .15s;
+        }
+
+        .sf-fd input:focus {
+          background: #FBFFE6;
+        }
+
+        .sf-fd input.invalid-input {
+          border-style: dashed;
+          background: #FBEBD0;
+        }
+
+        .sf-hint {
+          margin-top: 7px;
+          font-size: 14px;
+          font-weight: 600;
+          padding: 6px 10px;
+          background: #F2B66B;
+          border: 2px solid #0E1A14;
+          border-radius: 4px;
+          color: #0E1A14;
+        }
+
+        .sf-al {
+          padding: 14px 16px;
+          border: 2px solid #0E1A14;
+          border-radius: 6px;
+          font-weight: 600;
+          font-size: 16px;
+          margin-bottom: 18px;
+          color: #0E1A14;
+        }
+
+        .sf-al.err {
+          background: #F2B66B;
+        }
+
+        .sf-al.ok {
+          background: #C8F135;
+        }
+
+        .sf-lk {
+          font-weight: 600;
+          border-bottom: 2px solid #0E1A14;
+          color: #0E1A14;
+          padding-bottom: 1px;
+          transition: background .15s;
+        }
+
+        .sf-lk:hover {
+          background: #C8F135;
+        }
+
+        .sf-sp {
+          display: inline-block;
+          width: 18px;
+          height: 18px;
+          border: 3px solid #0E1A14;
+          border-top-color: transparent;
+          border-radius: 50%;
+          animation: sf-spin .8s linear infinite;
+        }
+
+        @keyframes sf-spin {
+          to { transform: rotate(360deg); }
+        }
+
+        /* Vault Stage */
+        .sf-stage {
+          position: relative;
+          width: 340px;
+          max-width: 100%;
+          aspect-ratio: 1;
+          perspective: 1300px;
+        }
+
+        .sf-inner {
+          position: absolute;
+          inset: 0;
+          border-radius: 50%;
+          border: 12px solid #2C3F34;
+          background: #E4EBDC;
+          color: #0E1A14;
+          box-sizing: border-box;
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          justify-content: center;
+          gap: 4px;
+          text-align: center;
+        }
+
+        .sf-inner small {
+          font-size: 13px;
+          font-weight: 600;
+          color: #44544B;
+        }
+
+        .sf-inner b {
+          font-family: 'Bricolage Grotesque', sans-serif;
+          font-weight: 800;
+          font-size: 22px;
+          letter-spacing: -0.03em;
+          line-height: 1.25;
+        }
+
+        .sf-door {
+          position: absolute;
+          inset: 0;
+          width: 100%;
+          height: 100%;
+          transform-origin: left center;
+          transition: transform .6s cubic-bezier(.4,0,.2,1);
+        }
+
+        .sf-dial {
+          transform-origin: 250px 250px;
+          transition: transform .5s cubic-bezier(.4,0,.2,1);
+        }
+
+        .sf-vp {
+          margin-top: 38px;
+          max-width: 420px;
+          width: 100%;
+        }
+
+        .sf-vp p {
+          padding: 12px 0;
+          border-top: 1px solid #2C3F34;
+          font-size: 17px;
+          color: #F2F5EE;
+        }
+
+        @media (max-width: 900px) {
+          .sf-L, .sf-R {
+            padding: 32px 24px;
+          }
+          .sf-tt {
+            font-size: 44px !important;
+          }
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+          .sf-login-page * {
+            animation: none !important;
+            transition: none !important;
+          }
+        }
+      
+        .sf-nav-logo-img {
+          height: 48px;
+          width: auto;
+          max-width: 200px;
+          object-fit: contain;
+          display: block;
+          transition: transform .15s ease;
+        }
+        .sf-logo:hover .sf-nav-logo-img {
+          transform: scale(1.02);
+        }
+      `}</style>
     </div>
   );
 }

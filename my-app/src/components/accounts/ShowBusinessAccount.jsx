@@ -7,9 +7,9 @@ import {
   Wallet,
   PiggyBank,
   CreditCard,
-  DollarSign,
+  Landmark,
   TrendingUp,
-  CircleDollarSign
+  Coins
 } from 'lucide-react';
 
 const ShowBusinessAccount = () => {
@@ -120,10 +120,10 @@ const ShowBusinessAccount = () => {
     const t = typeName.toLowerCase();
     if (t.includes('asset')) return <Wallet className="w-5 h-5" />;
     if (t.includes('liabilit')) return <CreditCard className="w-5 h-5" />;
-    if (t.includes('equity')) return <CircleDollarSign className="w-5 h-5" />;
+    if (t.includes('equity')) return <Coins className="w-5 h-5" />;
     if (t.includes('income')) return <TrendingUp className="w-5 h-5" />;
     if (t.includes('expens')) return <PiggyBank className="w-5 h-5" />;
-    return <DollarSign className="w-5 h-5" />;
+    return <Landmark className="w-5 h-5" />;
   };
 
   const accountTypeFilters = [
@@ -265,7 +265,7 @@ const ShowBusinessAccount = () => {
                 margin: '0 auto 20px'
               }}
             >
-              <DollarSign className="w-8 h-8 text-brand-lime" />
+              <Landmark className="w-8 h-8 text-brand-lime" />
             </div>
             <h3 style={{ fontFamily: "'Bricolage Grotesque', sans-serif", fontSize: '28px', fontWeight: 800, marginBottom: '8px' }}>
               {searchTerm || selectedFilter !== 'all' ? 'No ledgers found' : 'No ledgers yet'}

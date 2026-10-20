@@ -406,8 +406,8 @@ export default function TransectionForm() {
             {/* Header Columns */}
             <div className="sf-r3 sf-hd3">
               <span>Ledger name</span>
-              <span style={{ textAlign: "right" }}>Debit ($)</span>
-              <span style={{ textAlign: "right" }}>Credit ($)</span>
+              <span style={{ textAlign: "right" }}>Debit (PKR)</span>
+              <span style={{ textAlign: "right" }}>Credit (PKR)</span>
               <span></span>
             </div>
 

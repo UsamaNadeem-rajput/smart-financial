@@ -190,8 +190,8 @@ const LedgerBalancing = () => {
                       <tr>
                         <th scope="col">Ledger</th>
                         <th scope="col">Type</th>
-                        <th scope="col" className="n">Debits ($)</th>
-                        <th scope="col" className="n">Credits ($)</th>
+                        <th scope="col" className="n">Debits (PKR)</th>
+                        <th scope="col" className="n">Credits (PKR)</th>
                         <th scope="col" className="n">Closing</th>
                       </tr>
                     </thead>
@@ -445,14 +445,14 @@ const LedgerBalancing = () => {
                             <th scope="col">Date</th>
                             <th scope="col">Particulars</th>
                             <th scope="col" className="n">
-                              Amount ($)
+                              Amount (PKR)
                             </th>
                             <th scope="col" className="bl">
                               Date
                             </th>
                             <th scope="col">Particulars</th>
                             <th scope="col" className="n">
-                              Amount ($)
+                              Amount (PKR)
                             </th>
                           </tr>
                         </thead>
