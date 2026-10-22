@@ -4,10 +4,18 @@ import axios from 'axios';
 import PageLoader from '../common/PageLoader';
 
 const PrivateRoute = ({ children }) => {
-  // Synchronously initialize auth state from localStorage to prevent loading flash
+  // Synchronously check URL param (e.g. from Google OAuth) or localStorage
   const [authenticated, setAuthenticated] = useState(() => {
     try {
-      return Boolean(localStorage.getItem('username') || localStorage.getItem('user'));
+      const params = new URLSearchParams(window.location.search);
+      const urlUser = params.get('username');
+      if (urlUser) {
+        localStorage.setItem('username', urlUser);
+        return true;
+      }
+      const hasLocalUser = Boolean(localStorage.getItem('username') || localStorage.getItem('user'));
+      // If we have cached local auth, start as true (no flash). If not, wait for session check (null).
+      return hasLocalUser ? true : null;
     } catch {
       return null;
     }

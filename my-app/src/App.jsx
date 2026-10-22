@@ -70,7 +70,7 @@ function App() {
   return (
     <BusinessProvider>
       <Router>
-        <div className="min-h-screen bg-gray-50">
+        <div className="min-h-screen bg-[#F2F5EE]">
           <Suspense fallback={<PageLoader />}>
             <Routes>
               {/* Eagerly Loaded Public & Auth Pages (Zero Loading, Instant) */}

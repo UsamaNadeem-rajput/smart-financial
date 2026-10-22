@@ -765,12 +765,6 @@ const IncomeReport = () => {
             </Link>{' '}
             / Income statement
           </p>
-          <button
-            onClick={() => navigate(-1)}
-            className="sf-is-back-btn"
-          >
-            ← Back to Reports
-          </button>
         </div>
 
         {/* Title and Subtitle */}

@@ -206,42 +206,6 @@ export default function TrialBalance() {
             </Link>{' '}
             / Trial balance
           </p>
-          <div style={{ display: 'flex', gap: '16px', alignItems: 'center' }}>
-            <button
-              type="button"
-              onClick={() => window.print()}
-              style={{
-                background: 'none',
-                border: 'none',
-                borderBottom: '2px solid #0E1A14',
-                color: '#0E1A14',
-                fontFamily: 'inherit',
-                fontWeight: 600,
-                fontSize: '15px',
-                cursor: 'pointer',
-                padding: '0 0 2px 0',
-              }}
-            >
-              Print statement
-            </button>
-            <button
-              type="button"
-              onClick={() => navigate(-1)}
-              style={{
-                background: 'none',
-                border: 'none',
-                borderBottom: '2px solid #0E1A14',
-                color: '#0E1A14',
-                fontFamily: 'inherit',
-                fontWeight: 600,
-                fontSize: '15px',
-                cursor: 'pointer',
-                padding: '0 0 2px 0',
-              }}
-            >
-              ← Back to Reports
-            </button>
-          </div>
         </div>
 
         {/* Page Title & Mission */}

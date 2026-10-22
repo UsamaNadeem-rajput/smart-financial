@@ -33,9 +33,45 @@ async function checkEmailVerificationLimit(rawEmail) {
   if (!rawEmail) return { allowed: true, remaining: MAX_VERIFICATION_PER_24H };
 
   const email = rawEmail.toLowerCase().trim();
-  const validTimestamps = cleanupExpiredTimestamps(email);
 
-  // Check in-memory store first
+  // 1. Check in database first
+  try {
+    // Clean up expired records older than 24 hours
+    pool.query(`DELETE FROM verification_code_requests WHERE first_requested_at < NOW() - INTERVAL 24 HOUR`).catch(() => {});
+
+    const [rows] = await pool.query(
+      `SELECT request_count, first_requested_at FROM verification_code_requests WHERE LOWER(email) = ?`,
+      [email]
+    );
+
+    if (rows && rows.length > 0) {
+      const { request_count, first_requested_at } = rows[0];
+      const firstTime = new Date(first_requested_at).getTime();
+      const elapsed = Date.now() - firstTime;
+
+      // If still within 24 hours and count >= 3, enforce limit
+      if (elapsed < ONE_DAY_MS && request_count >= MAX_VERIFICATION_PER_24H) {
+        const resetTime = firstTime + ONE_DAY_MS;
+        const hoursRemaining = Math.max(1, Math.ceil((resetTime - Date.now()) / (60 * 60 * 1000)));
+        return {
+          allowed: false,
+          remaining: 0,
+          hoursRemaining,
+          resetTime
+        };
+      }
+
+      return {
+        allowed: true,
+        remaining: Math.max(0, MAX_VERIFICATION_PER_24H - (elapsed < ONE_DAY_MS ? request_count : 0))
+      };
+    }
+  } catch (dbErr) {
+    console.warn('⚠️ Rate limiter DB check warning:', dbErr.message);
+  }
+
+  // 2. Fallback to in-memory sliding window
+  const validTimestamps = cleanupExpiredTimestamps(email);
   if (validTimestamps.length >= MAX_VERIFICATION_PER_24H) {
     const oldest = validTimestamps[0];
     const resetTime = oldest + ONE_DAY_MS;
@@ -49,31 +85,6 @@ async function checkEmailVerificationLimit(rawEmail) {
     };
   }
 
-  // Also query MySQL if database is connected
-  try {
-    const [rows] = await pool.query(
-      `SELECT COUNT(*) as count, MIN(requested_at) as oldest FROM (
-         SELECT requested_at FROM verification_code_requests 
-         WHERE email = ? AND requested_at > NOW() - INTERVAL 24 HOUR
-       ) as recent`,
-      [email]
-    );
-
-    if (rows && rows[0] && rows[0].count >= MAX_VERIFICATION_PER_24H) {
-      const dbOldest = new Date(rows[0].oldest).getTime();
-      const resetTime = dbOldest + ONE_DAY_MS;
-      const hoursRemaining = Math.max(1, Math.ceil((resetTime - Date.now()) / (60 * 60 * 1000)));
-      return {
-        allowed: false,
-        remaining: 0,
-        hoursRemaining,
-        resetTime
-      };
-    }
-  } catch (dbErr) {
-    // If table doesn't exist yet, gracefully fall back to in-memory tracking
-  }
-
   return {
     allowed: true,
     remaining: MAX_VERIFICATION_PER_24H - validTimestamps.length
@@ -81,7 +92,7 @@ async function checkEmailVerificationLimit(rawEmail) {
 }
 
 /**
- * Record a verification code request for an email
+ * Record a verification code request for an email (increments request_count up to 3)
  */
 async function recordEmailVerificationAttempt(rawEmail) {
   if (!rawEmail) return;
@@ -92,32 +103,22 @@ async function recordEmailVerificationAttempt(rawEmail) {
   current.push(now);
   emailVerificationTimestamps.set(email, current);
 
-  // Also record in database if table is available
+  // Record in database: increments count if within 24h, or resets if 24h elapsed
   try {
     await pool.query(
-      `INSERT INTO verification_code_requests (email, requested_at) VALUES (?, NOW())`,
+      `INSERT INTO verification_code_requests (email, request_count, first_requested_at, last_requested_at)
+       VALUES (?, 1, NOW(), NOW())
+       ON DUPLICATE KEY UPDATE
+         request_count = IF(first_requested_at < NOW() - INTERVAL 24 HOUR, 1, request_count + 1),
+         first_requested_at = IF(first_requested_at < NOW() - INTERVAL 24 HOUR, NOW(), first_requested_at),
+         last_requested_at = NOW()`,
       [email]
     );
+
+    // Automatically prune records older than 24 hours
+    pool.query(`DELETE FROM verification_code_requests WHERE first_requested_at < NOW() - INTERVAL 24 HOUR`).catch(() => {});
   } catch (dbErr) {
-    // Attempt to auto-create table if missing
-    if (dbErr.code === 'ER_NO_SUCH_TABLE') {
-      try {
-        await pool.query(`
-          CREATE TABLE IF NOT EXISTS verification_code_requests (
-            id INT AUTO_INCREMENT PRIMARY KEY,
-            email VARCHAR(255) NOT NULL,
-            requested_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-            INDEX idx_email_time (email, requested_at)
-          )
-        `);
-        await pool.query(
-          `INSERT INTO verification_code_requests (email, requested_at) VALUES (?, NOW())`,
-          [email]
-        );
-      } catch (createErr) {
-        // Table creation fallback handled silently
-      }
-    }
+    console.warn('⚠️ Could not record verification attempt in DB:', dbErr.message);
   }
 }
 

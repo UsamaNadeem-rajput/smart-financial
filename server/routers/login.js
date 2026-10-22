@@ -21,14 +21,42 @@ router.post('/', async (req, res) => {
       'SELECT * FROM users WHERE LOWER(email) = LOWER(?) OR LOWER(username) = LOWER(?)',
       [cleanIdentifier, cleanIdentifier]
     );
-    conn.release();
-
     if (rows.length === 0) {
+      // Check if this account is pending verification in pending_registrations
+      try {
+        const [pendingRows] = await conn.query(
+          'SELECT email FROM pending_registrations WHERE LOWER(email) = LOWER(?) OR LOWER(username) = LOWER(?)',
+          [cleanIdentifier, cleanIdentifier]
+        );
+        if (pendingRows.length > 0) {
+          conn.release();
+          return res.status(403).json({
+            error: 'Your email is not verified yet. Please verify your email first.',
+            unverified: true,
+            email: pendingRows[0].email
+          });
+        }
+      } catch (checkErr) {
+        // Table might not exist yet if no pending registrations, ignore
+      }
+
+      conn.release();
       console.log('❌ User not found:', cleanIdentifier);
       return res.status(401).json({ error: 'Invalid credentials' });
     }
 
     const user = rows[0];
+    conn.release();
+
+    // Reject unverified legacy accounts
+    if (user.is_verified != 1) {
+      return res.status(403).json({
+        error: 'Please verify your email address before logging in.',
+        unverified: true,
+        email: user.email
+      });
+    }
+
     const match = await bcrypt.compare(password, user.password_hash);
     if (!match) {
       console.log('❌ Password mismatch for:', cleanIdentifier);

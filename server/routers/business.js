@@ -63,6 +63,17 @@ router.post("/", upload.single("logo"), async (req, res) => {
       .json({ error: "Required fields missing or invalid" });
   }
 
+  // Strict plan sanitization:
+  // Free plan permits: businessName, businessType, industry, ntn, and logo.
+  // Address, city, country, phone are strictly null on Free plan, preventing client-side inspection bypass.
+  const isPremium = plan === "premium";
+  const cleanIndustry = industry ? String(industry).trim() : null;
+  const cleanNtn = ntn ? String(ntn).trim() : null;
+  const cleanAddress = isPremium && address ? String(address).trim() : null;
+  const cleanCity = isPremium && city ? String(city).trim() : null;
+  const cleanCountry = isPremium && country ? String(country).trim() : null;
+  const cleanPhone = isPremium && phone ? String(phone).trim() : null;
+
   try {
     const conn = await pool.getConnection();
 
@@ -75,14 +86,14 @@ router.post("/", upload.single("logo"), async (req, res) => {
     await conn.query(sql, [
       username,
       plan,
-      businessName,
-      plan === "premium" ? industry : null,
+      businessName.trim(),
+      cleanIndustry,
       businessType,
-      plan === "premium" ? ntn : null,
-      plan === "premium" ? address : null,
-      plan === "premium" ? city : null,
-      plan === "premium" ? country : null,
-      plan === "premium" ? phone : null,
+      cleanNtn,
+      cleanAddress,
+      cleanCity,
+      cleanCountry,
+      cleanPhone,
       logoUrl,
     ]);
 
@@ -97,7 +108,6 @@ router.post("/", upload.single("logo"), async (req, res) => {
 
 
 
-// ========================= UPDATE BUSINESS =========================
 // ========================= UPDATE BUSINESS =========================
 router.put("/:id", upload.single("logo"), async (req, res) => {
   const { id } = req.params;
@@ -120,6 +130,29 @@ router.put("/:id", upload.single("logo"), async (req, res) => {
     return res.status(401).json({ error: "Unauthorized: No active session" });
   }
 
+  // Basic validation
+  if (
+    !plan ||
+    !businessName ||
+    !businessType ||
+    (plan !== "free" && plan !== "premium")
+  ) {
+    return res
+      .status(400)
+      .json({ error: "Required fields missing or invalid" });
+  }
+
+  // Strict plan sanitization:
+  // Free plan permits: businessName, businessType, industry, ntn, and logo.
+  // Address, city, country, phone are strictly null on Free plan.
+  const isPremium = plan === "premium";
+  const cleanIndustry = industry ? String(industry).trim() : null;
+  const cleanNtn = ntn ? String(ntn).trim() : null;
+  const cleanAddress = isPremium && address ? String(address).trim() : null;
+  const cleanCity = isPremium && city ? String(city).trim() : null;
+  const cleanCountry = isPremium && country ? String(country).trim() : null;
+  const cleanPhone = isPremium && phone ? String(phone).trim() : null;
+
   try {
     const conn = await pool.getConnection();
 
@@ -135,14 +168,14 @@ router.put("/:id", upload.single("logo"), async (req, res) => {
       `;
       params = [
         plan,
-        businessName,
-        plan === "premium" ? industry : null,
+        businessName.trim(),
+        cleanIndustry,
         businessType,
-        plan === "premium" ? ntn : null,
-        plan === "premium" ? address : null,
-        plan === "premium" ? city : null,
-        plan === "premium" ? country : null,
-        plan === "premium" ? phone : null,
+        cleanNtn,
+        cleanAddress,
+        cleanCity,
+        cleanCountry,
+        cleanPhone,
         newLogoUrl,
         id,
         username,
@@ -156,14 +189,14 @@ router.put("/:id", upload.single("logo"), async (req, res) => {
       `;
       params = [
         plan,
-        businessName,
-        plan === "premium" ? industry : null,
+        businessName.trim(),
+        cleanIndustry,
         businessType,
-        plan === "premium" ? ntn : null,
-        plan === "premium" ? address : null,
-        plan === "premium" ? city : null,
-        plan === "premium" ? country : null,
-        plan === "premium" ? phone : null,
+        cleanNtn,
+        cleanAddress,
+        cleanCity,
+        cleanCountry,
+        cleanPhone,
         id,
         username,
       ];

@@ -120,19 +120,17 @@ const LedgerBalancing = () => {
         {' / '}
         <span className="text-brand-ink font-medium">Ledger balancing</span>
       </p>
-      <button
-        type="button"
-        className="sf-lb-lk font-semibold text-sm"
-        onClick={() => {
-          if (!isAll) {
+      {!isAll && (
+        <button
+          type="button"
+          className="sf-lb-lk font-semibold text-sm"
+          onClick={() => {
             navigate('/ledger-balancing', { state: { selectedLedger: 'all' } });
-          } else {
-            navigate(-1);
-          }
-        }}
-      >
-        {!isAll ? '← View All Ledgers' : '← Back to Reports'}
-      </button>
+          }}
+        >
+          ← View All Ledgers
+        </button>
+      )}
     </div>
   ), [navigate, isAll]);
 

@@ -156,9 +156,9 @@ const ShowBusinessAccount = () => {
 
   if (isLoading) {
     return (
-      <div style={{ minHeight: '100vh', background: '#F2F5EE' }}>
+      <div style={{ minHeight: '100vh', height: '100%', background: '#F2F5EE', display: 'flex', flexDirection: 'column' }}>
         <Navbar />
-        <div className="sf-wrap" style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '60vh' }}>
+        <div className="sf-wrap" style={{ flex: 1, display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '60vh' }}>
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-brand-ink"></div>
         </div>
       </div>
@@ -169,16 +169,28 @@ const ShowBusinessAccount = () => {
     <div
       style={{
         minHeight: '100vh',
+        height: '100%',
         background: '#F2F5EE',
         color: '#0E1A14',
         fontFamily: "'Instrument Sans', system-ui, -apple-system, sans-serif",
         fontVariantNumeric: 'tabular-nums',
-        WebkitFontSmoothing: 'antialiased'
+        WebkitFontSmoothing: 'antialiased',
+        display: 'flex',
+        flexDirection: 'column'
       }}
     >
       <Navbar />
 
-      <main className="sf-wrap sf-coa-wrap">
+      <main
+        className="sf-wrap sf-coa-wrap"
+        style={{
+          flex: '1 0 auto',
+          width: '100%',
+          paddingTop: '40px',
+          paddingBottom: '90px',
+          boxSizing: 'border-box'
+        }}
+      >
         {/* Title & Action Header */}
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', flexWrap: 'wrap', gap: '24px' }}>
           <div>
@@ -249,7 +261,7 @@ const ShowBusinessAccount = () => {
               border: '2px solid #0E1A14',
               borderRadius: '6px',
               maxWidth: '600px',
-              margin: '48px auto',
+              margin: '48px auto 0',
               boxShadow: '4px 4px 0 #0E1A14'
             }}
           >

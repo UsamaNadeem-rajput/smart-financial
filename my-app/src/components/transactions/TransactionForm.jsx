@@ -445,7 +445,7 @@ export default function TransectionForm() {
                         >
                           <span>{s.account_name}</span>
                           <b>
-                            ${Number(s.balance || 0).toLocaleString("en-US", {
+                            PKR {Number(s.balance || 0).toLocaleString("en-US", {
                               minimumFractionDigits: 2,
                               maximumFractionDigits: 2,
                             })}{" "}
@@ -528,14 +528,14 @@ export default function TransectionForm() {
             <div className="sf-tots">
               <div>
                 <span className="sf-lb">Debit total</span>
-                <span className="sf-tn">${formatNumberWithCommas(debitTotal.toFixed(2))}</span>
+                <span className="sf-tn">PKR {formatNumberWithCommas(debitTotal.toFixed(2))}</span>
                 <div className="sf-trk">
                   <i style={{ width: `${debitRatio}%` }}></i>
                 </div>
               </div>
               <div>
                 <span className="sf-lb">Credit total</span>
-                <span className="sf-tn">${formatNumberWithCommas(creditTotal.toFixed(2))}</span>
+                <span className="sf-tn">PKR {formatNumberWithCommas(creditTotal.toFixed(2))}</span>
                 <div className="sf-trk">
                   <i className={isBalanced ? "ok" : "wr"} style={{ width: `${creditRatio}%` }}></i>
                 </div>
@@ -549,11 +549,11 @@ export default function TransectionForm() {
               </p>
             ) : isBalanced ? (
               <p className="sf-st sf-ok" role="status">
-                ✓ Balanced. Debits equal credits (${formatNumberWithCommas(debitTotal.toFixed(2))}), so you can save.
+                ✓ Balanced. Debits equal credits (PKR {formatNumberWithCommas(debitTotal.toFixed(2))}), so you can save.
               </p>
             ) : (
               <p className="sf-st sf-bad" role="status">
-                ⚠ Unbalanced. Difference: ${formatNumberWithCommas(Math.abs(debitTotal - creditTotal).toFixed(2))} (
+                ⚠ Unbalanced. Difference: PKR {formatNumberWithCommas(Math.abs(debitTotal - creditTotal).toFixed(2))} (
                 {debitTotal > creditTotal ? "Debits exceed Credits" : "Credits exceed Debits"}).
               </p>
             )}
@@ -673,7 +673,7 @@ export default function TransectionForm() {
                 <dl>
                   <div>
                     <dt>Total amount</dt>
-                    <dd>${formatNumberWithCommas(Number(successData.debitTotal).toFixed(2))}</dd>
+                    <dd>PKR {formatNumberWithCommas(Number(successData.debitTotal).toFixed(2))}</dd>
                   </div>
                   <div>
                     <dt>Entries</dt>

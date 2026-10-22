@@ -22,9 +22,7 @@ export default function VerifyPage() {
   const queryEmail = new URLSearchParams(location.search).get('email') || '';
   const storedEmail = typeof window !== 'undefined' ? (sessionStorage.getItem('pending_verify_email') || localStorage.getItem('pending_verify_email') || '') : '';
   const initialEmail = (location.state?.email || queryEmail || storedEmail || '').trim();
-  const [email, setEmail] = useState(initialEmail);
-  const [isEditingEmail, setIsEditingEmail] = useState(!initialEmail);
-  const [newEmailInput, setNewEmailInput] = useState(initialEmail);
+  const [email] = useState(initialEmail);
 
   // Persist email in sessionStorage if available
   useEffect(() => {
@@ -141,6 +139,9 @@ export default function VerifyPage() {
 
       setIsSuccess(true);
       setMessage(res.data.message || 'Account verified successfully!');
+      if (res.data?.username) {
+        localStorage.setItem('username', res.data.username);
+      }
       if (typeof window !== 'undefined') {
         sessionStorage.removeItem('pending_verify_email');
       }
@@ -207,15 +208,6 @@ export default function VerifyPage() {
     }
   };
 
-  const handleSaveEmail = () => {
-    const trimmed = newEmailInput.trim();
-    if (trimmed) {
-      setEmail(trimmed);
-      sessionStorage.setItem('pending_verify_email', trimmed);
-      setIsEditingEmail(false);
-      setMessage('');
-    }
-  };
 
   return (
     <div className="sf-verify-page font-sans">
@@ -289,99 +281,43 @@ export default function VerifyPage() {
                 boxShadow: '2px 2px 0 #0E1A14',
                 display: 'flex',
                 alignItems: 'center',
-                justifyContent: 'space-between',
                 gap: '10px',
                 boxSizing: 'border-box',
                 width: '100%'
               }}
             >
-              <div style={{ display: 'flex', alignItems: 'center', gap: '10px', minWidth: 0 }}>
+              <div
+                style={{
+                  width: '34px',
+                  height: '34px',
+                  borderRadius: '6px',
+                  background: '#C8F135',
+                  border: '1.5px solid #0E1A14',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  flexShrink: 0
+                }}
+              >
+                <Mail size={16} color="#0E1A14" />
+              </div>
+              <div style={{ minWidth: 0 }}>
+                <div style={{ fontSize: '11px', fontWeight: 700, color: '#44544B', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                  Code Dispatched To
+                </div>
                 <div
                   style={{
-                    width: '34px',
-                    height: '34px',
-                    borderRadius: '6px',
-                    background: '#C8F135',
-                    border: '1.5px solid #0E1A14',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    flexShrink: 0
-                  }}
-                >
-                  <Mail size={16} color="#0E1A14" />
-                </div>
-                <div style={{ minWidth: 0 }}>
-                  <div style={{ fontSize: '11px', fontWeight: 700, color: '#44544B', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-                    Code Dispatched To
-                  </div>
-                  {isEditingEmail ? (
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginTop: '3px' }}>
-                      <input
-                        type="email"
-                        value={newEmailInput}
-                        onChange={(e) => setNewEmailInput(e.target.value)}
-                        placeholder="name@example.com"
-                        style={{
-                          fontSize: '13px',
-                          fontWeight: 600,
-                          padding: '4px 6px',
-                          border: '1.5px solid #0E1A14',
-                          borderRadius: '4px',
-                          background: '#FBFFE6',
-                          color: '#0E1A14',
-                          width: '100%',
-                          maxWidth: '190px'
-                        }}
-                      />
-                      <button
-                        type="button"
-                        onClick={handleSaveEmail}
-                        className="sf-btn sf-btn-lime"
-                        style={{ minHeight: '28px', padding: '0 10px', fontSize: '12px' }}
-                      >
-                        Save
-                      </button>
-                    </div>
-                  ) : (
-                    <div
-                      style={{
-                        fontSize: '14px',
-                        fontWeight: 700,
-                        color: '#0E1A14',
-                        overflow: 'hidden',
-                        textOverflow: 'ellipsis',
-                        whiteSpace: 'nowrap'
-                      }}
-                    >
-                      {email || 'No email provided'}
-                    </div>
-                  )}
-                </div>
-              </div>
-
-              {!isEditingEmail && (
-                <button
-                  type="button"
-                  onClick={() => {
-                    setNewEmailInput(email);
-                    setIsEditingEmail(true);
-                  }}
-                  style={{
-                    fontSize: '12px',
+                    fontSize: '14px',
                     fontWeight: 700,
                     color: '#0E1A14',
-                    background: '#F2F5EE',
-                    border: '1.5px solid #0E1A14',
-                    borderRadius: '4px',
-                    padding: '4px 8px',
-                    cursor: 'pointer',
+                    overflow: 'hidden',
+                    textOverflow: 'ellipsis',
                     whiteSpace: 'nowrap'
                   }}
                 >
-                  Change
-                </button>
-              )}
+                  {email || 'No email provided'}
+                </div>
+              </div>
             </div>
 
             {/* Status Alert Notification */}

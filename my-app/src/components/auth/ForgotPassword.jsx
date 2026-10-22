@@ -36,8 +36,9 @@ export default function ForgotPassword() {
     setMessage('');
     setIsError(false);
     try {
-      await axios.post(`${api}/api/authreset/forgot-password`, { email });
-      setMessage('Reset code sent (if email exists). Check your inbox.');
+      const cleanEmail = email.trim().toLowerCase();
+      const res = await axios.post(`${api}/api/authreset/forgot-password`, { email: cleanEmail });
+      setMessage(res.data?.message || 'Reset code sent. Please check your inbox.');
       setIsError(false);
       setStage('reset');
     } catch (err) {
@@ -54,7 +55,12 @@ export default function ForgotPassword() {
     setMessage('');
     setIsError(false);
     try {
-      const res = await axios.post(`${api}/api/authreset/reset-password`, { email, code, newPassword });
+      const cleanEmail = email.trim().toLowerCase();
+      const res = await axios.post(`${api}/api/authreset/reset-password`, { 
+        email: cleanEmail, 
+        code: code.trim(), 
+        newPassword 
+      });
       setMessage(res.data.message || 'Password reset successfully! Redirecting to login...');
       setIsError(false);
       setTimeout(() => navigate('/login'), 1600);
@@ -80,35 +86,49 @@ export default function ForgotPassword() {
         {/* Left Side: Form Container */}
         <main className="sf-L">
           <div className="sf-fw">
-            {/* Logo */}
-            <Link to="/" className="sf-logo" style={{ marginBottom: '40px', textDecoration: 'none', display: 'inline-block' }}>
-              <img
-                src="/final.png"
-                alt="Smart Financials by Khushi Vijay"
-                className="sf-nav-logo-img"
-                style={{ height: '48px', width: 'auto', objectFit: 'contain' }}
-              />
-            </Link>
-
-            {/* Back to Login Link */}
-            <Link
-              to="/login"
+            {/* Top Bar: Logo and Back to login in the same row */}
+            <div
               style={{
-                display: 'inline-flex',
+                display: 'flex',
                 alignItems: 'center',
-                gap: '6px',
-                fontSize: '14px',
-                fontWeight: 600,
-                color: '#44544B',
-                marginBottom: '20px',
-                textDecoration: 'none',
-                paddingLeft: '80px'
+                justifyContent: 'space-between',
+                gap: '12px',
+                marginBottom: '32px',
+                width: '100%'
               }}
-              className="hover:underline"
             >
-              <ArrowLeft className="w-4 h-4" />
-              <span>Back to login</span>
-            </Link>
+              <Link to="/" className="sf-logo" style={{ textDecoration: 'none', display: 'inline-flex', alignItems: 'center' }}>
+                <img
+                  src="/final.png"
+                  alt="Smart Financials by Khushi Vijay"
+                  className="sf-nav-logo-img"
+                  style={{ height: '44px', width: 'auto', objectFit: 'contain' }}
+                />
+              </Link>
+
+              <Link
+                to="/login"
+                style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '6px',
+                  fontSize: '13px',
+                  fontWeight: 600,
+                  color: '#0E1A14',
+                  background: '#FFFFFF',
+                  border: '1.5px solid #0E1A14',
+                  borderRadius: '6px',
+                  padding: '6px 12px',
+                  boxShadow: '2px 2px 0 #0E1A14',
+                  textDecoration: 'none',
+                  whiteSpace: 'nowrap',
+                  transition: 'all 0.15s ease'
+                }}
+              >
+                <ArrowLeft size={14} />
+                <span>Back to login</span>
+              </Link>
+            </div>
 
             {/* Step Badge */}
             <div

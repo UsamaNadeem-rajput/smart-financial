@@ -8,6 +8,9 @@ const transporter = nodemailer.createTransport({
   auth: {
     user: "support@khushifinances.com",
     pass: "Usamark@123"
+  },
+  tls: {
+    rejectUnauthorized: false
   }
 });
 

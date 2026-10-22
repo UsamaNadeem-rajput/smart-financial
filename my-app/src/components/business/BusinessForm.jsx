@@ -48,7 +48,7 @@ const BusinessForm = () => {
   }, [location.state]);
 
   const isDisabled = (field) => {
-    const premiumOnly = ['industry', 'ntn_number', 'address', 'city', 'country', 'phone'];
+    const premiumOnly = ['address', 'city', 'country', 'phone'];
     return formData.plan === 'free' && premiumOnly.includes(field);
   };
 
@@ -85,12 +85,11 @@ const BusinessForm = () => {
       newErrors.business_type = 'Business type is required';
     }
     if (formData.plan === 'premium') {
-      if (!formData.industry.trim()) newErrors.industry = 'Industry is required';
       if (!formData.city.trim()) newErrors.city = 'City is required';
       if (!formData.country.trim()) newErrors.country = 'Country is required';
-    }
-    if (formData.phone && !/^\+?[\d\s\-\(\)]+$/.test(formData.phone)) {
-      newErrors.phone = 'Invalid phone number';
+      if (formData.phone && !/^\+?[\d\s\-\(\)]+$/.test(formData.phone)) {
+        newErrors.phone = 'Invalid phone number';
+      }
     }
     return newErrors;
   };
@@ -107,16 +106,16 @@ const BusinessForm = () => {
 
     const submitData = new FormData();
     submitData.append("plan", formData.plan);
-    submitData.append("businessName", formData.business_name);
+    submitData.append("businessName", formData.business_name.trim());
     submitData.append("businessType", formData.business_type);
+    submitData.append("industry", formData.industry ? formData.industry.trim() : "");
+    submitData.append("ntn", formData.ntn_number ? formData.ntn_number.trim() : "");
 
     if (formData.plan === 'premium') {
-      submitData.append("industry", formData.industry);
-      submitData.append("ntn", formData.ntn_number);
-      submitData.append("address", formData.address);
-      submitData.append("city", formData.city);
-      submitData.append("country", formData.country);
-      submitData.append("phone", formData.phone);
+      submitData.append("address", formData.address ? formData.address.trim() : "");
+      submitData.append("city", formData.city ? formData.city.trim() : "");
+      submitData.append("country", formData.country ? formData.country.trim() : "");
+      submitData.append("phone", formData.phone ? formData.phone.trim() : "");
     }
 
     if (logoFile) {
@@ -199,7 +198,7 @@ const BusinessForm = () => {
                   onClick={() => setFormData(prev => ({ ...prev, plan: 'free' }))}
                 >
                   <b>Free</b>
-                  <span>Name and type. Everything you need to start.</span>
+                  <span>Name, type, industry & NTN. Everything you need to start.</span>
                 </button>
                 <button
                   type="button"
@@ -208,11 +207,8 @@ const BusinessForm = () => {
                 >
                   <b>
                     Premium{' '}
-                    <svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true" className="inline-block ml-1">
-                      <path d="M3 8l4.5 4L12 5l4.5 7L21 8l-2 11H5z" fill="#C8F135" stroke="#0E1A14" strokeWidth="2" strokeLinejoin="round"></path>
-                    </svg>
                   </b>
-                  <span>Adds industry, NTN, address, city, country and phone.</span>
+                  <span>Adds address, city, country and phone.</span>
                 </button>
               </div>
             </div>
@@ -269,25 +265,71 @@ const BusinessForm = () => {
                   <p className="sf-bf-hint">{errors.business_type}</p>
                 )}
               </div>
+              <div className="sf-bf-fg3" style={{ marginTop: '20px' }}>
+                <div className="sf-bf-fd">
+                  <label htmlFor="ind" className="sf-bf-lbl">
+                    Industry
+                  </label>
+                  <select
+                    id="ind"
+                    name="industry"
+                    value={formData.industry}
+                    onChange={handleChange}
+                    className="sf-bf-input"
+                  >
+                    <option value="">Select industry</option>
+                    {industries.map(ind => (
+                      <option key={ind} value={ind}>{ind}</option>
+                    ))}
+                  </select>
+                </div>
+
+                <div className="sf-bf-fd">
+                  <label htmlFor="ntn" className="sf-bf-lbl">
+                    NTN number
+                  </label>
+                  <input
+                    id="ntn"
+                    type="text"
+                    name="ntn_number"
+                    value={formData.ntn_number}
+                    onChange={handleChange}
+                    placeholder="National Tax Number"
+                    className="sf-bf-input"
+                  />
+                </div>
+              </div>
             </div>
 
             {/* Premium details Section */}
             <div className="sf-bf-sec">
-              <h2>Premium details</h2>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '8px' }}>
+                {/* <h2>Premium details</h2> */}
+                {formData.plan === 'free' && (
+                  <span
+                    style={{
+                      fontSize: '11px',
+                      fontWeight: 700,
+                      color: '#0E1A14',
+                      background: '#C8F135',
+                      border: '1.5px solid #0E1A14',
+                      padding: '2px 8px',
+                      borderRadius: '4px',
+                      textTransform: 'uppercase',
+                      letterSpacing: '0.04em'
+                    }}
+                  >
+                    Locked on Free
+                  </span>
+                )}
+              </div>
+
               {formData.plan === 'free' ? (
                 <div>
                   <p className="sf-bf-note2">
-                    Premium details are locked on the Free plan. Choose Premium above to fill them in.
+                    Address, city, country, and phone details are locked on the Free plan. Switch to Premium above to enable them.
                   </p>
                   <div className="sf-bf-fg3">
-                    <div className="sf-bf-fd">
-                      <label className="sf-bf-lbl">Industry</label>
-                      <input type="text" placeholder="Premium only" disabled={isDisabled('industry')} className="sf-bf-input" />
-                    </div>
-                    <div className="sf-bf-fd">
-                      <label className="sf-bf-lbl">NTN number</label>
-                      <input type="text" placeholder="Premium only" disabled={isDisabled('ntn_number')} className="sf-bf-input" />
-                    </div>
                     <div className="sf-bf-fd sf-bf-w2">
                       <label className="sf-bf-lbl">Address</label>
                       <input type="text" placeholder="Premium only" disabled={isDisabled('address')} className="sf-bf-input" />
@@ -300,7 +342,7 @@ const BusinessForm = () => {
                       <label className="sf-bf-lbl">Country</label>
                       <input type="text" placeholder="Premium only" disabled={isDisabled('country')} className="sf-bf-input" />
                     </div>
-                    <div className="sf-bf-fd">
+                    <div className="sf-bf-fd sf-bf-w2">
                       <label className="sf-bf-lbl">Phone</label>
                       <input type="tel" placeholder="Premium only" disabled={isDisabled('phone')} className="sf-bf-input" />
                     </div>
@@ -308,36 +350,6 @@ const BusinessForm = () => {
                 </div>
               ) : (
                 <div className="sf-bf-fg3">
-                  <div className="sf-bf-fd">
-                    <label className="sf-bf-lbl">
-                      Industry <span className="text-red-500">*</span>
-                    </label>
-                    <select
-                      name="industry"
-                      value={formData.industry}
-                      onChange={handleChange}
-                      className={`sf-bf-input ${errors.industry ? 'err' : ''}`}
-                    >
-                      <option value="">Select industry</option>
-                      {industries.map(ind => (
-                        <option key={ind} value={ind}>{ind}</option>
-                      ))}
-                    </select>
-                    {errors.industry && <p className="sf-bf-hint">{errors.industry}</p>}
-                  </div>
-
-                  <div className="sf-bf-fd">
-                    <label className="sf-bf-lbl">NTN number</label>
-                    <input
-                      type="text"
-                      name="ntn_number"
-                      value={formData.ntn_number}
-                      onChange={handleChange}
-                      placeholder="National Tax Number"
-                      className="sf-bf-input"
-                    />
-                  </div>
-
                   <div className="sf-bf-fd sf-bf-w2">
                     <label className="sf-bf-lbl">Address</label>
                     <input
@@ -381,7 +393,7 @@ const BusinessForm = () => {
                     {errors.country && <p className="sf-bf-hint">{errors.country}</p>}
                   </div>
 
-                  <div className="sf-bf-fd">
+                  <div className="sf-bf-fd sf-bf-w2">
                     <label className="sf-bf-lbl">Phone</label>
                     <input
                       type="tel"
@@ -399,7 +411,7 @@ const BusinessForm = () => {
 
             {/* Logo Section */}
             <div className="sf-bf-sec">
-              <h2>Logo</h2>
+              <h2>Profile picture / Logo</h2>
               <div className="sf-bf-drop">
                 <div className="ic" aria-hidden="true">
                   <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="#0E1A14" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -493,6 +505,8 @@ const BusinessForm = () => {
                 {formData.business_type === 'partnership' && <span>Partnership</span>}
                 {formData.business_type === 'company' && <span>Company</span>}
                 {!formData.business_type && <span>No type selected</span>}
+                {formData.industry && <span>{formData.industry}</span>}
+                {formData.ntn_number && <span>NTN: {formData.ntn_number}</span>}
               </div>
               <ul>
                 <li>Its own chart of accounts</li>

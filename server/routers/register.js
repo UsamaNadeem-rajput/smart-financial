@@ -12,45 +12,80 @@ router.post('/', verifyEmail24HourRateLimiter, async (req, res) => {
     return res.status(400).json({ error: 'Please fill all fields' });
   }
 
+  const cleanUsername = String(username).trim();
+  const cleanEmail = String(email).trim().toLowerCase();
+  const cleanFullName = String(fullname).trim();
+
   if (password.length < 6) {
     return res.status(400).json({ error: 'Password must be at least 6 characters long' });
   }
 
+  let conn;
   try {
-    const conn = await pool.getConnection();
+    conn = await pool.getConnection();
 
-    const [rows] = await conn.query('SELECT * FROM users WHERE email = ?', [email]);
-    if (rows.length > 0) {
-      conn.release();
-      return res.status(409).json({ error: 'Email already registered' });
+    // Automatically remove expired pending registrations older than 15 minutes
+    conn.query('DELETE FROM pending_registrations WHERE expires_at < NOW()').catch(() => {});
+
+    // 1. Check if email is already registered in actual verified users table
+    const [existingEmailRows] = await conn.query(
+      'SELECT id, is_verified FROM users WHERE LOWER(email) = ?',
+      [cleanEmail]
+    );
+
+    if (existingEmailRows.length > 0) {
+      const existingUser = existingEmailRows[0];
+      if (existingUser.is_verified == 1) {
+        conn.release();
+        return res.status(409).json({ error: 'Email already registered. Please log in.' });
+      }
+      // If an old legacy record exists with is_verified = 0, remove it so pending registration takes over cleanly
+      await conn.query('DELETE FROM users WHERE id = ? AND is_verified = 0', [existingUser.id]);
     }
 
-    const [rows1] = await conn.query('SELECT * FROM users WHERE username = ?', [username]);
-    if (rows1.length > 0) {
+    // 2. Check if username is already registered in actual users table
+    const [existingUserRows] = await conn.query(
+      'SELECT id FROM users WHERE LOWER(username) = ?',
+      [cleanUsername.toLowerCase()]
+    );
+    if (existingUserRows.length > 0) {
       conn.release();
-      return res.status(409).json({ error: 'Username already registered' });
+      return res.status(409).json({ error: 'Username already taken. Please choose another.' });
+    }
+
+    // 3. Check if username is currently pending for a different email
+    const [pendingUserRows] = await conn.query(
+      'SELECT id FROM pending_registrations WHERE LOWER(username) = ? AND LOWER(email) != ?',
+      [cleanUsername.toLowerCase(), cleanEmail]
+    );
+    if (pendingUserRows.length > 0) {
+      conn.release();
+      return res.status(409).json({ error: 'Username already taken. Please choose another.' });
     }
 
     const hashedPassword = await bcrypt.hash(password, 10);
     const verificationCode = generateCode();
 
-    const [result] = await conn.query(
-      'INSERT INTO users (username, full_name, email, password_hash, is_verified, verification_code) VALUES (?, ?, ?, ?, ?, ?)',
-      [username, fullname, email, hashedPassword, 0, verificationCode]
-    );
+    // 4. Save into pending_registrations for 15 minutes (NOT in users table, and NO session login)
+    await conn.query(`
+      INSERT INTO pending_registrations (username, full_name, email, password_hash, verification_code, expires_at)
+      VALUES (?, ?, ?, ?, ?, DATE_ADD(NOW(), INTERVAL 15 MINUTE))
+      ON DUPLICATE KEY UPDATE
+        username = VALUES(username),
+        full_name = VALUES(full_name),
+        password_hash = VALUES(password_hash),
+        verification_code = VALUES(verification_code),
+        expires_at = DATE_ADD(NOW(), INTERVAL 15 MINUTE)
+    `, [cleanUsername, cleanFullName, cleanEmail, hashedPassword, verificationCode]);
 
     conn.release();
 
-    // ⚠️ Purana session wala code keep kar raha hoon
-    req.session.username = username;
-    req.session.userId = result.insertId;
+    console.log(`📩 Pending registration created for ${cleanEmail} (code sent, NOT inserted into users yet)`);
 
-    console.log('✅ Registered');
-
-    // 🔹 Send beautifully formatted verification email with highlighted code
+    // 5. Send verification email with 6-digit code
     await sendVerificationEmail({
-      to: email,
-      name: fullname || username,
+      to: cleanEmail,
+      name: cleanFullName || cleanUsername,
       code: verificationCode
     });
 
@@ -58,11 +93,17 @@ router.post('/', verifyEmail24HourRateLimiter, async (req, res) => {
       await req.recordVerificationAttempt();
     }
 
-    res.status(201).json({ message: 'User registered successfully. Please check your email for verification code.', username });
+    // Notice: We intentionally DO NOT set req.session.username here.
+    // The user will ONLY be logged in and inserted into users once the code is verified!
+    return res.status(201).json({
+      message: 'Verification code sent to your email. Please enter the code to complete registration.',
+      email: cleanEmail
+    });
 
   } catch (error) {
-    console.error('❌ Registration Error');
-    res.status(500).json({ error: 'Internal Server Error' });
+    if (conn) conn.release();
+    console.error('❌ Registration Error:', error.message || error);
+    return res.status(500).json({ error: error.message || 'Internal Server Error' });
   }
 });
 

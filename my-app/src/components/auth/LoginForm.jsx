@@ -18,7 +18,28 @@ export default function LoginForm() {
     if (error === 'auth_failed') {
       setMessage('Google login failed. Please try again.');
       setIsGoogleLoading(false);
+      return;
     }
+
+    // If user already has an active session, auto-navigate to /list
+    let isMounted = true;
+    const checkAlreadyLoggedIn = async () => {
+      try {
+        const apiUrl = import.meta.env.VITE_BACKEND_URL || 'https://server.khushifinances.com';
+        const res = await axios.get(`${apiUrl}/api/login/session`, { withCredentials: true });
+        if (isMounted && res.data?.authenticated && res.data?.username) {
+          localStorage.setItem('username', res.data.username);
+          navigate('/list', { replace: true });
+        }
+      } catch {
+        // Session not active, stay on login page
+      }
+    };
+    checkAlreadyLoggedIn();
+
+    return () => {
+      isMounted = false;
+    };
   }, [searchParams, navigate]);
 
   const handleChange = (e) =>
@@ -43,6 +64,14 @@ export default function LoginForm() {
       setMessage(res.data.message || 'Login successful. Taking you to your businesses.');
       navigate('/list');
     } catch (err) {
+      if (err.response?.data?.unverified) {
+        const unverifiedEmail = err.response.data.email || formData.email;
+        setMessage('Please verify your email address. Taking you to the verification screen...');
+        setTimeout(() => {
+          navigate('/verify', { state: { email: unverifiedEmail } });
+        }, 1400);
+        return;
+      }
       const msg = err.response?.data?.error || err.response?.data?.message || 'Server error';
       setMessage(`Login failed: ${msg}`);
     } finally {

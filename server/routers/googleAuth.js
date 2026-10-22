@@ -7,6 +7,7 @@ router.get("/google", (req, res, next) => {
   console.log("Initiating Google OAuth...");
   passport.authenticate("google", {
     scope: ["profile", "email"],
+    prompt: "select_account" // Always prompt user to select account or switch accounts
   })(req, res, next);
 });
 
@@ -22,7 +23,16 @@ router.get("/google/callback",
       req.session.username = req.user.username || req.user.full_name || req.user.email;
       req.session.userId = req.user.id;
     }
-    res.redirect('https://khushifinances.com/list');
+    
+    // Explicitly save session before redirecting to prevent race condition with MySQL session store
+    req.session.save((err) => {
+      if (err) {
+        console.error("Session save error on Google OAuth callback:", err);
+      }
+      const username = req.session?.username || req.user?.username || "";
+      const frontendUrl = process.env.FRONTEND_URL || "https://khushifinances.com";
+      res.redirect(`${frontendUrl}/list?username=${encodeURIComponent(username)}`);
+    });
   }
 );
 

@@ -545,23 +545,6 @@ const BalanceSheet = () => {
             </Link>{' '}
             / Balance sheet
           </p>
-          <button
-            type="button"
-            onClick={() => navigate(-1)}
-            style={{
-              background: 'none',
-              border: 'none',
-              borderBottom: '2px solid #0E1A14',
-              color: '#0E1A14',
-              fontFamily: 'inherit',
-              fontWeight: 600,
-              fontSize: '15px',
-              cursor: 'pointer',
-              padding: '0 0 2px 0',
-            }}
-          >
-            ← Back to Reports
-          </button>
         </div>
 
         {/* Title and Subtitle */}
