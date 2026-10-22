@@ -64,6 +64,17 @@ function formatVoucherDate(dateStr) {
   });
 }
 
+// HTML escape helper to prevent XSS in document.write templates
+const escapeHtml = (str) => {
+  if (str == null) return "";
+  return String(str)
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;");
+};
+
 // Helper to convert image URL to data URL using proxy endpoint (bypasses CORS for print/PDF)
 async function getImageAsDataUrl(logoPath, backendUrl) {
   try {
@@ -303,7 +314,7 @@ export default function TransactionEntryTable() {
               ${logoDataUrl ? `<img src="${logoDataUrl}" class="logo" alt="Logo" id="printLogo" />` : '<div style="font-size: 24px; color: #0E1A14; font-weight: bold;">SF</div>'}
             </div>
             <div class="header-center">
-              <div class="business-name">${selectedBusiness?.business_name || "Your Business Name"}</div>
+              <div class="business-name">${escapeHtml(selectedBusiness?.business_name || "Your Business Name")}</div>
               <div class="report-title">General Journal</div>
               <div class="date-range">${formatCustomDate(fromDate)} to ${formatCustomDate(toDate)}</div>
             </div>
@@ -330,10 +341,10 @@ export default function TransactionEntryTable() {
           printWindow.document.write(`
           <tr class="${entry.isTotal ? "transaction-total-row" : ""}">
             ${idx === 0 && !entry.isTotal
-              ? `<td rowspan="${group.length}">${frontend_transaction_id}<br><span style="font-size: 0.8em; color: #888;">${formatCustomDate(entry.transaction_date) || "No Date"}</span></td>`
+              ? `<td rowspan="${group.length}">${escapeHtml(frontend_transaction_id)}<br><span style="font-size: 0.8em; color: #888;">${formatCustomDate(entry.transaction_date) || "No Date"}</span></td>`
               : ""
             }
-            <td>${entry.account_name}</td>
+            <td>${escapeHtml(entry.account_name)}</td>
             <td style="text-align: right;">${formatAmount(entry.debit)}</td>
             <td style="text-align: right;">${formatAmount(entry.credit)}</td>
           </tr>

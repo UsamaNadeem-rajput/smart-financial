@@ -1,26 +1,11 @@
 const express = require('express');
-const bcrypt = require('bcrypt');
+const bcrypt = require('bcryptjs');
 const pool = require('../db');
+const { generateCode, sendVerificationEmail } = require('../mailer');
+const { verifyEmail24HourRateLimiter } = require('../middleware/rateLimiter');
 const router = express.Router();
-const nodemailer = require('nodemailer');
 
-// Nodemailer transporter (OrangeHost SMTP)
-const transporter = nodemailer.createTransport({
-  host: "mail.khushifinances.com",
-  port: 465,
-  secure: true,
-  auth: {
-    user: "support@khushifinances.com",
-    pass: "Usamark@123" 
-  }
-});
-
-// Generate 6 digit code
-function generateCode() {
-  return Math.floor(100000 + Math.random() * 900000).toString();
-}
-
-router.post('/', async (req, res) => {
+router.post('/', verifyEmail24HourRateLimiter, async (req, res) => {
   const { username, fullname, email, password } = req.body;
 
   if (!username || !fullname || !email || !password) {
@@ -62,13 +47,16 @@ router.post('/', async (req, res) => {
 
     console.log('✅ Registered');
 
-    // 🔹 Send email (new addition)
-    await transporter.sendMail({
-      from: '"Khushi Finances" <support@khushifinances.com>',
+    // 🔹 Send beautifully formatted verification email with highlighted code
+    await sendVerificationEmail({
       to: email,
-      subject: "Verify your account",
-      text: `Your verification code is: ${verificationCode}`
+      name: fullname || username,
+      code: verificationCode
     });
+
+    if (req.recordVerificationAttempt) {
+      await req.recordVerificationAttempt();
+    }
 
     res.status(201).json({ message: 'User registered successfully. Please check your email for verification code.', username });
 

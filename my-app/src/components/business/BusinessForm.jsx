@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import Navbar from '../layout/Navbar';
 import axios from 'axios';
+import { Plus, Check, X, Loader2 } from 'lucide-react';
 
 const BusinessForm = () => {
   const navigate = useNavigate();
@@ -432,23 +433,27 @@ const BusinessForm = () => {
                 type="submit"
                 id="submitBtn"
                 disabled={isLoading}
-                className={`btn lime font-semibold ${isLoading ? 'busy opacity-75' : ''}`}
+                className="sf-btn sf-btn-lime flex items-center justify-center gap-2.5 font-bold cursor-pointer transition-all duration-150 disabled:opacity-50 disabled:cursor-not-allowed shadow-[2px_2px_0_#0E1A14] hover:shadow-[4px_4px_0_#0E1A14] active:translate-y-0 active:shadow-none"
               >
                 {isLoading ? (
                   <>
-                    <span className="sp"></span>
-                    {isEditMode ? 'Updating...' : 'Creating...'}
+                    <Loader2 className="w-5 h-5 animate-spin" />
+                    <span>{isEditMode ? 'Updating business...' : 'Creating business...'}</span>
                   </>
                 ) : (
-                  isEditMode ? 'Update business' : 'Create business'
+                  <>
+                    {isEditMode ? <Check className="w-5 h-5" /> : <Plus className="w-5 h-5" strokeWidth={2.5} />}
+                    <span>{isEditMode ? 'Update business' : 'Create business'}</span>
+                  </>
                 )}
               </button>
               <button
                 type="button"
                 onClick={() => navigate('/list')}
-                className="btn out font-semibold"
+                className="sf-btn sf-btn-line flex items-center justify-center gap-2 font-bold cursor-pointer transition-all duration-150 shadow-[2px_2px_0_#0E1A14] hover:bg-black/5 hover:shadow-[4px_4px_0_#0E1A14] active:translate-y-0 active:shadow-none"
               >
-                Cancel
+                <X className="w-5 h-5" />
+                <span>Cancel</span>
               </button>
 
               {errors.general && (

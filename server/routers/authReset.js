@@ -1,49 +1,18 @@
-// routes/authReset.js
 const express = require('express');
 const bcrypt = require('bcryptjs');
 const pool = require('../db');
-const nodemailer = require('nodemailer');
+const { generateCode, sendResetEmail } = require('../mailer');
+const {
+  verifyEmail24HourRateLimiter,
+  verificationIpLimiter
+} = require('../middleware/rateLimiter');
 const router = express.Router();
 
-// --- Mailer config (use env vars in production)
-const transporter = nodemailer.createTransport({
-  host: "mail.khushifinances.com",
-  port: 465,
-  secure: true,
-  auth: {
-    user: "support@khushifinances.com",
-    pass: "Usamark@123" 
-  }
-});
-
-// Reuse your registration code generator pattern
-function generateCode() {
-  return Math.floor(100000 + Math.random() * 900000).toString(); // 6-digit string
-}
-
-async function sendResetEmail(to, code, username) {
-  const frontend = process.env.FRONTEND_URL || 'http://localhost:5173';
-  const html = `
-    <p>Hi ${username || ''},</p>
-    <p>Your password reset code is: <strong>${code}</strong></p>
-    <p>This code is valid for 15 minutes.</p>
-    <p>If you did not request this, ignore this email.</p>
-    <hr/>
-    <small>Or visit: ${frontend}/reset-password</small>
-  `;
-  await transporter.sendMail({
-    from: process.env.FROM_EMAIL || '"Khushi Finances" <support@khushifinances.com>',
-    to,
-    subject: 'Password reset code',
-    html
-  });
-}
-
-/* POST /api/auth/forgot-password
+/* POST /api/authreset/forgot-password
    Body: { email }
    Response: generic message (do not leak whether email exists)
 */
-router.post('/forgot-password', async (req, res) => {
+router.post('/forgot-password', verificationIpLimiter, verifyEmail24HourRateLimiter, async (req, res) => {
   const { email } = req.body;
   if (!email) return res.status(400).json({ error: 'Email required' });
 
@@ -67,7 +36,10 @@ router.post('/forgot-password', async (req, res) => {
 
     // send email (don't fail the request if mail fails — log instead)
     try {
-      await sendResetEmail(email, code, user.username);
+      await sendResetEmail({ to: email, username: user.username, code });
+      if (req.recordVerificationAttempt) {
+        await req.recordVerificationAttempt();
+      }
     } catch (mailErr) {
       console.error('Reset email send error:', mailErr);
     }

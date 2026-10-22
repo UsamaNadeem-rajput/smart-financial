@@ -99,6 +99,7 @@ export default function SignupForm() {
         { withCredentials: true }
       );
       setMessage(res.data.message || "Registration successful");
+      sessionStorage.setItem('pending_verify_email', formData.email);
       navigate("/verify", { state: { email: formData.email } });
     } catch (err) {
       const msg = err.response?.data?.error || err.response?.data?.message || "Server error";

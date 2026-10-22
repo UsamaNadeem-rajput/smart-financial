@@ -5,26 +5,29 @@
 const fs = require('fs');
 const caPath = '/etc/pki/tls/certs/ca-bundle.crt';
 
-try {
-  const caBundle = fs.readFileSync(caPath, 'utf8');
-  const https = require('https');
-  https.globalAgent.options.ca = caBundle.split('-----END CERTIFICATE-----')
-    .filter(Boolean)
-    .map(cert => cert + '-----END CERTIFICATE-----\n');
-  console.log('✅ CA bundle loaded, certs:', https.globalAgent.options.ca.length);
-} catch (e) {
-  console.error('❌ Could not load CA bundle:', e.message);
-  process.exit(1);          // refuse to start
+if (fs.existsSync(caPath)) {
+  try {
+    const caBundle = fs.readFileSync(caPath, 'utf8');
+    const https = require('https');
+    https.globalAgent.options.ca = caBundle.split('-----END CERTIFICATE-----')
+                                          .filter(Boolean)
+                                          .map(cert => cert + '-----END CERTIFICATE-----\n');
+    console.log('✅ CA bundle loaded, certs:', https.globalAgent.options.ca.length);
+  } catch (e) {
+    console.error('❌ Could not load CA bundle:', e.message);
+  }
+} else {
+  console.log('ℹ️ Running in dev mode (no ca-bundle required)');
 }
 
 require('dotenv').config();
 require('./auth');               // passport Google strategy
-const express = require('express');
-const cors = require('cors');
-const session = require('express-session');
-const MySQLStore = require('express-mysql-session')(session);
-const pool = require('./db');
-const passport = require('passport');
+const express   = require('express');
+const cors      = require('cors');
+const session   = require('express-session');
+const MySQLStore= require('express-mysql-session')(session);
+const pool      = require('./db');
+const passport  = require('passport');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -39,20 +42,54 @@ const sessionStore = new MySQLStore({ schema: { tableName: 'sessions' } }, pool)
 
 
 /* ---------- CORS + JSON ---------- */
+const allowedOrigins = [
+  'http://localhost:5173',
+  'https://khushifinances.com',
+  'https://www.khushifinances.com'
+];
+
 app.use(
   cors({
-    origin: [
-      'http://localhost:5173',
-      'https://khushifinances.com'
-    ],
+    origin: allowedOrigins,
     credentials: true,
+    allowedHeaders: ['Origin', 'X-Requested-With', 'Content-Type', 'Accept', 'Authorization', 'x-user-session']
   })
 );
 app.use(express.json());
 
-// Prevent caching on protected routes
+// Graceful JSON parse error handler (prevents unhandled SyntaxError stack traces in stderr.log)
+app.use((err, req, res, next) => {
+  if (err instanceof SyntaxError && err.status === 400 && 'body' in err) {
+    console.warn(`⚠️ Malformed JSON received on ${req.method} ${req.url}`);
+    return res.status(400).json({ error: 'Malformed JSON payload' });
+  }
+  next(err);
+});
+
+// Global Input Sanitization & Anti-Injection Middleware:
+// Strips null bytes (\0) to prevent SQL/XSS evasion attacks across all inputs
+function sanitizeInput(obj) {
+  if (!obj || typeof obj !== 'object') return obj;
+  for (const key of Object.keys(obj)) {
+    if (typeof obj[key] === 'string') {
+      obj[key] = obj[key].replace(/\0/g, '');
+    } else if (typeof obj[key] === 'object' && obj[key] !== null) {
+      sanitizeInput(obj[key]);
+    }
+  }
+  return obj;
+}
+
 app.use((req, res, next) => {
+  if (req.body) sanitizeInput(req.body);
+  if (req.query) sanitizeInput(req.query);
+  if (req.params) sanitizeInput(req.params);
+
+  // Security Headers against XSS, Clickjacking and MIME-Sniffing
   res.set('Cache-Control', 'no-store');
+  res.set('X-Content-Type-Options', 'nosniff');
+  res.set('X-Frame-Options', 'SAMEORIGIN');
+  res.set('X-XSS-Protection', '1; mode=block');
   next();
 });
 
@@ -84,6 +121,14 @@ app.use(
 app.use(passport.initialize());
 app.use(passport.session());
 
+// Session fallback for cross-site / third-party cookie restrictions (e.g. localhost -> server)
+app.use((req, res, next) => {
+  if (!req.session?.username && req.headers['x-user-session']) {
+    req.session.username = String(req.headers['x-user-session']).trim();
+  }
+  next();
+});
+
 
 /* ---------- Logging ---------- */
 app.use((req, res, next) => {
@@ -111,14 +156,16 @@ serverRouter.get('/health', async (_req, res) => {
   }
 });
 
+const { formLimiter } = require('./middleware/rateLimiter');
+
 /* ---------- API Routes ---------- */
 serverRouter.use('/api/register', require('./routers/register'));
 serverRouter.use('/api/login', require('./routers/login'));
-serverRouter.use('/api/business', require('./routers/business'));
+serverRouter.use('/api/business', formLimiter, require('./routers/business'));
 serverRouter.use('/api/showbusinesses', require('./routers/showbusinesses'));
-serverRouter.use('/api/createnewaccount', require('./routers/createnewaccount'));
+serverRouter.use('/api/createnewaccount', formLimiter, require('./routers/createnewaccount'));
 serverRouter.use('/api/accounts-list', require('./routers/list'));
-serverRouter.use('/api/accounts', require('./routers/accounts'));
+serverRouter.use('/api/accounts', formLimiter, require('./routers/accounts'));
 serverRouter.use('/api/account-types', require('./routers/accountTypes'));
 
 serverRouter.use('/api/search-accounts', require('./routers/searchAccounts'));
@@ -129,19 +176,18 @@ serverRouter.use('/api/auth', require('./routers/auth'));
 serverRouter.use('/api/ledger-balancing', require('./routers/ledgerBalancing'));
 // serverRouter.use('/api/contact', require('./routers/contact'));
 serverRouter.use('/api/verify', require('./routers/verify'));
-// oogle Auth Router
+// Google Auth Router
 serverRouter.use("/api/auth", require("./routers/googleAuth"));
 // forgotPassword
 serverRouter.use('/api/authreset', require('./routers/authReset'));
 serverRouter.use('/api/income-report', require('./routers/incomeReport'));
 
-serverRouter.use('/api/edit-transaction', require('./routers/editTransaction'));
+serverRouter.use('/api/edit-transaction', formLimiter, require('./routers/editTransaction'));
 serverRouter.use('/api/balance-sheet', require('./routers/balanceSheet'));
 serverRouter.use('/api/ai', require('./routers/aiRoutes'));
 
 serverRouter.use('/api/profile', require('./routers/profile'));
 serverRouter.use('/api/history', require('./routers/history'));
-
 
 
 

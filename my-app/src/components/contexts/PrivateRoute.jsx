@@ -29,10 +29,18 @@ const PrivateRoute = ({ children }) => {
             localStorage.removeItem('username');
           }
         }
-      } catch {
+      } catch (err) {
         if (isMounted) {
-          setAuthenticated(false);
-          localStorage.removeItem('username');
+          // If the server explicitly rejected the session with 401, remove local state and redirect
+          if (err.response?.status === 401) {
+            setAuthenticated(false);
+            localStorage.removeItem('username');
+          } else if (localStorage.getItem('username')) {
+            // If it's a rate limit (429) or transient network issue, preserve existing logged in state
+            setAuthenticated(true);
+          } else {
+            setAuthenticated(false);
+          }
         }
       }
     };

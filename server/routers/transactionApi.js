@@ -2,6 +2,7 @@
 const express = require('express');
 const mysql = require('mysql2/promise');
 const pool = require('../db');
+const { formLimiter } = require('../middleware/rateLimiter');
 const router = express.Router();
 
 // GET /api/next-transaction-id/:business_id
@@ -232,7 +233,7 @@ async function handleOpeningBalance(business_id, ledger_id, amount, type, date =
 
 
 // POST /api/transactions
-router.post('/transactions', async (req, res) => {
+router.post('/transactions', formLimiter, async (req, res) => {
     const transactionData = req.body;
 
     let conn;

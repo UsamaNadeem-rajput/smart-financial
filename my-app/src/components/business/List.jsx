@@ -19,11 +19,20 @@ const List = () => {
   const checkAuth = async () => {
     try {
       const res = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/login/session`, { withCredentials: true });
-      setUser(res.data);
-      fetchBusinesses(); // ✅ Only fetch if session is valid
+      if (res.data?.username) {
+        setUser(res.data);
+        fetchBusinesses(); // ✅ Fetch businesses for verified session
+      } else if (!localStorage.getItem('username')) {
+        navigate('/login', { replace: true }); // Redirect if not logged in
+      } else {
+        fetchBusinesses();
+      }
     } catch (err) {
-      console.error('Not authenticated:', err);
-      navigate('/login', { replace: true }); // 🔐 Redirect to login if session expired
+      if (!localStorage.getItem('username')) {
+        navigate('/login', { replace: true });
+      } else {
+        fetchBusinesses();
+      }
     }
   };
 

@@ -1,6 +1,5 @@
 const express = require("express");
 const pool = require("../db"); // Your DB connection (mysql2/promise)
-const { compareSync } = require("bcrypt");
 const router = express.Router();
 
 router.get("/", async (req, res) => {

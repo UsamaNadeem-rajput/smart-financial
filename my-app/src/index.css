@@ -3217,6 +3217,48 @@ html {
   padding-top: 10px;
 }
 
+.sf-bf-acts .sf-btn,
+.btn.lime,
+.btn.out {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 52px;
+  padding: 0 28px;
+  border-radius: 6px;
+  font-weight: 700;
+  font-size: 16px;
+  border: 2px solid #0E1A14;
+  cursor: pointer;
+  text-decoration: none;
+  transition: transform 0.15s ease, background 0.15s ease, box-shadow 0.15s ease;
+  user-select: none;
+}
+
+.btn.lime {
+  background: #C8F135;
+  color: #0E1A14;
+  box-shadow: 2px 2px 0 #0E1A14;
+}
+
+.btn.lime:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 4px 4px 0 #0E1A14;
+}
+
+.btn.out {
+  background: transparent;
+  color: #0E1A14;
+  box-shadow: 2px 2px 0 #0E1A14;
+}
+
+.btn.out:hover:not(:disabled) {
+  background: rgba(14, 26, 20, 0.05);
+  transform: translateY(-2px);
+  box-shadow: 4px 4px 0 #0E1A14;
+}
+
+
 /* Aside Preview Box */
 .sf-bf-pv {
   background: #0E1A14;
