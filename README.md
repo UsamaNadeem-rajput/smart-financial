@@ -1,4 +1,4 @@
-# Smart Financial (Sovereign Ledger)
+# Smart Financial
 
 An enterprise-grade, cloud-based double-entry accounting platform and financial intelligence engine. Designed for multi-business management, real-time ledger balancing, automated financial statement generation, and conversational natural language querying powered by an NLP-driven AI backend.
 
